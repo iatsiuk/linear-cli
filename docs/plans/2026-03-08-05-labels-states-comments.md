@@ -49,11 +49,11 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 2: GraphQL queries for labels, states, comments
-- [ ] write tests for query construction
-- [ ] create `internal/query/label.go`: LabelListQuery, LabelCreateMutation, LabelUpdateMutation
-- [ ] create `internal/query/state.go`: StateListQuery
-- [ ] create `internal/query/comment.go`: CommentListQuery, CommentCreateMutation
-- [ ] run `make test` - must pass before next task
+- [x] write tests for query construction
+- [x] create `internal/query/label.go`: LabelListQuery, LabelCreateMutation, LabelUpdateMutation
+- [x] create `internal/query/state.go`: StateListQuery
+- [x] create `internal/query/comment.go`: CommentListQuery, CommentCreateMutation
+- [x] run `make test` - must pass before next task
 
 ### Task 3: `linear label list/create/update` commands
 - [ ] write tests for label list: fetches labels, filters by team, table output, `--include-archived`

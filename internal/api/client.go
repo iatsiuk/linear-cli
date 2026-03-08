@@ -127,7 +127,7 @@ func (c *Client) do(ctx context.Context, attempt int, query string, variables ma
 		return 0, gqlResp.Errors
 	}
 
-	if result != nil && len(gqlResp.Data) > 0 && string(gqlResp.Data) != "null" {
+	if result != nil && len(gqlResp.Data) > 0 && !bytes.Equal(gqlResp.Data, []byte("null")) {
 		if err := json.Unmarshal(gqlResp.Data, result); err != nil {
 			return 0, fmt.Errorf("unmarshal data: %w", err)
 		}

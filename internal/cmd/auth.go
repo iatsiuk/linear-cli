@@ -5,9 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 
 	"linear-cli/internal/config"
 )
@@ -24,12 +26,25 @@ func newAuthCommand() *cobra.Command {
 
 func runAuth(cmd *cobra.Command, _ []string) error {
 	_, _ = fmt.Fprint(cmd.OutOrStdout(), "Enter your Linear API key: ")
-	reader := bufio.NewReader(cmd.InOrStdin())
-	key, err := reader.ReadString('\n')
-	if err != nil && (!errors.Is(err, io.EOF) || key == "") {
-		return fmt.Errorf("read api key: %w", err)
+
+	var key string
+	// use secure input when stdin is a real terminal
+	if f, ok := cmd.InOrStdin().(*os.File); ok && term.IsTerminal(int(f.Fd())) {
+		b, err := term.ReadPassword(int(f.Fd()))
+		if err != nil {
+			return fmt.Errorf("read api key: %w", err)
+		}
+		_, _ = fmt.Fprintln(cmd.OutOrStdout())
+		key = strings.TrimSpace(string(b))
+	} else {
+		reader := bufio.NewReader(cmd.InOrStdin())
+		raw, err := reader.ReadString('\n')
+		if err != nil && (!errors.Is(err, io.EOF) || raw == "") {
+			return fmt.Errorf("read api key: %w", err)
+		}
+		key = strings.TrimSpace(raw)
 	}
-	key = strings.TrimSpace(key)
+
 	if key == "" {
 		return fmt.Errorf("api key cannot be empty")
 	}

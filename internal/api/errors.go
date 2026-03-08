@@ -13,7 +13,7 @@ const (
 // GraphQLError represents a single error entry in a GraphQL response.
 type GraphQLError struct {
 	Message    string         `json:"message"`
-	Path       []string       `json:"path,omitempty"`
+	Path       []any          `json:"path,omitempty"`
 	Extensions map[string]any `json:"extensions,omitempty"`
 }
 

@@ -146,8 +146,8 @@ func TestClientDo_ServerError_Retries(t *testing.T) {
 		t.Fatal("expected error after all retries")
 	}
 	// should have retried (maxRetries=3 means 4 total attempts)
-	if attempts <= 1 {
-		t.Errorf("expected retries, got %d attempt(s)", attempts)
+	if attempts != 4 {
+		t.Errorf("expected 4 attempts (1 + 3 retries), got %d", attempts)
 	}
 }
 

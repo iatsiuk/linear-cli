@@ -82,6 +82,10 @@ func (f *TableFormatter) Format(w io.Writer, data any) error {
 	for i := range v.Len() {
 		elem := v.Index(i)
 		if elem.Kind() == reflect.Ptr {
+			if elem.IsNil() {
+				rows[i] = make([]string, len(cols))
+				continue
+			}
 			elem = elem.Elem()
 		}
 		rows[i] = make([]string, len(cols))

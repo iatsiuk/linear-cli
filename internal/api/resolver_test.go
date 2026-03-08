@@ -165,6 +165,42 @@ func TestResolveUserID_ByName(t *testing.T) {
 	}
 }
 
+func TestResolveUserID_ByEmail(t *testing.T) {
+	t.Parallel()
+	// first request (name lookup) returns empty; second (email lookup) returns a match
+	calls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		calls++
+		var resp map[string]any
+		if calls == 1 {
+			// name lookup - no match
+			resp = map[string]any{"data": map[string]any{"users": map[string]any{"nodes": []any{}}}}
+		} else {
+			// email lookup - match
+			resp = map[string]any{"data": map[string]any{"users": map[string]any{
+				"nodes": []map[string]any{{"id": "user-uuid-1234-5678-90ab-cdef01234567"}},
+			}}}
+		}
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			t.Errorf("encode response: %v", err)
+		}
+	}))
+	defer srv.Close()
+
+	c := NewClient("key", WithEndpoint(srv.URL))
+	got, err := ResolveUserID(context.Background(), c, "alice@example.com")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != "user-uuid-1234-5678-90ab-cdef01234567" {
+		t.Errorf("unexpected id: %q", got)
+	}
+	if calls != 2 {
+		t.Errorf("expected 2 API calls (name then email), got %d", calls)
+	}
+}
+
 func TestResolveUserID_NotFound(t *testing.T) {
 	t.Parallel()
 	srv := makeServer(t, map[string]any{

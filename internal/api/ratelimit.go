@@ -14,6 +14,9 @@ func rateLimitDelay(resp *http.Response, attempt int) time.Duration {
 	if reset := resp.Header.Get("X-RateLimit-Requests-Reset"); reset != "" {
 		if ms, err := strconv.ParseInt(reset, 10, 64); err == nil {
 			if d := time.Until(time.UnixMilli(ms)); d > 0 {
+				if d > 60*time.Second {
+					d = 60 * time.Second
+				}
 				return d + jitter(500*time.Millisecond)
 			}
 		}

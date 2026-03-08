@@ -135,16 +135,30 @@ func TestJSONFormatter_EmptySlice(t *testing.T) {
 
 func TestNewFormatter_TableByDefault(t *testing.T) {
 	t.Parallel()
+	var buf bytes.Buffer
 	f := output.NewFormatter(false)
-	if f == nil {
-		t.Fatal("expected non-nil formatter")
+	data := []row{{Name: "x", Value: "y"}}
+	if err := f.Format(&buf, data); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	out := buf.String()
+	// table formatter uppercases JSON tag names as headers
+	if !strings.Contains(out, "NAME") {
+		t.Errorf("expected table output with NAME header, got: %s", out)
 	}
 }
 
 func TestNewFormatter_JSON(t *testing.T) {
 	t.Parallel()
+	var buf bytes.Buffer
 	f := output.NewFormatter(true)
-	if f == nil {
-		t.Fatal("expected non-nil formatter")
+	data := []row{{Name: "x", Value: "y"}}
+	if err := f.Format(&buf, data); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	out := buf.String()
+	// json formatter produces JSON with lowercase keys
+	if !strings.Contains(out, `"name"`) {
+		t.Errorf("expected JSON output with name key, got: %s", out)
 	}
 }

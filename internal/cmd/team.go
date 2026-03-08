@@ -118,7 +118,12 @@ func runTeamShow(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	vars := map[string]any{"id": args[0]}
+	teamID, err := api.ResolveTeamID(context.Background(), client, args[0])
+	if err != nil {
+		return err
+	}
+
+	vars := map[string]any{"id": teamID}
 
 	var result teamGetResult
 	if err := client.Do(context.Background(), query.TeamGetQuery, vars, &result); err != nil {

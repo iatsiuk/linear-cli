@@ -35,8 +35,8 @@ func TestUserDeserialization(t *testing.T) {
 	if user.DisplayName != "Alice" {
 		t.Errorf("DisplayName: got %q", user.DisplayName)
 	}
-	if user.AvatarUrl == nil || *user.AvatarUrl != "https://cdn.example.com/alice.png" {
-		t.Errorf("AvatarUrl: unexpected value")
+	if user.AvatarURL == nil || *user.AvatarURL != "https://cdn.example.com/alice.png" {
+		t.Errorf("AvatarURL: unexpected value")
 	}
 	if !user.Active {
 		t.Errorf("Active: got false, want true")
@@ -78,8 +78,8 @@ func TestUserNullableFields(t *testing.T) {
 		t.Fatalf("unmarshal: %v", err)
 	}
 
-	if user.AvatarUrl != nil {
-		t.Errorf("AvatarUrl should be nil, got %v", user.AvatarUrl)
+	if user.AvatarURL != nil {
+		t.Errorf("AvatarURL should be nil, got %v", user.AvatarURL)
 	}
 	if user.Active {
 		t.Errorf("Active: got true, want false")

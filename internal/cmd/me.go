@@ -112,9 +112,14 @@ func runMeIssues(cmd *cobra.Command, client *api.Client, assigned bool, jsonMode
 		return formatter.Format(cmd.OutOrStdout(), nodes)
 	}
 
-	rows := make([]IssueRow, len(nodes))
+	type meIssueRow struct {
+		ID     string `json:"id"`
+		Title  string `json:"title"`
+		Status string `json:"status"`
+	}
+	rows := make([]meIssueRow, len(nodes))
 	for i, n := range nodes {
-		rows[i] = IssueRow{
+		rows[i] = meIssueRow{
 			ID:     n.Identifier,
 			Title:  truncate(n.Title, 40),
 			Status: n.State.Name,
@@ -126,12 +131,7 @@ func runMeIssues(cmd *cobra.Command, client *api.Client, assigned bool, jsonMode
 func printViewerDetail(cmd *cobra.Command, u *viewerUser) error {
 	w := cmd.OutOrStdout()
 
-	role := "member"
-	if u.Admin {
-		role = "admin"
-	} else if u.Guest {
-		role = "guest"
-	}
+	role := userRole(u.User)
 
 	active := "yes"
 	if !u.Active {

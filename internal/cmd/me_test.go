@@ -81,8 +81,8 @@ func TestMeCommand_TableOutput(t *testing.T) {
 	if !strings.Contains(result, "alice@example.com") {
 		t.Errorf("output should contain email, got:\n%s", result)
 	}
-	if !strings.Contains(result, "member") {
-		t.Errorf("output should contain role=member, got:\n%s", result)
+	if !strings.Contains(result, "Member") {
+		t.Errorf("output should contain role=Member, got:\n%s", result)
 	}
 	if !strings.Contains(result, "Active:") || !strings.Contains(result, "yes") {
 		t.Errorf("output should contain Active: yes, got:\n%s", result)
@@ -111,8 +111,8 @@ func TestMeCommand_AdminRole(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !strings.Contains(out.String(), "admin") {
-		t.Errorf("output should contain role=admin, got:\n%s", out.String())
+	if !strings.Contains(out.String(), "Admin") {
+		t.Errorf("output should contain role=Admin, got:\n%s", out.String())
 	}
 }
 
@@ -132,8 +132,8 @@ func TestMeCommand_GuestRole(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !strings.Contains(out.String(), "guest") {
-		t.Errorf("output should contain role=guest, got:\n%s", out.String())
+	if !strings.Contains(out.String(), "Guest") {
+		t.Errorf("output should contain role=Guest, got:\n%s", out.String())
 	}
 }
 

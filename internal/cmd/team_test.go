@@ -147,7 +147,21 @@ func TestTeamShowCommand_TableOutput(t *testing.T) {
 	desc := "Core engineering team"
 	team := makeTeam("t1", "Engineering", "ENG", desc, true)
 
-	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Query string `json:"query"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if strings.Contains(body.Query, "ResolveTeam") {
+			writeJSONResponse(w, map[string]any{
+				"data": map[string]any{
+					"teams": map[string]any{
+						"nodes": []map[string]any{{"id": "t1"}},
+					},
+				},
+			})
+			return
+		}
 		writeJSONResponse(w, teamGetResponse(team))
 	})
 	setupIssueTest(t, server)
@@ -201,7 +215,21 @@ func TestTeamShowCommand_NotFound(t *testing.T) {
 func TestTeamShowCommand_JSONOutput(t *testing.T) {
 	team := makeTeam("t1", "Engineering", "ENG", "Core engineering team", true)
 
-	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Query string `json:"query"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if strings.Contains(body.Query, "ResolveTeam") {
+			writeJSONResponse(w, map[string]any{
+				"data": map[string]any{
+					"teams": map[string]any{
+						"nodes": []map[string]any{{"id": "t1"}},
+					},
+				},
+			})
+			return
+		}
 		writeJSONResponse(w, teamGetResponse(team))
 	})
 	setupIssueTest(t, server)

@@ -13,7 +13,7 @@ type User struct {
 	ID          string  `json:"id"`
 	Email       string  `json:"email"`
 	DisplayName string  `json:"displayName"`
-	AvatarUrl   *string `json:"avatarUrl,omitempty"`
+	AvatarURL   *string `json:"avatarUrl,omitempty"`
 	Active      bool    `json:"active"`
 	Admin       bool    `json:"admin"`
 	Guest       bool    `json:"guest"`

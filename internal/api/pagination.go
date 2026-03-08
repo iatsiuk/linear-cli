@@ -40,6 +40,9 @@ func PaginateAll[T any](ctx context.Context, fetch FetchFunc[T], pageSize, limit
 		if !page.PageInfo.HasNextPage {
 			break
 		}
+		if len(page.Nodes) == 0 {
+			return nil, fmt.Errorf("pagination: hasNextPage is true but page returned no nodes")
+		}
 		if page.PageInfo.EndCursor == nil {
 			return nil, fmt.Errorf("pagination: hasNextPage is true but endCursor is nil")
 		}

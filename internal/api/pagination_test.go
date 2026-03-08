@@ -206,4 +206,20 @@ func TestPaginateAll_Limit(t *testing.T) {
 	}
 }
 
+func TestPaginateAll_HasNextPageWithEmptyNodes(t *testing.T) {
+	t.Parallel()
+	cursor := "cursor"
+	fetch := func(_ context.Context, _ *string, _ int) (Connection[string], error) {
+		return Connection[string]{
+			Nodes:    []string{},
+			PageInfo: PageInfo{HasNextPage: true, EndCursor: &cursor},
+		}, nil
+	}
+
+	_, err := PaginateAll(context.Background(), fetch, 10, 0)
+	if err == nil {
+		t.Fatal("expected error when hasNextPage=true but nodes is empty")
+	}
+}
+
 func strPtr(s string) *string { return &s }

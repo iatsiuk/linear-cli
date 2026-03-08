@@ -21,7 +21,7 @@ func newAuthCommand() *cobra.Command {
 }
 
 func runAuth(cmd *cobra.Command, _ []string) error {
-	fmt.Fprint(cmd.OutOrStdout(), "Enter your Linear API key: ")
+	_, _ = fmt.Fprint(cmd.OutOrStdout(), "Enter your Linear API key: ")
 	reader := bufio.NewReader(cmd.InOrStdin())
 	key, err := reader.ReadString('\n')
 	if err != nil {
@@ -41,7 +41,7 @@ func runAuth(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("save config: %w", err)
 	}
 
-	fmt.Fprintln(cmd.OutOrStdout(), "API key saved.")
+	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "API key saved.")
 	return nil
 }
 
@@ -60,11 +60,11 @@ func runAuthStatus(cmd *cobra.Command, _ []string) error {
 	}
 
 	if cfg.APIKey == "" {
-		fmt.Fprintln(cmd.OutOrStdout(), "not configured")
+		_, _ = fmt.Fprintln(cmd.OutOrStdout(), "not configured")
 		return nil
 	}
 
-	fmt.Fprintf(cmd.OutOrStdout(), "authenticated: %s\n", maskKey(cfg.APIKey))
+	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "authenticated: %s\n", maskKey(cfg.APIKey))
 	return nil
 }
 

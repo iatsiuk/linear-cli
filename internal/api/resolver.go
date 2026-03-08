@@ -197,7 +197,7 @@ func ResolveProjectStatusID(ctx context.Context, c *Client, typeOrID string) (st
 			} `json:"nodes"`
 		} `json:"projectStatuses"`
 	}
-	const q = `query { projectStatuses { nodes { id type } } }`
+	const q = `query { projectStatuses(first: 250) { nodes { id type } } }`
 	if err := c.Do(ctx, q, nil, &result); err != nil {
 		return "", fmt.Errorf("resolve project status %q: %w", typeOrID, err)
 	}

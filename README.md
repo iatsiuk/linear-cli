@@ -363,7 +363,7 @@ Manage Linear cycles with the `cycle` subcommand.
 ### List cycles
 
 ```
-linear cycle list [flags]
+linear cycle list --team <key> [flags]
 ```
 
 Flags:

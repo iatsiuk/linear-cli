@@ -16,5 +16,7 @@ func NewRootCommand(version string) *cobra.Command {
 		},
 	}
 
+	root.AddCommand(newAuthCommand())
+
 	return root
 }

@@ -165,6 +165,23 @@ func ResolveStateID(ctx context.Context, c *Client, name, teamID string) (string
 	return result.WorkflowStates.Nodes[0].ID, nil
 }
 
+// ResolveViewerID returns the ID of the authenticated user.
+func ResolveViewerID(ctx context.Context, c *Client) (string, error) {
+	var result struct {
+		Viewer struct {
+			ID string `json:"id"`
+		} `json:"viewer"`
+	}
+	const q = `query { viewer { id } }`
+	if err := c.Do(ctx, q, nil, &result); err != nil {
+		return "", fmt.Errorf("resolve viewer: %w", err)
+	}
+	if result.Viewer.ID == "" {
+		return "", fmt.Errorf("viewer not found")
+	}
+	return result.Viewer.ID, nil
+}
+
 // ResolveProjectID resolves a project name to a project UUID.
 // If name is already a UUID, it is returned as-is without an API call.
 func ResolveProjectID(ctx context.Context, c *Client, name string) (string, error) {

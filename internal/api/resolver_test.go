@@ -320,6 +320,43 @@ func TestResolveStateID_ByNameNoTeam(t *testing.T) {
 	}
 }
 
+// -- ResolveViewerID --
+
+func TestResolveViewerID_ReturnsID(t *testing.T) {
+	t.Parallel()
+	srv := makeServer(t, map[string]any{
+		"data": map[string]any{
+			"viewer": map[string]any{"id": "viewer-uuid-1234-5678-90ab-cdef01234567"},
+		},
+	})
+	defer srv.Close()
+
+	c := NewClient("key", WithEndpoint(srv.URL))
+	got, err := ResolveViewerID(context.Background(), c)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != "viewer-uuid-1234-5678-90ab-cdef01234567" {
+		t.Errorf("unexpected id: %q", got)
+	}
+}
+
+func TestResolveViewerID_NotFound(t *testing.T) {
+	t.Parallel()
+	srv := makeServer(t, map[string]any{
+		"data": map[string]any{
+			"viewer": map[string]any{"id": ""},
+		},
+	})
+	defer srv.Close()
+
+	c := NewClient("key", WithEndpoint(srv.URL))
+	_, err := ResolveViewerID(context.Background(), c)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
 // -- ResolveProjectID --
 
 func TestResolveProjectID_UUIDPassthrough(t *testing.T) {

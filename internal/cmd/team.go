@@ -103,8 +103,8 @@ func newTeamShowCommand() *cobra.Command {
 		Use:   "show <id|key>",
 		Short: "Show team details",
 		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return fmt.Errorf("team id or key is required")
+			if len(args) != 1 {
+				return fmt.Errorf("exactly one team id or key is required")
 			}
 			return nil
 		},

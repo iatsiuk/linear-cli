@@ -34,7 +34,7 @@ type viewerIssueNode struct {
 	Identifier string              `json:"identifier"`
 	Title      string              `json:"title"`
 	State      model.WorkflowState `json:"state"`
-	Team       model.Team          `json:"team"`
+	Team       viewerTeam          `json:"team"`
 }
 
 type viewerIssuesResult struct {

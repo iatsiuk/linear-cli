@@ -95,11 +95,11 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 7: Verify acceptance criteria
-- [ ] verify all project commands work end-to-end
-- [ ] verify all cycle commands work end-to-end
-- [ ] verify `--json` output for all commands
-- [ ] run `make test` - full suite must pass
-- [ ] run `make build` - lint + build must pass
+- [x] verify all project commands work end-to-end
+- [x] verify all cycle commands work end-to-end
+- [x] verify `--json` output for all commands
+- [x] run `make test` - full suite must pass
+- [x] run `make build` - lint + build must pass
 
 ## Technical Details
 

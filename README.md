@@ -259,6 +259,157 @@ Example:
 linear team show ENG
 ```
 
+## Project Commands
+
+Manage Linear projects with the `project` subcommand.
+
+### List projects
+
+```
+linear project list [flags]
+```
+
+Flags:
+```
+  --team string      filter by team key (e.g. ENG)
+  --status string    filter by status (backlog|planned|started|paused|completed|canceled)
+  --health string    filter by health (onTrack|atRisk|offTrack)
+  --limit int        maximum number of projects to return (default 50)
+  --include-archived include archived projects
+  --order-by string  sort order: createdAt|updatedAt (default "updatedAt")
+  --json             output as JSON array
+```
+
+Output columns: Name | Status | Health | Progress% | Target Date
+
+### Show project
+
+```
+linear project show <id> [flags]
+```
+
+Flags:
+```
+  --json   output as JSON object
+```
+
+Output fields: Name, Status, Health, Progress, Teams, Creator, Start Date, Target Date, URL, Created, Updated, and description.
+
+### Create project
+
+```
+linear project create --name <name> --team <team> [flags]
+```
+
+Flags:
+```
+  --name string         project name (required)
+  --team stringArray    team key or ID (repeatable, required)
+  --description string  project description
+  --color string        project color (hex)
+  --target-date string  target date (YYYY-MM-DD)
+  --start-date string   start date (YYYY-MM-DD)
+  --json                output created project as JSON
+```
+
+Example:
+```
+linear project create --name "Q2 Launch" --team ENG --target-date 2026-06-30
+```
+
+### Update project
+
+```
+linear project update <id> [flags]
+```
+
+Only flags explicitly provided are sent to the API - omitted flags leave fields unchanged.
+
+Flags:
+```
+  --name string         project name
+  --description string  project description
+  --state string        project state (backlog|planned|started|paused|completed|canceled)
+  --target-date string  target date (YYYY-MM-DD)
+  --start-date string   start date (YYYY-MM-DD)
+  --health string       project health (onTrack|atRisk|offTrack)
+  --json                output updated project as JSON
+```
+
+Example:
+```
+linear project update abc123 --state started --health onTrack
+```
+
+### Delete project
+
+```
+linear project delete <id> [flags]
+```
+
+Flags:
+```
+  --yes   skip confirmation prompt
+```
+
+Example:
+```
+linear project delete abc123 --yes
+```
+
+## Cycle Commands
+
+Manage Linear cycles with the `cycle` subcommand.
+
+### List cycles
+
+```
+linear cycle list [flags]
+```
+
+Flags:
+```
+  --team string      filter by team key (e.g. ENG)
+  --limit int        maximum number of cycles to return (default 50)
+  --include-archived include archived cycles
+  --order-by string  sort order: createdAt|updatedAt (default "updatedAt")
+  --json             output as JSON array
+```
+
+Output columns: # | Name | Start | End | Progress% | Status (Active/Past/Future)
+
+### Show cycle
+
+```
+linear cycle show <id> [flags]
+```
+
+Flags:
+```
+  --json   output as JSON object
+```
+
+Output fields: Number, Name, Status, Progress, Start, End, Team, and description.
+
+### Active cycle
+
+```
+linear cycle active --team <key> [flags]
+```
+
+Shows the currently active cycle for a team.
+
+Flags:
+```
+  --team string   team key (required)
+  --json          output as JSON object
+```
+
+Example:
+```
+linear cycle active --team ENG
+```
+
 ## User Commands
 
 Manage Linear users with the `user` subcommand.

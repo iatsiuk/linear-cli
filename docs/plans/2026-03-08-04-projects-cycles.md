@@ -108,8 +108,8 @@
 **cycle list**: # | Name | Start | End | Progress% | Status (Active/Past/Future)
 
 ### Task 8: [Final] Update documentation
-- [ ] update README.md with project and cycle commands usage
-- [ ] document all command flags and options
+- [x] update README.md with project and cycle commands usage
+- [x] document all command flags and options
 
 ## Post-Completion
 - Manual testing with real Linear workspace

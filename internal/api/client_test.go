@@ -57,8 +57,8 @@ func TestClientDo_AuthHeader(t *testing.T) {
 	})
 
 	_ = c.Do(context.Background(), "query { viewer { id } }", nil, nil)
-	if gotAuth != "lin_api_testkey" {
-		t.Errorf("Authorization = %q, want %q", gotAuth, "lin_api_testkey")
+	if gotAuth != "Bearer lin_api_testkey" {
+		t.Errorf("Authorization = %q, want %q", gotAuth, "Bearer lin_api_testkey")
 	}
 }
 

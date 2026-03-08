@@ -148,6 +148,31 @@ func TestNewFormatter_TableByDefault(t *testing.T) {
 	}
 }
 
+func TestTableFormatter_PointerFields(t *testing.T) {
+	t.Parallel()
+	type withPtr struct {
+		Name string  `json:"name"`
+		Desc *string `json:"desc"`
+	}
+	s := "some description"
+	var buf bytes.Buffer
+	f := output.NewFormatter(false)
+	data := []withPtr{
+		{Name: "a", Desc: &s},
+		{Name: "b", Desc: nil},
+	}
+	if err := f.Format(&buf, data); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "some description") {
+		t.Errorf("expected dereferenced pointer value, got:\n%s", out)
+	}
+	if strings.Contains(out, "0x") {
+		t.Errorf("expected no pointer addresses in output, got:\n%s", out)
+	}
+}
+
 func TestNewFormatter_JSON(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer

@@ -29,7 +29,8 @@ func (f *JSONFormatter) Format(w io.Writer, data any) error {
 	if err != nil {
 		return fmt.Errorf("json marshal: %w", err)
 	}
-	_, err = fmt.Fprintln(w, string(b))
+	b = append(b, '\n')
+	_, err = w.Write(b)
 	return err
 }
 
@@ -104,7 +105,16 @@ func (f *TableFormatter) Format(w io.Writer, data any) error {
 		}
 		rows[i] = make([]string, len(cols))
 		for j, c := range cols {
-			rows[i][j] = fmt.Sprintf("%v", elem.FieldByIndex(c.index).Interface())
+			field := elem.FieldByIndex(c.index)
+			if field.Kind() == reflect.Ptr {
+				if field.IsNil() {
+					rows[i][j] = ""
+				} else {
+					rows[i][j] = fmt.Sprintf("%v", field.Elem().Interface())
+				}
+			} else {
+				rows[i][j] = fmt.Sprintf("%v", field.Interface())
+			}
 		}
 	}
 

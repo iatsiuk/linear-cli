@@ -104,12 +104,13 @@ func (f *TableFormatter) Format(w io.Writer, data any) error {
 	}
 
 	// build format string: each column padded to width, separated by two spaces
-	printRow := func(cells []string) {
+	printRow := func(cells []string) error {
 		parts := make([]string, len(cols))
 		for j, cell := range cells {
 			parts[j] = fmt.Sprintf("%-*s", widths[j], cell)
 		}
-		fmt.Fprintln(w, strings.Join(parts, "  "))
+		_, err := fmt.Fprintln(w, strings.Join(parts, "  "))
+		return err
 	}
 
 	// header
@@ -117,11 +118,15 @@ func (f *TableFormatter) Format(w io.Writer, data any) error {
 	for j, c := range cols {
 		headers[j] = c.name
 	}
-	printRow(headers)
+	if err := printRow(headers); err != nil {
+		return err
+	}
 
 	// data rows
 	for _, row := range rows {
-		printRow(row)
+		if err := printRow(row); err != nil {
+			return err
+		}
 	}
 
 	return nil

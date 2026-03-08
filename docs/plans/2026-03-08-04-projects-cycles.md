@@ -41,13 +41,13 @@
 ## Implementation Steps
 
 ### Task 1: Project and Cycle models
-- [ ] write tests for Project struct deserialization
-- [ ] write tests for Cycle struct deserialization
-- [ ] create `internal/model/project.go`:
+- [x] write tests for Project struct deserialization
+- [x] write tests for Cycle struct deserialization
+- [x] create `internal/model/project.go`:
   - Project struct with key fields + JSON tags
-- [ ] create `internal/model/cycle.go`:
+- [x] create `internal/model/cycle.go`:
   - Cycle struct with key fields + JSON tags
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 2: Project GraphQL queries and mutations
 - [ ] write tests for project query/mutation string construction

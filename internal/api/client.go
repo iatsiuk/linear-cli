@@ -32,7 +32,7 @@ func WithEndpoint(endpoint string) Option {
 // NewClient creates a new API client authenticated with apiKey.
 func NewClient(apiKey string, opts ...Option) *Client {
 	c := &Client{
-		httpClient: &http.Client{},
+		httpClient: &http.Client{Timeout: 30 * time.Second},
 		apiKey:     apiKey,
 		endpoint:   defaultEndpoint,
 		sleep:      time.Sleep,

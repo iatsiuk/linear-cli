@@ -184,7 +184,18 @@ func runIssueUpdate(cmd *cobra.Command, args []string) error {
 
 	if f.Changed("parent") {
 		parent, _ := f.GetString("parent")
-		input["parentId"] = parent
+		var parentResult issueGetResult
+		if err := client.Do(ctx, query.IssueGetQuery, map[string]any{"id": parent}, &parentResult); err != nil {
+			return fmt.Errorf("resolve parent: %w", err)
+		}
+		if parentResult.Issue == nil {
+			return fmt.Errorf("parent issue %q not found", parent)
+		}
+		input["parentId"] = parentResult.Issue.ID
+	}
+
+	if len(input) == 0 {
+		return fmt.Errorf("no fields to update: specify at least one flag")
 	}
 
 	vars := map[string]any{"id": issueID, "input": input}

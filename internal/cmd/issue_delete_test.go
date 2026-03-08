@@ -59,8 +59,8 @@ func TestIssueDeleteCommand_Basic(t *testing.T) {
 	}
 
 	result := out.String()
-	if !strings.Contains(result, "deleted") && !strings.Contains(result, "ENG-10") {
-		t.Errorf("output should mention deletion or identifier, got: %s", result)
+	if !strings.Contains(result, "deleted") || !strings.Contains(result, "ENG-10") {
+		t.Errorf("output should mention deleted and ENG-10, got: %s", result)
 	}
 }
 
@@ -90,6 +90,11 @@ func TestIssueDeleteCommand_ArchiveFlag(t *testing.T) {
 	mutationVars := (*bodies)[1]
 	if mutationVars["id"] != "issue-uuid-arc1" {
 		t.Errorf("mutation id = %v, want issue-uuid-arc1", mutationVars["id"])
+	}
+
+	result := out.String()
+	if !strings.Contains(result, "archived") || !strings.Contains(result, "ENG-20") {
+		t.Errorf("output should mention archived and ENG-20, got: %s", result)
 	}
 }
 

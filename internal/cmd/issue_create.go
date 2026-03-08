@@ -140,7 +140,14 @@ func runIssueCreate(cmd *cobra.Command, _ []string) error {
 	}
 
 	if parent != "" {
-		input["parentId"] = parent
+		var parentResult issueGetResult
+		if err := client.Do(ctx, query.IssueGetQuery, map[string]any{"id": parent}, &parentResult); err != nil {
+			return fmt.Errorf("resolve parent: %w", err)
+		}
+		if parentResult.Issue == nil {
+			return fmt.Errorf("parent issue %q not found", parent)
+		}
+		input["parentId"] = parentResult.Issue.ID
 	}
 
 	vars := map[string]any{"input": input}

@@ -53,7 +53,9 @@ func newCycleListCommand() *cobra.Command {
 	}
 	f := cmd.Flags()
 	f.String("team", "", "filter by team key")
-	_ = cmd.MarkFlagRequired("team")
+	if err := cmd.MarkFlagRequired("team"); err != nil {
+		panic(err)
+	}
 	f.Int("limit", 50, "maximum number of cycles to return")
 	f.Bool("include-archived", false, "include archived cycles")
 	f.String("order-by", "updatedAt", "sort order (createdAt|updatedAt)")

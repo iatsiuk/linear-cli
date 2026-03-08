@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 var uuidRe = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
@@ -201,8 +202,9 @@ func ResolveProjectStatusID(ctx context.Context, c *Client, typeOrID string) (st
 	if err := c.Do(ctx, q, nil, &result); err != nil {
 		return "", fmt.Errorf("resolve project status %q: %w", typeOrID, err)
 	}
+	normalized := strings.ToLower(typeOrID)
 	for _, s := range result.ProjectStatuses.Nodes {
-		if s.Type == typeOrID {
+		if strings.ToLower(s.Type) == normalized {
 			return s.ID, nil
 		}
 	}

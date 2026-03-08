@@ -63,6 +63,9 @@ func (f *TableFormatter) Format(w io.Writer, data any) error {
 	var cols []col
 	for i := range elemType.NumField() {
 		field := elemType.Field(i)
+		if !field.IsExported() {
+			continue
+		}
 		tag := field.Tag.Get("json")
 		if tag == "" || tag == "-" {
 			continue

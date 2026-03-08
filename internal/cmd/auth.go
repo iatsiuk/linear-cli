@@ -2,7 +2,9 @@ package cmd
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -24,7 +26,7 @@ func runAuth(cmd *cobra.Command, _ []string) error {
 	_, _ = fmt.Fprint(cmd.OutOrStdout(), "Enter your Linear API key: ")
 	reader := bufio.NewReader(cmd.InOrStdin())
 	key, err := reader.ReadString('\n')
-	if err != nil {
+	if err != nil && (!errors.Is(err, io.EOF) || key == "") {
 		return fmt.Errorf("read api key: %w", err)
 	}
 	key = strings.TrimSpace(key)

@@ -23,6 +23,7 @@ func NewRootCommand(version string) *cobra.Command {
 	root.AddCommand(newIssueCommand())
 	root.AddCommand(newMeCommand())
 	root.AddCommand(newTeamCommand())
+	root.AddCommand(newUserCommand())
 
 	return root
 }

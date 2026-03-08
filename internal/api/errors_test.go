@@ -32,6 +32,7 @@ func TestGraphQLErrors_Error(t *testing.T) {
 		errors GraphQLErrors
 		want   string
 	}{
+		{"empty", GraphQLErrors{}, ""},
 		{"single", GraphQLErrors{{Message: "not found"}}, "not found"},
 		{"multiple", GraphQLErrors{{Message: "error one"}, {Message: "error two"}}, "error one; error two"},
 	}

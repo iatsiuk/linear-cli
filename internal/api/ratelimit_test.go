@@ -58,7 +58,7 @@ func TestClientDo_RateLimit_ResetHeader(t *testing.T) {
 	defer server.Close()
 
 	c := NewClient("key", WithEndpoint(server.URL))
-	c.sleep = func(d time.Duration) { sleptFor = d }
+	c.sleep = func(_ context.Context, d time.Duration) error { sleptFor = d; return nil }
 
 	var result map[string]any
 	if err := c.Do(context.Background(), "query {}", nil, &result); err != nil {
@@ -104,8 +104,14 @@ func TestRateLimitDelay_FallbackBackoff(t *testing.T) {
 	if d0 < time.Second {
 		t.Errorf("attempt 0 delay = %v, want >= 1s", d0)
 	}
+	if d0 > 2*time.Second {
+		t.Errorf("attempt 0 delay = %v, want <= 2s (base 1s + max jitter 500ms)", d0)
+	}
 	if d1 < 2*time.Second {
 		t.Errorf("attempt 1 delay = %v, want >= 2s", d1)
+	}
+	if d1 > 4*time.Second {
+		t.Errorf("attempt 1 delay = %v, want <= 4s (base 2s + max jitter 1s)", d1)
 	}
 }
 

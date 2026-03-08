@@ -17,7 +17,7 @@ func newTestClient(t *testing.T, handler http.HandlerFunc) (*httptest.Server, *C
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
 	c := NewClient("lin_api_testkey", WithEndpoint(server.URL))
-	c.sleep = func(time.Duration) {}
+	c.sleep = func(context.Context, time.Duration) error { return nil }
 	return server, c
 }
 
@@ -119,6 +119,9 @@ func TestClientDo_PartialDataWithErrors(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error for partial response with errors")
 	}
+	if result != nil {
+		t.Errorf("result should remain nil when errors are returned, got: %v", result)
+	}
 }
 
 func TestClientDo_Unauthorized(t *testing.T) {
@@ -155,7 +158,7 @@ func TestClientDo_NetworkError(t *testing.T) {
 	t.Parallel()
 	// nothing listening on port 1
 	c := NewClient("key", WithEndpoint("http://127.0.0.1:1"))
-	c.sleep = func(time.Duration) {}
+	c.sleep = func(context.Context, time.Duration) error { return nil }
 
 	err := c.Do(context.Background(), "query {}", nil, nil)
 	if err == nil {
@@ -173,7 +176,7 @@ func TestClientDo_CustomEndpoint(t *testing.T) {
 	defer server.Close()
 
 	c := NewClient("key", WithEndpoint(server.URL+"/custom/graphql"))
-	c.sleep = func(time.Duration) {}
+	c.sleep = func(context.Context, time.Duration) error { return nil }
 	_ = c.Do(context.Background(), "query {}", nil, nil)
 
 	if gotPath != "/custom/graphql" {

@@ -76,6 +76,9 @@ func TestAuthStatusCommand_ShowsMaskedKey(t *testing.T) {
 	if !strings.Contains(result, "lin_api") {
 		t.Errorf("output should contain key prefix, got: %s", result)
 	}
+	if !strings.Contains(result, "****") {
+		t.Errorf("output should contain masked portion (****), got: %s", result)
+	}
 }
 
 func TestAuthStatusCommand_NotConfigured(t *testing.T) {

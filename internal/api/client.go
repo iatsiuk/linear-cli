@@ -16,7 +16,7 @@ type Client struct {
 	httpClient *http.Client
 	apiKey     string
 	endpoint   string
-	sleep      func(time.Duration)
+	sleep      func(context.Context, time.Duration) error
 }
 
 // Option configures a Client.
@@ -35,7 +35,16 @@ func NewClient(apiKey string, opts ...Option) *Client {
 		httpClient: &http.Client{Timeout: 30 * time.Second},
 		apiKey:     apiKey,
 		endpoint:   defaultEndpoint,
-		sleep:      time.Sleep,
+		sleep: func(ctx context.Context, d time.Duration) error {
+			t := time.NewTimer(d)
+			select {
+			case <-ctx.Done():
+				t.Stop()
+				return ctx.Err()
+			case <-t.C:
+				return nil
+			}
+		},
 	}
 	for _, opt := range opts {
 		opt(c)
@@ -68,10 +77,9 @@ func (c *Client) Do(ctx context.Context, query string, variables map[string]any,
 		if delay == 0 || attempt == maxRetries {
 			break
 		}
-		if ctx.Err() != nil {
-			return ctx.Err()
+		if err := c.sleep(ctx, delay); err != nil {
+			return err
 		}
-		c.sleep(delay)
 	}
 	return lastErr
 }

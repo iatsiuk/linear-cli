@@ -1,7 +1,18 @@
 package main
 
+import (
+	"fmt"
+	"os"
+
+	"linear-cli/internal/cmd"
+)
+
 var version = "dev"
 
 func main() {
-	_ = version
+	root := cmd.NewRootCommand(version)
+	if err := root.Execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 }

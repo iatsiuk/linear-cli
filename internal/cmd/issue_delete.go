@@ -28,8 +28,8 @@ func newIssueDeleteCommand() *cobra.Command {
 		Use:   "delete <identifier>",
 		Short: "Delete (trash) an issue",
 		Args: func(cmd *cobra.Command, args []string) error {
-			if len(args) == 0 {
-				return fmt.Errorf("identifier is required (e.g. ENG-42)")
+			if len(args) != 1 {
+				return fmt.Errorf("exactly one identifier required (e.g. ENG-42)")
 			}
 			return nil
 		},

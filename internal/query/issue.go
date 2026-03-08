@@ -15,7 +15,7 @@ const issueFields = `
 	updatedAt
 	state { id name color type }
 	assignee { id displayName email }
-	team { id name }
+	team { id name key }
 	labels { nodes { id name color } }
 `
 

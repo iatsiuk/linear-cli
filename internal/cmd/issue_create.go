@@ -64,7 +64,7 @@ func runIssueCreate(cmd *cobra.Command, _ []string) error {
 	project, _ := f.GetString("project")
 	parent, _ := f.GetString("parent")
 
-	if priority != -1 && (priority < 0 || priority > 4) {
+	if f.Changed("priority") && (priority < 0 || priority > 4) {
 		return fmt.Errorf("priority must be 0-4, got %d", priority)
 	}
 
@@ -103,7 +103,7 @@ func runIssueCreate(cmd *cobra.Command, _ []string) error {
 		input["stateId"] = stateID
 	}
 
-	if priority >= 0 {
+	if f.Changed("priority") {
 		input["priority"] = priority
 	}
 
@@ -123,7 +123,7 @@ func runIssueCreate(cmd *cobra.Command, _ []string) error {
 		input["dueDate"] = dueDate
 	}
 
-	if estimate >= 0 {
+	if f.Changed("estimate") {
 		input["estimate"] = estimate
 	}
 

@@ -66,12 +66,12 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 4: `linear state list` command
-- [ ] write tests for state list: fetches states for team, groups by type, table output
-- [ ] create `internal/cmd/state.go`:
+- [x] write tests for state list: fetches states for team, groups by type, table output
+- [x] create `internal/cmd/state.go`:
   - `state list`: flags `--team` (required), `--json`
   - table columns: Name | Type | Color | Position
   - group output by type (Triage, Backlog, Unstarted, Started, Completed, Canceled)
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 5: `linear comment list/create` commands
 - [ ] write tests for comment list: fetches comments for issue, displays threaded

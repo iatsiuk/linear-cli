@@ -10,16 +10,31 @@ type WorkflowState struct {
 
 // User represents a Linear user.
 type User struct {
-	ID          string `json:"id"`
-	DisplayName string `json:"displayName"`
-	Email       string `json:"email"`
+	ID          string  `json:"id"`
+	Email       string  `json:"email"`
+	DisplayName string  `json:"displayName"`
+	AvatarUrl   *string `json:"avatarUrl,omitempty"`
+	Active      bool    `json:"active"`
+	Admin       bool    `json:"admin"`
+	Guest       bool    `json:"guest"`
+	IsMe        bool    `json:"isMe"`
+	CreatedAt   string  `json:"createdAt"`
+	UpdatedAt   string  `json:"updatedAt"`
 }
 
 // Team represents a Linear team.
 type Team struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Key  string `json:"key"`
+	ID                  string  `json:"id"`
+	Name                string  `json:"name"`
+	DisplayName         string  `json:"displayName"`
+	Description         *string `json:"description,omitempty"`
+	Icon                *string `json:"icon,omitempty"`
+	Color               *string `json:"color,omitempty"`
+	Key                 string  `json:"key"`
+	CyclesEnabled       bool    `json:"cyclesEnabled"`
+	IssueEstimationType string  `json:"issueEstimationType"`
+	CreatedAt           string  `json:"createdAt"`
+	UpdatedAt           string  `json:"updatedAt"`
 }
 
 // IssueLabel represents a Linear issue label.

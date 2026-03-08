@@ -110,3 +110,23 @@ All documentation, comments, and text must be in English.
 - Fix formatting issues with `goimports -w <file>` or `gofmt -w <file>`
 - Config: `.golangci.yml` defines enabled linters
 - No trailing whitespace, proper import grouping (stdlib, external, local)
+
+## API Patterns
+
+### ID Resolution
+
+Use functions in `internal/api/resolver.go` to convert human-readable names to UUIDs:
+- `ResolveTeamID` - team key (e.g. "ENG") or UUID
+- `ResolveLabelID` - label name or UUID; accepts optional teamID to restrict search
+- `ResolveUserID` - display name or email or UUID; tries name first, then email
+- `ResolveStateID` - workflow state name or UUID; accepts optional teamID
+- `ResolveProjectID` - project name or UUID
+- `ResolveViewerID` - returns authenticated user ID (used for "me" assignee)
+
+Pattern: if input already matches UUID regex, return immediately without API call.
+
+### Partial Update Mutations
+
+Use `map[string]any` for mutation input variables when partial updates are needed.
+Omitting a key leaves the field unchanged. Do not use typed structs for update
+inputs - `omitempty` cannot distinguish "not provided" from "zero value".

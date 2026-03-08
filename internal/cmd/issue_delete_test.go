@@ -155,6 +155,31 @@ func TestIssueDeleteCommand_PayloadSuccessFalse(t *testing.T) {
 	}
 }
 
+func TestIssueArchivePayloadSuccessFalse(t *testing.T) {
+	issue := makeIssue("ENG-31", "Fail archive", "Todo", "No priority", "")
+	issue["id"] = "issue-uuid-fail2"
+
+	server, _ := newQueuedServer(t, []map[string]any{
+		issueGetResponse(issue),
+		issueArchiveResponse(false),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "delete", "ENG-31", "--archive", "--yes"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when archive success=false")
+	}
+	if !strings.Contains(err.Error(), "success=false") {
+		t.Errorf("error should mention success=false, got: %v", err)
+	}
+}
+
 func TestIssueDeleteCommand_ConfirmationPrompt(t *testing.T) {
 	issue := makeIssue("ENG-40", "Confirm me", "Todo", "No priority", "")
 	issue["id"] = "issue-uuid-conf1"

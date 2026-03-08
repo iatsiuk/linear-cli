@@ -305,3 +305,24 @@ func TestIssueUpdateCommand_PayloadSuccessFalse(t *testing.T) {
 		t.Errorf("error should mention success=false, got: %v", err)
 	}
 }
+
+func TestIssueUpdateCommand_IssueNotFound(t *testing.T) {
+	server, _ := newQueuedServer(t, []map[string]any{
+		{"data": map[string]any{"issue": nil}},
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "update", "ENG-99", "--title", "New title"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when issue not found")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("error should mention not found, got: %v", err)
+	}
+}

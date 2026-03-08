@@ -63,19 +63,10 @@ func newIssueListCommand() *cobra.Command {
 }
 
 func runIssueList(cmd *cobra.Command, _ []string) error {
-	cfg, err := config.Load()
+	client, err := newClientFromConfig()
 	if err != nil {
-		return fmt.Errorf("load config: %w", err)
+		return err
 	}
-	if cfg.APIKey == "" {
-		return fmt.Errorf("not authenticated: run 'linear auth' first")
-	}
-
-	var opts []api.Option
-	if ep := os.Getenv("LINEAR_API_ENDPOINT"); ep != "" {
-		opts = append(opts, api.WithEndpoint(ep))
-	}
-	client := api.NewClient(cfg.APIKey, opts...)
 
 	f := cmd.Flags()
 	limit, _ := f.GetInt("limit")
@@ -139,8 +130,37 @@ func runIssueList(cmd *cobra.Command, _ []string) error {
 }
 
 func truncate(s string, n int) string {
-	if len(s) <= n {
+	runes := []rune(s)
+	if len(runes) <= n {
 		return s
 	}
-	return s[:n-3] + "..."
+	return string(runes[:n-3]) + "..."
+}
+
+func newClientFromConfig() (*api.Client, error) {
+	cfg, err := config.Load()
+	if err != nil {
+		return nil, fmt.Errorf("load config: %w", err)
+	}
+	if cfg.APIKey == "" {
+		return nil, fmt.Errorf("not authenticated: run 'linear auth' first")
+	}
+	var opts []api.Option
+	if ep := os.Getenv("LINEAR_API_ENDPOINT"); ep != "" {
+		opts = append(opts, api.WithEndpoint(ep))
+	}
+	return api.NewClient(cfg.APIKey, opts...), nil
+}
+
+func printIssueRow(cmd *cobra.Command, issue *model.Issue) error {
+	rows := []IssueRow{{
+		ID:       issue.Identifier,
+		Title:    truncate(issue.Title, 40),
+		Status:   issue.State.Name,
+		Priority: issue.PriorityLabel,
+	}}
+	if issue.Assignee != nil {
+		rows[0].Assignee = issue.Assignee.DisplayName
+	}
+	return output.NewFormatter(false).Format(cmd.OutOrStdout(), rows)
 }

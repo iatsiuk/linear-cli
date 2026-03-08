@@ -3,12 +3,10 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 
 	"linear-cli/internal/api"
-	"linear-cli/internal/config"
 	"linear-cli/internal/model"
 	"linear-cli/internal/output"
 	"linear-cli/internal/query"
@@ -51,19 +49,10 @@ func newIssueUpdateCommand() *cobra.Command {
 }
 
 func runIssueUpdate(cmd *cobra.Command, args []string) error {
-	cfg, err := config.Load()
+	client, err := newClientFromConfig()
 	if err != nil {
-		return fmt.Errorf("load config: %w", err)
+		return err
 	}
-	if cfg.APIKey == "" {
-		return fmt.Errorf("not authenticated: run 'linear auth' first")
-	}
-
-	var opts []api.Option
-	if ep := os.Getenv("LINEAR_API_ENDPOINT"); ep != "" {
-		opts = append(opts, api.WithEndpoint(ep))
-	}
-	client := api.NewClient(cfg.APIKey, opts...)
 	ctx := context.Background()
 
 	identifier := args[0]
@@ -79,6 +68,10 @@ func runIssueUpdate(cmd *cobra.Command, args []string) error {
 	issueID := getResult.Issue.ID
 
 	f := cmd.Flags()
+
+	if f.Changed("label") && (f.Changed("add-label") || f.Changed("remove-label")) {
+		return fmt.Errorf("--label cannot be combined with --add-label or --remove-label")
+	}
 
 	// resolve team ID for state/label resolution (use team from fetched issue)
 	teamID := getResult.Issue.Team.ID
@@ -211,15 +204,5 @@ func runIssueUpdate(cmd *cobra.Command, args []string) error {
 	if jsonMode {
 		return output.NewFormatter(true).Format(cmd.OutOrStdout(), issue)
 	}
-
-	rows := []IssueRow{{
-		ID:       issue.Identifier,
-		Title:    truncate(issue.Title, 40),
-		Status:   issue.State.Name,
-		Priority: issue.PriorityLabel,
-	}}
-	if issue.Assignee != nil {
-		rows[0].Assignee = issue.Assignee.DisplayName
-	}
-	return output.NewFormatter(false).Format(cmd.OutOrStdout(), rows)
+	return printIssueRow(cmd, issue)
 }

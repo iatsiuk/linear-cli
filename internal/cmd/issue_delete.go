@@ -4,13 +4,10 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
 
-	"linear-cli/internal/api"
-	"linear-cli/internal/config"
 	"linear-cli/internal/query"
 )
 
@@ -45,19 +42,10 @@ func newIssueDeleteCommand() *cobra.Command {
 }
 
 func runIssueDelete(cmd *cobra.Command, args []string) error {
-	cfg, err := config.Load()
+	client, err := newClientFromConfig()
 	if err != nil {
-		return fmt.Errorf("load config: %w", err)
+		return err
 	}
-	if cfg.APIKey == "" {
-		return fmt.Errorf("not authenticated: run 'linear auth' first")
-	}
-
-	var opts []api.Option
-	if ep := os.Getenv("LINEAR_API_ENDPOINT"); ep != "" {
-		opts = append(opts, api.WithEndpoint(ep))
-	}
-	client := api.NewClient(cfg.APIKey, opts...)
 	ctx := context.Background()
 
 	identifier := args[0]

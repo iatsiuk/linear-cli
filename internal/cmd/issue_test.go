@@ -3,6 +3,7 @@ package cmd_test
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -78,7 +79,9 @@ func setupIssueTest(t *testing.T, server *httptest.Server) {
 
 func writeJSONResponse(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.NewEncoder(w).Encode(v)
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		http.Error(w, fmt.Sprintf("encode: %v", err), http.StatusInternalServerError)
+	}
 }
 
 func TestIssueListCommand_TableOutput(t *testing.T) {
@@ -453,5 +456,73 @@ func TestIssueListCommand_DefaultLimit(t *testing.T) {
 	}
 	if int(first) != 50 {
 		t.Errorf("default limit = %v, want 50", first)
+	}
+}
+
+func TestIssueListCommand_AssigneeFilter(t *testing.T) {
+
+	var gotVars map[string]any
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		gotVars = body.Variables
+		writeJSONResponse(w, issueListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "list", "--assignee", "Alice"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	filter, ok := gotVars["filter"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables.filter not set, got: %v", gotVars["filter"])
+	}
+	assignee, ok := filter["assignee"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.assignee not set, got: %v", filter["assignee"])
+	}
+	displayName, ok := assignee["displayName"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.assignee.displayName not set, got: %v", assignee["displayName"])
+	}
+	if displayName["eq"] != "Alice" {
+		t.Errorf("filter.assignee.displayName.eq = %v, want Alice", displayName["eq"])
+	}
+}
+
+func TestIssueListCommand_OrderByFlag(t *testing.T) {
+
+	var gotVars map[string]any
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		gotVars = body.Variables
+		writeJSONResponse(w, issueListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "list", "--order-by", "createdAt"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if gotVars["orderBy"] != "createdAt" {
+		t.Errorf("variables.orderBy = %v, want createdAt", gotVars["orderBy"])
 	}
 }

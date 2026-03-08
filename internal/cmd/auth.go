@@ -71,10 +71,11 @@ func runAuthStatus(cmd *cobra.Command, _ []string) error {
 }
 
 // maskKey shows the first 12 chars and replaces the rest with asterisks.
+// Short keys are masked entirely to avoid revealing the full secret.
 func maskKey(key string) string {
 	const visible = 12
 	if len(key) <= visible {
-		return key
+		return strings.Repeat("*", len(key))
 	}
 	return key[:visible] + strings.Repeat("*", len(key)-visible)
 }

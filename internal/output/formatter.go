@@ -55,27 +55,38 @@ func (f *TableFormatter) Format(w io.Writer, data any) error {
 		return fmt.Errorf("table formatter requires a slice of structs, got %T", data)
 	}
 
-	// collect field indices and header names from JSON tags
+	// collect field paths and header names from JSON tags,
+	// expanding anonymous (embedded) struct fields recursively
 	type col struct {
-		index int
+		index []int // field path for FieldByIndex
 		name  string
 	}
-	var cols []col
-	for i := range elemType.NumField() {
-		field := elemType.Field(i)
-		if !field.IsExported() {
-			continue
+	var collectFields func(t reflect.Type, prefix []int) []col
+	collectFields = func(t reflect.Type, prefix []int) []col {
+		var result []col
+		for i := range t.NumField() {
+			field := t.Field(i)
+			if !field.IsExported() {
+				continue
+			}
+			path := append(append([]int{}, prefix...), i)
+			if field.Anonymous && field.Type.Kind() == reflect.Struct {
+				result = append(result, collectFields(field.Type, path)...)
+				continue
+			}
+			tag := field.Tag.Get("json")
+			if tag == "" || tag == "-" {
+				continue
+			}
+			name := strings.Split(tag, ",")[0]
+			if name == "-" {
+				continue
+			}
+			result = append(result, col{index: path, name: strings.ToUpper(name)})
 		}
-		tag := field.Tag.Get("json")
-		if tag == "" || tag == "-" {
-			continue
-		}
-		name := strings.Split(tag, ",")[0]
-		if name == "-" {
-			continue
-		}
-		cols = append(cols, col{index: i, name: strings.ToUpper(name)})
+		return result
 	}
+	cols := collectFields(elemType, nil)
 	if len(cols) == 0 {
 		return nil
 	}
@@ -93,7 +104,7 @@ func (f *TableFormatter) Format(w io.Writer, data any) error {
 		}
 		rows[i] = make([]string, len(cols))
 		for j, c := range cols {
-			rows[i][j] = fmt.Sprintf("%v", elem.Field(c.index).Interface())
+			rows[i][j] = fmt.Sprintf("%v", elem.FieldByIndex(c.index).Interface())
 		}
 	}
 

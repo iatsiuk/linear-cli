@@ -23,7 +23,7 @@ func TestPaginateAll_SinglePage(t *testing.T) {
 		}, nil
 	}
 
-	nodes, err := PaginateAll(context.Background(), fetch, 50)
+	nodes, err := PaginateAll(context.Background(), fetch, 50, 0)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -63,7 +63,7 @@ func TestPaginateAll_MultiPage(t *testing.T) {
 		return resp, nil
 	}
 
-	nodes, err := PaginateAll(context.Background(), fetch, 10)
+	nodes, err := PaginateAll(context.Background(), fetch, 10, 0)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -96,7 +96,7 @@ func TestPaginateAll_StopsAtLastPage(t *testing.T) {
 		return resp, nil
 	}
 
-	nodes, err := PaginateAll(context.Background(), fetch, 10)
+	nodes, err := PaginateAll(context.Background(), fetch, 10, 0)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -117,7 +117,7 @@ func TestPaginateAll_EmptyResult(t *testing.T) {
 		}, nil
 	}
 
-	nodes, err := PaginateAll(context.Background(), fetch, 10)
+	nodes, err := PaginateAll(context.Background(), fetch, 10, 0)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -133,7 +133,7 @@ func TestPaginateAll_FetchError(t *testing.T) {
 		return Connection[string]{}, fetchErr
 	}
 
-	_, err := PaginateAll(context.Background(), fetch, 10)
+	_, err := PaginateAll(context.Background(), fetch, 10, 0)
 	if !errors.Is(err, fetchErr) {
 		t.Errorf("want fetchErr, got %v", err)
 	}
@@ -148,7 +148,7 @@ func TestPaginateAll_HasNextPageWithNilCursor(t *testing.T) {
 		}, nil
 	}
 
-	_, err := PaginateAll(context.Background(), fetch, 10)
+	_, err := PaginateAll(context.Background(), fetch, 10, 0)
 	if err == nil {
 		t.Fatal("expected error when hasNextPage=true but endCursor=nil")
 	}
@@ -165,12 +165,44 @@ func TestPaginateAll_ContextCancellation(t *testing.T) {
 		return Connection[string]{}, ctx.Err()
 	}
 
-	_, err := PaginateAll(ctx, fetch, 10)
+	_, err := PaginateAll(ctx, fetch, 10, 0)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
 	if !called {
 		t.Error("fetch was not called")
+	}
+}
+
+func TestPaginateAll_Limit(t *testing.T) {
+	t.Parallel()
+	cursor1 := "c1"
+	responses := []Connection[int]{
+		{Nodes: []int{1, 2, 3}, PageInfo: PageInfo{HasNextPage: true, EndCursor: &cursor1}},
+		{Nodes: []int{4, 5, 6}, PageInfo: PageInfo{HasNextPage: false}},
+	}
+	page := 0
+	fetch := func(_ context.Context, _ *string, _ int) (Connection[int], error) {
+		resp := responses[page]
+		page++
+		return resp, nil
+	}
+
+	nodes, err := PaginateAll(context.Background(), fetch, 10, 4)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(nodes) != 4 {
+		t.Errorf("want 4 nodes, got %d", len(nodes))
+	}
+	// only first page fetched since page 1 has 3 items, page 2 adds up to 6 - limit is 4
+	if page != 2 {
+		t.Errorf("want 2 page fetches, got %d", page)
+	}
+	for i, want := range []int{1, 2, 3, 4} {
+		if nodes[i] != want {
+			t.Errorf("nodes[%d]: want %d, got %d", i, want, nodes[i])
+		}
 	}
 }
 

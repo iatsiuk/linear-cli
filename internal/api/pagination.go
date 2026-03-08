@@ -20,9 +20,10 @@ type Connection[T any] struct {
 // FetchFunc fetches a single page of results given an optional after cursor and page size.
 type FetchFunc[T any] func(ctx context.Context, after *string, first int) (Connection[T], error)
 
-// PaginateAll fetches all pages using fetch, collecting all nodes.
+// PaginateAll fetches pages using fetch, collecting all nodes.
 // Each page requests pageSize items. Stops when PageInfo.HasNextPage is false.
-func PaginateAll[T any](ctx context.Context, fetch FetchFunc[T], pageSize int) ([]T, error) {
+// If limit > 0, stops after collecting limit nodes.
+func PaginateAll[T any](ctx context.Context, fetch FetchFunc[T], pageSize, limit int) ([]T, error) {
 	var (
 		all   []T
 		after *string
@@ -33,6 +34,9 @@ func PaginateAll[T any](ctx context.Context, fetch FetchFunc[T], pageSize int) (
 			return nil, err
 		}
 		all = append(all, page.Nodes...)
+		if limit > 0 && len(all) >= limit {
+			return all[:limit], nil
+		}
 		if !page.PageInfo.HasNextPage {
 			break
 		}

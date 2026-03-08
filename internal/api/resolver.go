@@ -115,7 +115,6 @@ func ResolveUserID(ctx context.Context, c *Client, nameOrEmail string) (string, 
 	}
 	if len(result.Users.Nodes) == 0 {
 		// retry by email
-		result.Users.Nodes = nil
 		if err := c.Do(ctx, qEmail, map[string]any{"email": nameOrEmail}, &result); err != nil {
 			return "", fmt.Errorf("resolve user %q: %w", nameOrEmail, err)
 		}

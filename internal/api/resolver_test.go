@@ -128,6 +128,29 @@ func TestResolveLabelID_NotFound(t *testing.T) {
 	}
 }
 
+func TestResolveLabelID_ByNameWithTeam(t *testing.T) {
+	t.Parallel()
+	srv := makeServer(t, map[string]any{
+		"data": map[string]any{
+			"issueLabels": map[string]any{
+				"nodes": []map[string]any{
+					{"id": "label-uuid-1234-5678-90ab-cdef01234567", "name": "Bug"},
+				},
+			},
+		},
+	})
+	defer srv.Close()
+
+	c := NewClient("key", WithEndpoint(srv.URL))
+	got, err := ResolveLabelID(context.Background(), c, "Bug", "team-uuid-1234-5678-90ab-cdef01234567")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != "label-uuid-1234-5678-90ab-cdef01234567" {
+		t.Errorf("unexpected id: %q", got)
+	}
+}
+
 // -- ResolveUserID --
 
 func TestResolveUserID_UUIDPassthrough(t *testing.T) {
@@ -271,6 +294,29 @@ func TestResolveStateID_NotFound(t *testing.T) {
 	_, err := ResolveStateID(context.Background(), c, "Nonexistent", "")
 	if err == nil {
 		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestResolveStateID_ByNameNoTeam(t *testing.T) {
+	t.Parallel()
+	srv := makeServer(t, map[string]any{
+		"data": map[string]any{
+			"workflowStates": map[string]any{
+				"nodes": []map[string]any{
+					{"id": "state-uuid-1234-5678-90ab-cdef01234567", "name": "Done"},
+				},
+			},
+		},
+	})
+	defer srv.Close()
+
+	c := NewClient("key", WithEndpoint(srv.URL))
+	got, err := ResolveStateID(context.Background(), c, "Done", "")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != "state-uuid-1234-5678-90ab-cdef01234567" {
+		t.Errorf("unexpected id: %q", got)
 	}
 }
 

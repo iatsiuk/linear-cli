@@ -41,65 +41,65 @@
 ## Implementation Steps
 
 ### Task 1: Project and Cycle models
-- [ ] write tests for Project struct deserialization
-- [ ] write tests for Cycle struct deserialization
-- [ ] create `internal/model/project.go`:
+- [x] write tests for Project struct deserialization
+- [x] write tests for Cycle struct deserialization
+- [x] create `internal/model/project.go`:
   - Project struct with key fields + JSON tags
-- [ ] create `internal/model/cycle.go`:
+- [x] create `internal/model/cycle.go`:
   - Cycle struct with key fields + JSON tags
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 2: Project GraphQL queries and mutations
-- [ ] write tests for project query/mutation string construction
-- [ ] create `internal/query/project.go`:
+- [x] write tests for project query/mutation string construction
+- [x] create `internal/query/project.go`:
   - ProjectListQuery, ProjectGetQuery, ProjectCreateMutation, ProjectUpdateMutation, ProjectDeleteMutation
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 3: `linear project list/show` commands
-- [ ] write tests for project list: fetches projects, table output, filters
-- [ ] write tests for project show: fetches by ID, detailed output
-- [ ] create `internal/cmd/project.go`:
+- [x] write tests for project list: fetches projects, table output, filters
+- [x] write tests for project show: fetches by ID, detailed output
+- [x] create `internal/cmd/project.go`:
   - `project list`: flags `--team`, `--status`, `--health`, `--limit`, `--json`, `--include-archived`, `--order-by`
   - `project show <id>`: full project details
   - table columns: Name | Status | Health | Progress | Target Date
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 4: `linear project create/update/delete` commands
-- [ ] write tests for project create: required flags, mutation variables
-- [ ] write tests for project update: partial update, correct mutation
-- [ ] write tests for project delete: archive mutation, confirmation
-- [ ] create `internal/cmd/project_create.go`:
+- [x] write tests for project create: required flags, mutation variables
+- [x] write tests for project update: partial update, correct mutation
+- [x] write tests for project delete: archive mutation, confirmation
+- [x] create `internal/cmd/project_create.go`:
   - flags: `--name` (required), `--team` (required, repeatable), `--description`, `--color`, `--target-date`, `--start-date`
-- [ ] create `internal/cmd/project_update.go`:
+- [x] create `internal/cmd/project_update.go`:
   - flags: `--name`, `--description`, `--state`, `--target-date`, `--start-date`, `--health`
-- [ ] create `internal/cmd/project_delete.go`:
+- [x] create `internal/cmd/project_delete.go`:
   - uses `projectDelete` mutation (not deprecated `projectArchive`)
   - `--yes` to skip confirmation
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 5: Cycle GraphQL queries
-- [ ] write tests for cycle query string construction
-- [ ] create `internal/query/cycle.go`:
+- [x] write tests for cycle query string construction
+- [x] create `internal/query/cycle.go`:
   - CycleListQuery, CycleGetQuery
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 6: `linear cycle list/show/active` commands
-- [ ] write tests for cycle list: fetches cycles for team, table output
-- [ ] write tests for cycle show: fetches by ID, detailed output
-- [ ] write tests for cycle active: shows active cycle for team
-- [ ] create `internal/cmd/cycle.go`:
+- [x] write tests for cycle list: fetches cycles for team, table output
+- [x] write tests for cycle show: fetches by ID, detailed output
+- [x] write tests for cycle active: shows active cycle for team
+- [x] create `internal/cmd/cycle.go`:
   - `cycle list`: flags `--team` (required), `--limit`, `--json`, `--include-archived`, `--order-by`
   - `cycle show <id>`: full cycle details
   - `cycle active --team <key>`: shows currently active cycle
   - table columns: Number | Name | Start | End | Progress | Status
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 7: Verify acceptance criteria
-- [ ] verify all project commands work end-to-end
-- [ ] verify all cycle commands work end-to-end
-- [ ] verify `--json` output for all commands
-- [ ] run `make test` - full suite must pass
-- [ ] run `make build` - lint + build must pass
+- [x] verify all project commands work end-to-end
+- [x] verify all cycle commands work end-to-end
+- [x] verify `--json` output for all commands
+- [x] run `make test` - full suite must pass
+- [x] run `make build` - lint + build must pass
 
 ## Technical Details
 
@@ -108,8 +108,8 @@
 **cycle list**: # | Name | Start | End | Progress% | Status (Active/Past/Future)
 
 ### Task 8: [Final] Update documentation
-- [ ] update README.md with project and cycle commands usage
-- [ ] document all command flags and options
+- [x] update README.md with project and cycle commands usage
+- [x] document all command flags and options
 
 ## Post-Completion
 - Manual testing with real Linear workspace

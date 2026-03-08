@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 var uuidRe = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
@@ -180,6 +181,34 @@ func ResolveViewerID(ctx context.Context, c *Client) (string, error) {
 		return "", fmt.Errorf("viewer not found")
 	}
 	return result.Viewer.ID, nil
+}
+
+// ResolveProjectStatusID resolves a project status type string (e.g. "started") to a status UUID.
+// If typeOrID is already a UUID, it is returned as-is without an API call.
+func ResolveProjectStatusID(ctx context.Context, c *Client, typeOrID string) (string, error) {
+	if looksLikeUUID(typeOrID) {
+		return typeOrID, nil
+	}
+
+	var result struct {
+		ProjectStatuses struct {
+			Nodes []struct {
+				ID   string `json:"id"`
+				Type string `json:"type"`
+			} `json:"nodes"`
+		} `json:"projectStatuses"`
+	}
+	const q = `query { projectStatuses(first: 250) { nodes { id type } } }`
+	if err := c.Do(ctx, q, nil, &result); err != nil {
+		return "", fmt.Errorf("resolve project status %q: %w", typeOrID, err)
+	}
+	normalized := strings.ToLower(typeOrID)
+	for _, s := range result.ProjectStatuses.Nodes {
+		if strings.ToLower(s.Type) == normalized {
+			return s.ID, nil
+		}
+	}
+	return "", fmt.Errorf("project status %q not found", typeOrID)
 }
 
 // ResolveProjectID resolves a project name to a project UUID.

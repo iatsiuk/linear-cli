@@ -20,8 +20,10 @@ func NewRootCommand(version string) *cobra.Command {
 
 	root.PersistentFlags().Bool("json", false, "output as JSON")
 	root.AddCommand(newAuthCommand())
+	root.AddCommand(newCycleCommand())
 	root.AddCommand(newIssueCommand())
 	root.AddCommand(newMeCommand())
+	root.AddCommand(newProjectCommand())
 	root.AddCommand(newTeamCommand())
 	root.AddCommand(newUserCommand())
 

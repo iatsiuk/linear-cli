@@ -20,6 +20,7 @@ func NewRootCommand(version string) *cobra.Command {
 
 	root.PersistentFlags().Bool("json", false, "output as JSON")
 	root.AddCommand(newAuthCommand())
+	root.AddCommand(newIssueCommand())
 
 	return root
 }

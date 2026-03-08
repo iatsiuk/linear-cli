@@ -19,7 +19,8 @@ func projectDeleteResponse(success bool) map[string]any {
 }
 
 func TestProjectDeleteCommand_Basic(t *testing.T) {
-	p := makeProject("proj-del", "Delete Me", "planned", "", 0.0, "")
+	const projDelID = "00000000-0000-0000-0000-000000000011"
+	p := makeProject(projDelID, "Delete Me", "planned", "", 0.0, "")
 
 	server, bodies := newQueuedServer(t, []map[string]any{
 		projectGetResponse(p),
@@ -31,7 +32,7 @@ func TestProjectDeleteCommand_Basic(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"project", "delete", "proj-del", "--yes"})
+	root.SetArgs([]string{"project", "delete", projDelID, "--yes"})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -40,10 +41,10 @@ func TestProjectDeleteCommand_Basic(t *testing.T) {
 	if len(*bodies) < 2 {
 		t.Fatalf("expected 2 requests, got %d", len(*bodies))
 	}
-	// second request is the delete mutation; id must be the raw arg (not UUID from GET)
+	// second request is the delete mutation
 	mutationVars := (*bodies)[1]
-	if mutationVars["id"] != "proj-del" {
-		t.Errorf("mutation id = %v, want proj-del", mutationVars["id"])
+	if mutationVars["id"] != projDelID {
+		t.Errorf("mutation id = %v, want %s", mutationVars["id"], projDelID)
 	}
 
 	result := out.String()
@@ -56,6 +57,7 @@ func TestProjectDeleteCommand_Basic(t *testing.T) {
 }
 
 func TestProjectDeleteCommand_NotFound(t *testing.T) {
+	const nonexistentID = "00000000-0000-0000-0000-000000000099"
 	server, _ := newQueuedServer(t, []map[string]any{
 		{"data": map[string]any{"project": nil}},
 	})
@@ -65,7 +67,7 @@ func TestProjectDeleteCommand_NotFound(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"project", "delete", "nonexistent", "--yes"})
+	root.SetArgs([]string{"project", "delete", nonexistentID, "--yes"})
 
 	err := root.Execute()
 	if err == nil {
@@ -93,7 +95,8 @@ func TestProjectDeleteCommand_MissingID(t *testing.T) {
 }
 
 func TestProjectDeleteCommand_SuccessFalse(t *testing.T) {
-	p := makeProject("proj-fail", "Fail Delete", "planned", "", 0.0, "")
+	const projFailID = "00000000-0000-0000-0000-000000000012"
+	p := makeProject(projFailID, "Fail Delete", "planned", "", 0.0, "")
 
 	server, _ := newQueuedServer(t, []map[string]any{
 		projectGetResponse(p),
@@ -105,7 +108,7 @@ func TestProjectDeleteCommand_SuccessFalse(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"project", "delete", "proj-fail", "--yes"})
+	root.SetArgs([]string{"project", "delete", projFailID, "--yes"})
 
 	err := root.Execute()
 	if err == nil {
@@ -117,7 +120,8 @@ func TestProjectDeleteCommand_SuccessFalse(t *testing.T) {
 }
 
 func TestProjectDeleteCommand_ConfirmationPrompt(t *testing.T) {
-	p := makeProject("proj-confirm", "Confirm Me", "planned", "", 0.0, "")
+	const projConfirmID = "00000000-0000-0000-0000-000000000013"
+	p := makeProject(projConfirmID, "Confirm Me", "planned", "", 0.0, "")
 
 	// only GET queued; delete should not proceed
 	server, bodies := newQueuedServer(t, []map[string]any{
@@ -130,7 +134,7 @@ func TestProjectDeleteCommand_ConfirmationPrompt(t *testing.T) {
 	root.SetOut(&out)
 	root.SetErr(&out)
 	root.SetIn(strings.NewReader("n\n"))
-	root.SetArgs([]string{"project", "delete", "proj-confirm"})
+	root.SetArgs([]string{"project", "delete", projConfirmID})
 
 	err := root.Execute()
 	if err == nil {
@@ -146,7 +150,8 @@ func TestProjectDeleteCommand_ConfirmationPrompt(t *testing.T) {
 }
 
 func TestProjectDeleteCommand_ConfirmationYes(t *testing.T) {
-	p := makeProject("proj-y", "Yes Delete", "planned", "", 0.0, "")
+	const projYID = "00000000-0000-0000-0000-000000000014"
+	p := makeProject(projYID, "Yes Delete", "planned", "", 0.0, "")
 
 	server, _ := newQueuedServer(t, []map[string]any{
 		projectGetResponse(p),
@@ -159,7 +164,7 @@ func TestProjectDeleteCommand_ConfirmationYes(t *testing.T) {
 	root.SetOut(&out)
 	root.SetErr(&out)
 	root.SetIn(strings.NewReader("y\n"))
-	root.SetArgs([]string{"project", "delete", "proj-y"})
+	root.SetArgs([]string{"project", "delete", projYID})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)

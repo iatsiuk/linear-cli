@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"linear-cli/internal/api"
 	"linear-cli/internal/query"
 )
 
@@ -41,7 +42,10 @@ func runProjectDelete(cmd *cobra.Command, args []string) error {
 	}
 	ctx := context.Background()
 
-	id := args[0]
+	id, err := api.ResolveProjectID(ctx, client, args[0])
+	if err != nil {
+		return err
+	}
 
 	// fetch project to confirm it exists
 	var getResult projectGetResult

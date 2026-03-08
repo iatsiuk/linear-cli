@@ -47,7 +47,10 @@ func runProjectUpdate(cmd *cobra.Command, args []string) error {
 	}
 	ctx := context.Background()
 
-	id := args[0]
+	id, err := api.ResolveProjectID(ctx, client, args[0])
+	if err != nil {
+		return err
+	}
 	f := cmd.Flags()
 
 	input := map[string]any{}

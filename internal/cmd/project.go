@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"linear-cli/internal/api"
 	"linear-cli/internal/model"
 	"linear-cli/internal/output"
 	"linear-cli/internal/query"
@@ -151,12 +152,16 @@ func runProjectShow(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+	ctx := context.Background()
 
-	id := args[0]
+	id, err := api.ResolveProjectID(ctx, client, args[0])
+	if err != nil {
+		return err
+	}
 	vars := map[string]any{"id": id}
 
 	var result projectGetResult
-	if err := client.Do(context.Background(), query.ProjectGetQuery, vars, &result); err != nil {
+	if err := client.Do(ctx, query.ProjectGetQuery, vars, &result); err != nil {
 		return fmt.Errorf("get project: %w", err)
 	}
 	if result.Project == nil {

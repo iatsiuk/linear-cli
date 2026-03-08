@@ -21,7 +21,8 @@ func projectUpdateResponse(project map[string]any) map[string]any {
 }
 
 func TestProjectUpdateCommand_Basic(t *testing.T) {
-	p := makeProject("proj-1", "Updated Name", "started", "onTrack", 0.5, "")
+	const projID1 = "00000000-0000-0000-0000-000000000001"
+	p := makeProject(projID1, "Updated Name", "started", "onTrack", 0.5, "")
 
 	server, bodies := newQueuedServer(t, []map[string]any{
 		projectUpdateResponse(p),
@@ -32,7 +33,7 @@ func TestProjectUpdateCommand_Basic(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"project", "update", "proj-1", "--name", "Updated Name"})
+	root.SetArgs([]string{"project", "update", projID1, "--name", "Updated Name"})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -42,8 +43,8 @@ func TestProjectUpdateCommand_Basic(t *testing.T) {
 		t.Fatalf("expected 1 request, got %d", len(*bodies))
 	}
 	vars := (*bodies)[0]
-	if vars["id"] != "proj-1" {
-		t.Errorf("id = %v, want proj-1", vars["id"])
+	if vars["id"] != projID1 {
+		t.Errorf("id = %v, want %s", vars["id"], projID1)
 	}
 	input, ok := vars["input"].(map[string]any)
 	if !ok {
@@ -55,7 +56,8 @@ func TestProjectUpdateCommand_Basic(t *testing.T) {
 }
 
 func TestProjectUpdateCommand_JSONOutput(t *testing.T) {
-	p := makeProject("proj-1", "Updated Name", "started", "onTrack", 0.5, "")
+	const projID1 = "00000000-0000-0000-0000-000000000001"
+	p := makeProject(projID1, "Updated Name", "started", "onTrack", 0.5, "")
 
 	server, _ := newQueuedServer(t, []map[string]any{
 		projectUpdateResponse(p),
@@ -66,7 +68,7 @@ func TestProjectUpdateCommand_JSONOutput(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"--json", "project", "update", "proj-1", "--name", "Updated Name"})
+	root.SetArgs([]string{"--json", "project", "update", projID1, "--name", "Updated Name"})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -82,7 +84,8 @@ func TestProjectUpdateCommand_JSONOutput(t *testing.T) {
 }
 
 func TestProjectUpdateCommand_PartialUpdate(t *testing.T) {
-	p := makeProject("proj-2", "Same Name", "paused", "atRisk", 0.3, "2026-09-01")
+	const projID2 = "00000000-0000-0000-0000-000000000002"
+	p := makeProject(projID2, "Same Name", "paused", "atRisk", 0.3, "2026-09-01")
 
 	server, bodies := newQueuedServer(t, []map[string]any{
 		projectUpdateResponse(p),
@@ -93,7 +96,7 @@ func TestProjectUpdateCommand_PartialUpdate(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"project", "update", "proj-2", "--target-date", "2026-09-01"})
+	root.SetArgs([]string{"project", "update", projID2, "--target-date", "2026-09-01"})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -110,6 +113,7 @@ func TestProjectUpdateCommand_PartialUpdate(t *testing.T) {
 }
 
 func TestProjectUpdateCommand_NoFlags(t *testing.T) {
+	const projID1 = "00000000-0000-0000-0000-000000000001"
 	server, _ := newQueuedServer(t, nil)
 	setupIssueTest(t, server)
 
@@ -117,7 +121,7 @@ func TestProjectUpdateCommand_NoFlags(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"project", "update", "proj-1"})
+	root.SetArgs([]string{"project", "update", projID1})
 
 	err := root.Execute()
 	if err == nil {
@@ -145,6 +149,7 @@ func TestProjectUpdateCommand_MissingID(t *testing.T) {
 }
 
 func TestProjectUpdateCommand_SuccessFalse(t *testing.T) {
+	const projID1 = "00000000-0000-0000-0000-000000000001"
 	server, _ := newQueuedServer(t, []map[string]any{
 		{
 			"data": map[string]any{
@@ -161,7 +166,7 @@ func TestProjectUpdateCommand_SuccessFalse(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"project", "update", "proj-1", "--name", "Fail"})
+	root.SetArgs([]string{"project", "update", projID1, "--name", "Fail"})
 
 	err := root.Execute()
 	if err == nil {
@@ -183,7 +188,8 @@ func projectStatusResolveResponse(statuses []map[string]any) map[string]any {
 }
 
 func TestProjectUpdateCommand_AllFlags(t *testing.T) {
-	p := makeProject("proj-3", "Full Update", "completed", "onTrack", 1.0, "2026-12-01")
+	const projID3 = "00000000-0000-0000-0000-000000000003"
+	p := makeProject(projID3, "Full Update", "completed", "onTrack", 1.0, "2026-12-01")
 
 	// first request: ResolveProjectStatusID for --state; second: mutation
 	server, bodies := newQueuedServer(t, []map[string]any{
@@ -199,7 +205,7 @@ func TestProjectUpdateCommand_AllFlags(t *testing.T) {
 	root.SetOut(&out)
 	root.SetErr(&out)
 	root.SetArgs([]string{
-		"project", "update", "proj-3",
+		"project", "update", projID3,
 		"--name", "Full Update",
 		"--description", "new desc",
 		"--state", "completed",

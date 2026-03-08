@@ -348,7 +348,8 @@ func TestProjectListCommand_OrderByFlag(t *testing.T) {
 }
 
 func TestProjectShowCommand_TableOutput(t *testing.T) {
-	project := makeProject("proj-1", "Auth Redesign", "started", "onTrack", 0.65, "2026-12-31")
+	const projID1 = "00000000-0000-0000-0000-000000000001"
+	project := makeProject(projID1, "Auth Redesign", "started", "onTrack", 0.65, "2026-12-31")
 
 	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
 		writeJSONResponse(w, projectGetResponse(project))
@@ -359,7 +360,7 @@ func TestProjectShowCommand_TableOutput(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"project", "show", "proj-1"})
+	root.SetArgs([]string{"project", "show", projID1})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -384,7 +385,8 @@ func TestProjectShowCommand_TableOutput(t *testing.T) {
 }
 
 func TestProjectShowCommand_JSONOutput(t *testing.T) {
-	project := makeProject("proj-1", "Auth Redesign", "started", "onTrack", 0.65, "2026-12-31")
+	const projID1 = "00000000-0000-0000-0000-000000000001"
+	project := makeProject(projID1, "Auth Redesign", "started", "onTrack", 0.65, "2026-12-31")
 
 	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
 		writeJSONResponse(w, projectGetResponse(project))
@@ -395,7 +397,7 @@ func TestProjectShowCommand_JSONOutput(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"--json", "project", "show", "proj-1"})
+	root.SetArgs([]string{"--json", "project", "show", projID1})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)

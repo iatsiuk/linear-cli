@@ -139,6 +139,21 @@ func TestPaginateAll_FetchError(t *testing.T) {
 	}
 }
 
+func TestPaginateAll_HasNextPageWithNilCursor(t *testing.T) {
+	t.Parallel()
+	fetch := func(_ context.Context, _ *string, _ int) (Connection[string], error) {
+		return Connection[string]{
+			Nodes:    []string{"a"},
+			PageInfo: PageInfo{HasNextPage: true, EndCursor: nil},
+		}, nil
+	}
+
+	_, err := PaginateAll(context.Background(), fetch, 10)
+	if err == nil {
+		t.Fatal("expected error when hasNextPage=true but endCursor=nil")
+	}
+}
+
 func TestPaginateAll_ContextCancellation(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := context.WithCancel(context.Background())

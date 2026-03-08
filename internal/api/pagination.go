@@ -1,6 +1,9 @@
 package api
 
-import "context"
+import (
+	"context"
+	"fmt"
+)
 
 // PageInfo holds cursor-based pagination info from a GraphQL connection.
 type PageInfo struct {
@@ -32,6 +35,9 @@ func PaginateAll[T any](ctx context.Context, fetch FetchFunc[T], pageSize int) (
 		all = append(all, page.Nodes...)
 		if !page.PageInfo.HasNextPage {
 			break
+		}
+		if page.PageInfo.EndCursor == nil {
+			return nil, fmt.Errorf("pagination: hasNextPage is true but endCursor is nil")
 		}
 		after = page.PageInfo.EndCursor
 	}

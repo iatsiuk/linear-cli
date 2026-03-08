@@ -65,17 +65,17 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 4: `linear project create/update/delete` commands
-- [ ] write tests for project create: required flags, mutation variables
-- [ ] write tests for project update: partial update, correct mutation
-- [ ] write tests for project delete: archive mutation, confirmation
-- [ ] create `internal/cmd/project_create.go`:
+- [x] write tests for project create: required flags, mutation variables
+- [x] write tests for project update: partial update, correct mutation
+- [x] write tests for project delete: archive mutation, confirmation
+- [x] create `internal/cmd/project_create.go`:
   - flags: `--name` (required), `--team` (required, repeatable), `--description`, `--color`, `--target-date`, `--start-date`
-- [ ] create `internal/cmd/project_update.go`:
+- [x] create `internal/cmd/project_update.go`:
   - flags: `--name`, `--description`, `--state`, `--target-date`, `--start-date`, `--health`
-- [ ] create `internal/cmd/project_delete.go`:
+- [x] create `internal/cmd/project_delete.go`:
   - uses `projectDelete` mutation (not deprecated `projectArchive`)
   - `--yes` to skip confirmation
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 5: Cycle GraphQL queries
 - [ ] write tests for cycle query string construction

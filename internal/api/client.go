@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
@@ -95,7 +96,7 @@ func (c *Client) do(ctx context.Context, attempt int, query string, variables ma
 		return 0, fmt.Errorf("create request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	req.Header.Set("Authorization", c.apiKey)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -104,9 +105,11 @@ func (c *Client) do(ctx context.Context, attempt int, query string, variables ma
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode == http.StatusUnauthorized {
+		_, _ = io.Copy(io.Discard, resp.Body)
 		return 0, fmt.Errorf("unauthorized: check your API key")
 	}
 	if resp.StatusCode >= 500 {
+		_, _ = io.Copy(io.Discard, resp.Body)
 		return serverErrorDelay(attempt), fmt.Errorf("server error: %d", resp.StatusCode)
 	}
 

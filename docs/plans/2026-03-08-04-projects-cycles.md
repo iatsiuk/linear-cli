@@ -50,10 +50,10 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 2: Project GraphQL queries and mutations
-- [ ] write tests for project query/mutation string construction
-- [ ] create `internal/query/project.go`:
+- [x] write tests for project query/mutation string construction
+- [x] create `internal/query/project.go`:
   - ProjectListQuery, ProjectGetQuery, ProjectCreateMutation, ProjectUpdateMutation, ProjectDeleteMutation
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 3: `linear project list/show` commands
 - [ ] write tests for project list: fetches projects, table output, filters

@@ -261,8 +261,8 @@ func TestUserShowCommand_TableOutput(t *testing.T) {
 	if !strings.Contains(result, "alice@example.com") {
 		t.Errorf("output should contain email, got:\n%s", result)
 	}
-	if !strings.Contains(result, "Active:") || !strings.Contains(result, "true") {
-		t.Errorf("output should contain Active: true, got:\n%s", result)
+	if !strings.Contains(result, "Active:") || !strings.Contains(result, "yes") {
+		t.Errorf("output should contain Active: yes, got:\n%s", result)
 	}
 }
 

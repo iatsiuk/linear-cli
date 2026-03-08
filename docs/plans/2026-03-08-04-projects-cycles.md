@@ -84,15 +84,15 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 6: `linear cycle list/show/active` commands
-- [ ] write tests for cycle list: fetches cycles for team, table output
-- [ ] write tests for cycle show: fetches by ID, detailed output
-- [ ] write tests for cycle active: shows active cycle for team
-- [ ] create `internal/cmd/cycle.go`:
+- [x] write tests for cycle list: fetches cycles for team, table output
+- [x] write tests for cycle show: fetches by ID, detailed output
+- [x] write tests for cycle active: shows active cycle for team
+- [x] create `internal/cmd/cycle.go`:
   - `cycle list`: flags `--team` (required), `--limit`, `--json`, `--include-archived`, `--order-by`
   - `cycle show <id>`: full cycle details
   - `cycle active --team <key>`: shows currently active cycle
   - table columns: Number | Name | Start | End | Progress | Status
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 7: Verify acceptance criteria
 - [ ] verify all project commands work end-to-end

@@ -63,6 +63,9 @@ func runProjectDelete(cmd *cobra.Command, args []string) error {
 		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Are you sure you want to delete project %q? [y/N] ", getResult.Project.Name)
 		scanner := bufio.NewScanner(cmd.InOrStdin())
 		scanner.Scan()
+		if err := scanner.Err(); err != nil {
+			return fmt.Errorf("read confirmation: %w", err)
+		}
 		answer := strings.TrimSpace(scanner.Text())
 		if !strings.EqualFold(answer, "y") && !strings.EqualFold(answer, "yes") {
 			return fmt.Errorf("aborted")

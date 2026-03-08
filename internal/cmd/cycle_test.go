@@ -66,7 +66,7 @@ func TestCycleListCommand_TableOutput(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"cycle", "list"})
+	root.SetArgs([]string{"cycle", "list", "--team", "ENG"})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -103,7 +103,7 @@ func TestCycleListCommand_JSONOutput(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"--json", "cycle", "list"})
+	root.SetArgs([]string{"--json", "cycle", "list", "--team", "ENG"})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)

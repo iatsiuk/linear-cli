@@ -93,19 +93,16 @@ func TestProjectUpdateCommand_PartialUpdate(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"project", "update", "proj-2", "--health", "atRisk", "--target-date", "2026-09-01"})
+	root.SetArgs([]string{"project", "update", "proj-2", "--target-date", "2026-09-01"})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
 	input := (*bodies)[0]["input"].(map[string]any)
-	// only health and targetDate should be present
+	// only targetDate should be present
 	if _, present := input["name"]; present {
 		t.Errorf("name should not be in input when not provided")
-	}
-	if input["health"] != "atRisk" {
-		t.Errorf("health = %v, want atRisk", input["health"])
 	}
 	if input["targetDate"] != "2026-09-01" {
 		t.Errorf("targetDate = %v, want 2026-09-01", input["targetDate"])
@@ -175,10 +172,24 @@ func TestProjectUpdateCommand_SuccessFalse(t *testing.T) {
 	}
 }
 
+func projectStatusResolveResponse(statuses []map[string]any) map[string]any {
+	return map[string]any{
+		"data": map[string]any{
+			"projectStatuses": map[string]any{
+				"nodes": statuses,
+			},
+		},
+	}
+}
+
 func TestProjectUpdateCommand_AllFlags(t *testing.T) {
 	p := makeProject("proj-3", "Full Update", "completed", "onTrack", 1.0, "2026-12-01")
 
+	// first request: ResolveProjectStatusID for --state; second: mutation
 	server, bodies := newQueuedServer(t, []map[string]any{
+		projectStatusResolveResponse([]map[string]any{
+			{"id": "status-completed-id", "type": "completed"},
+		}),
 		projectUpdateResponse(p),
 	})
 	setupIssueTest(t, server)
@@ -194,30 +205,26 @@ func TestProjectUpdateCommand_AllFlags(t *testing.T) {
 		"--state", "completed",
 		"--target-date", "2026-12-01",
 		"--start-date", "2026-06-01",
-		"--health", "onTrack",
 	})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	input := (*bodies)[0]["input"].(map[string]any)
+	input := (*bodies)[1]["input"].(map[string]any)
 	if input["name"] != "Full Update" {
 		t.Errorf("name = %v, want Full Update", input["name"])
 	}
 	if input["description"] != "new desc" {
 		t.Errorf("description = %v, want new desc", input["description"])
 	}
-	if input["statusType"] != "completed" {
-		t.Errorf("statusType = %v, want completed", input["statusType"])
+	if input["statusId"] != "status-completed-id" {
+		t.Errorf("statusId = %v, want status-completed-id", input["statusId"])
 	}
 	if input["targetDate"] != "2026-12-01" {
 		t.Errorf("targetDate = %v, want 2026-12-01", input["targetDate"])
 	}
 	if input["startDate"] != "2026-06-01" {
 		t.Errorf("startDate = %v, want 2026-06-01", input["startDate"])
-	}
-	if input["health"] != "onTrack" {
-		t.Errorf("health = %v, want onTrack", input["health"])
 	}
 }

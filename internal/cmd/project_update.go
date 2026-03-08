@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"linear-cli/internal/api"
 	"linear-cli/internal/model"
 	"linear-cli/internal/output"
 	"linear-cli/internal/query"
@@ -33,10 +34,9 @@ func newProjectUpdateCommand() *cobra.Command {
 	f := cmd.Flags()
 	f.String("name", "", "project name")
 	f.String("description", "", "project description")
-	f.String("state", "", "project state type (backlog|planned|started|paused|completed|canceled)")
+	f.String("state", "", "project state type or UUID (backlog|planned|started|paused|completed|canceled)")
 	f.String("target-date", "", "target date (YYYY-MM-DD)")
 	f.String("start-date", "", "start date (YYYY-MM-DD)")
-	f.String("health", "", "project health (onTrack|atRisk|offTrack)")
 	return cmd
 }
 
@@ -62,7 +62,11 @@ func runProjectUpdate(cmd *cobra.Command, args []string) error {
 	}
 	if f.Changed("state") {
 		v, _ := f.GetString("state")
-		input["statusType"] = v
+		statusID, err := api.ResolveProjectStatusID(ctx, client, v)
+		if err != nil {
+			return err
+		}
+		input["statusId"] = statusID
 	}
 	if f.Changed("target-date") {
 		v, _ := f.GetString("target-date")
@@ -72,11 +76,6 @@ func runProjectUpdate(cmd *cobra.Command, args []string) error {
 		v, _ := f.GetString("start-date")
 		input["startDate"] = v
 	}
-	if f.Changed("health") {
-		v, _ := f.GetString("health")
-		input["health"] = v
-	}
-
 	if len(input) == 0 {
 		return fmt.Errorf("no fields to update: specify at least one flag")
 	}

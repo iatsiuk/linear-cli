@@ -329,16 +329,15 @@ Flags:
 ```
   --name string         project name
   --description string  project description
-  --state string        project state (backlog|planned|started|paused|completed|canceled)
+  --state string        project state type or UUID (backlog|planned|started|paused|completed|canceled)
   --target-date string  target date (YYYY-MM-DD)
   --start-date string   start date (YYYY-MM-DD)
-  --health string       project health (onTrack|atRisk|offTrack)
   --json                output updated project as JSON
 ```
 
 Example:
 ```
-linear project update abc123 --state started --health onTrack
+linear project update abc123 --state started
 ```
 
 ### Delete project

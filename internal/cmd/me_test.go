@@ -84,8 +84,8 @@ func TestMeCommand_TableOutput(t *testing.T) {
 	if !strings.Contains(result, "member") {
 		t.Errorf("output should contain role=member, got:\n%s", result)
 	}
-	if !strings.Contains(result, "yes") {
-		t.Errorf("output should contain active=yes, got:\n%s", result)
+	if !strings.Contains(result, "Active:") || !strings.Contains(result, "yes") {
+		t.Errorf("output should contain Active: yes, got:\n%s", result)
 	}
 	if !strings.Contains(result, "Engineering") {
 		t.Errorf("output should contain team name, got:\n%s", result)
@@ -154,8 +154,8 @@ func TestMeCommand_InactiveUser(t *testing.T) {
 	}
 
 	result := out.String()
-	if !strings.Contains(result, "no") {
-		t.Errorf("output should contain active=no, got:\n%s", result)
+	if !strings.Contains(result, "Active:") || !strings.Contains(result, "no") {
+		t.Errorf("output should contain Active: no, got:\n%s", result)
 	}
 }
 
@@ -248,6 +248,25 @@ func TestMeCommand_CreatedFlag(t *testing.T) {
 	}
 	if !strings.Contains(result, "Created issue") {
 		t.Errorf("output should contain issue title, got:\n%s", result)
+	}
+}
+
+func TestMeCommand_BothFlagsError(t *testing.T) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"me", "--assigned", "--created"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when both --assigned and --created are provided")
+	}
+	if !strings.Contains(err.Error(), "mutually exclusive") {
+		t.Errorf("expected mutually exclusive error, got: %v", err)
 	}
 }
 

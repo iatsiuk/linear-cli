@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"linear-cli/internal/api"
 	"linear-cli/internal/model"
 	"linear-cli/internal/output"
 	"linear-cli/internal/query"
@@ -13,7 +14,8 @@ import (
 
 type userListResult struct {
 	Users struct {
-		Nodes []model.User `json:"nodes"`
+		Nodes    []model.User `json:"nodes"`
+		PageInfo api.PageInfo `json:"pageInfo"`
 	} `json:"users"`
 }
 
@@ -73,19 +75,27 @@ func runUserList(cmd *cobra.Command, _ []string) error {
 	includeDisabled, _ := cmd.Flags().GetBool("include-disabled")
 	includeGuests, _ := cmd.Flags().GetBool("include-guests")
 
-	vars := map[string]any{}
-	if includeDisabled {
-		vars["includeDisabled"] = true
-	}
-
-	var result userListResult
-	if err := client.Do(context.Background(), query.UserListQuery, vars, &result); err != nil {
+	ctx := context.Background()
+	users, err := api.PaginateAll(ctx, func(ctx context.Context, after *string, first int) (api.Connection[model.User], error) {
+		vars := map[string]any{"first": first}
+		if after != nil {
+			vars["after"] = *after
+		}
+		if includeDisabled {
+			vars["includeDisabled"] = true
+		}
+		var result userListResult
+		if err := client.Do(ctx, query.UserListQuery, vars, &result); err != nil {
+			return api.Connection[model.User]{}, err
+		}
+		return api.Connection[model.User]{Nodes: result.Users.Nodes, PageInfo: result.Users.PageInfo}, nil
+	}, 50, 0)
+	if err != nil {
 		return fmt.Errorf("list users: %w", err)
 	}
 
-	users := result.Users.Nodes
 	if !includeGuests {
-		filtered := users[:0]
+		filtered := users[:0:0]
 		for _, u := range users {
 			if !u.Guest {
 				filtered = append(filtered, u)

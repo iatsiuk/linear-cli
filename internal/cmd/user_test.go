@@ -139,6 +139,68 @@ func TestUserListCommand_RoleDisplay(t *testing.T) {
 	}
 }
 
+func TestUserListCommand_GuestFilteredByDefault(t *testing.T) {
+	users := []map[string]any{
+		makeUser("u1", "Alice Member", "alice@example.com", true, false, false),
+		makeUser("u2", "Bob Guest", "bob@example.com", true, false, true),
+	}
+
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeJSONResponse(w, userListResponse(users))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"user", "list"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	result := out.String()
+	if !strings.Contains(result, "Alice Member") {
+		t.Errorf("output should contain Alice Member, got:\n%s", result)
+	}
+	if strings.Contains(result, "Bob Guest") {
+		t.Errorf("output should not contain guest user Bob Guest, got:\n%s", result)
+	}
+}
+
+func TestUserListCommand_IncludeDisabled(t *testing.T) {
+	var capturedVars map[string]any
+
+	users := []map[string]any{
+		makeUser("u1", "Alice Smith", "alice@example.com", true, false, false),
+	}
+
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		capturedVars = body.Variables
+		writeJSONResponse(w, userListResponse(users))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"user", "list", "--include-disabled"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedVars["includeDisabled"] != true {
+		t.Errorf("expected includeDisabled=true in request vars, got: %v", capturedVars)
+	}
+}
+
 func TestUserListCommand_JSONOutput(t *testing.T) {
 	users := []map[string]any{
 		makeUser("u1", "Alice Smith", "alice@example.com", true, false, false),
@@ -199,8 +261,8 @@ func TestUserShowCommand_TableOutput(t *testing.T) {
 	if !strings.Contains(result, "alice@example.com") {
 		t.Errorf("output should contain email, got:\n%s", result)
 	}
-	if !strings.Contains(result, "true") {
-		t.Errorf("output should contain active=true, got:\n%s", result)
+	if !strings.Contains(result, "Active:") || !strings.Contains(result, "true") {
+		t.Errorf("output should contain Active: true, got:\n%s", result)
 	}
 }
 

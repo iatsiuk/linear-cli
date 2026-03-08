@@ -69,6 +69,9 @@ func runMe(cmd *cobra.Command, _ []string) error {
 	created, _ := cmd.Flags().GetBool("created")
 	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")
 
+	if assigned && created {
+		return fmt.Errorf("--assigned and --created are mutually exclusive")
+	}
 	if assigned || created {
 		return runMeIssues(cmd, client, assigned, jsonMode)
 	}

@@ -7,6 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"linear-cli/internal/api"
 	"linear-cli/internal/model"
 	"linear-cli/internal/output"
 	"linear-cli/internal/query"
@@ -14,7 +15,8 @@ import (
 
 type teamListResult struct {
 	Teams struct {
-		Nodes []model.Team `json:"nodes"`
+		Nodes    []model.Team `json:"nodes"`
+		PageInfo api.PageInfo `json:"pageInfo"`
 	} `json:"teams"`
 }
 
@@ -57,8 +59,19 @@ func runTeamList(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
-	var result teamListResult
-	if err := client.Do(context.Background(), query.TeamListQuery, nil, &result); err != nil {
+	ctx := context.Background()
+	teams, err := api.PaginateAll(ctx, func(ctx context.Context, after *string, first int) (api.Connection[model.Team], error) {
+		vars := map[string]any{"first": first}
+		if after != nil {
+			vars["after"] = *after
+		}
+		var result teamListResult
+		if err := client.Do(ctx, query.TeamListQuery, vars, &result); err != nil {
+			return api.Connection[model.Team]{}, err
+		}
+		return api.Connection[model.Team]{Nodes: result.Teams.Nodes, PageInfo: result.Teams.PageInfo}, nil
+	}, 50, 0)
+	if err != nil {
 		return fmt.Errorf("list teams: %w", err)
 	}
 
@@ -66,11 +79,11 @@ func runTeamList(cmd *cobra.Command, _ []string) error {
 	formatter := output.NewFormatter(jsonMode)
 
 	if jsonMode {
-		return formatter.Format(cmd.OutOrStdout(), result.Teams.Nodes)
+		return formatter.Format(cmd.OutOrStdout(), teams)
 	}
 
-	rows := make([]TeamRow, len(result.Teams.Nodes))
-	for i, t := range result.Teams.Nodes {
+	rows := make([]TeamRow, len(teams))
+	for i, t := range teams {
 		desc := ""
 		if t.Description != nil {
 			desc = truncate(*t.Description, 40)

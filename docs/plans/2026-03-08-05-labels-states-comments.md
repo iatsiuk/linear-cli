@@ -56,14 +56,14 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 3: `linear label list/create/update` commands
-- [ ] write tests for label list: fetches labels, filters by team, table output, `--include-archived`
-- [ ] write tests for label create: required flags, mutation
-- [ ] write tests for label update: partial update
-- [ ] create `internal/cmd/label.go`:
+- [x] write tests for label list: fetches labels, filters by team, table output, `--include-archived`
+- [x] write tests for label create: required flags, mutation
+- [x] write tests for label update: partial update
+- [x] create `internal/cmd/label.go`:
   - `label list`: flags `--team`, `--json`. Columns: Name | Color | Team | Group
   - `label create`: flags `--name` (required), `--color` (required), `--team`, `--description`
   - `label update <id>`: flags `--name`, `--color`, `--description`
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 4: `linear state list` command
 - [ ] write tests for state list: fetches states for team, groups by type, table output

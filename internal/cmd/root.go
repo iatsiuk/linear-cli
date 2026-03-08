@@ -22,6 +22,7 @@ func NewRootCommand(version string) *cobra.Command {
 	root.AddCommand(newAuthCommand())
 	root.AddCommand(newCycleCommand())
 	root.AddCommand(newIssueCommand())
+	root.AddCommand(newLabelCommand())
 	root.AddCommand(newMeCommand())
 	root.AddCommand(newProjectCommand())
 	root.AddCommand(newTeamCommand())

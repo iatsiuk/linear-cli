@@ -195,3 +195,105 @@ Example:
 linear issue delete ENG-42 --yes
 linear issue delete ENG-42 --archive
 ```
+
+## Me Command
+
+Show the currently authenticated user.
+
+```
+linear me [flags]
+```
+
+Flags:
+```
+  --assigned   show issues assigned to the current user
+  --created    show issues created by the current user
+  --json       output as JSON
+```
+
+Examples:
+```
+linear me
+linear me --assigned
+linear me --created
+linear me --json
+```
+
+Output (default): Name, Email, Role, Active status, and team memberships.
+Output (--assigned/--created): table of issues with columns ID, Title, Status.
+
+## Team Commands
+
+Manage Linear teams with the `team` subcommand.
+
+### List teams
+
+```
+linear team list [flags]
+```
+
+Flags:
+```
+  --json   output as JSON array
+```
+
+Output columns: Name, Key, Description, Cycles
+
+### Show team
+
+```
+linear team show <id|key> [flags]
+```
+
+Accepts a team UUID or team key (e.g. ENG).
+
+Flags:
+```
+  --json   output as JSON object
+```
+
+Output fields: Name, Key, Cycles, Estimation, Description, Created, Updated.
+
+Example:
+```
+linear team show ENG
+```
+
+## User Commands
+
+Manage Linear users with the `user` subcommand.
+
+### List users
+
+```
+linear user list [flags]
+```
+
+Flags:
+```
+  --include-guests     include guest users (excluded by default)
+  --include-disabled   include disabled/deactivated users
+  --json               output as JSON array
+```
+
+Output columns: Name, Email, Role, Active
+
+### Show user
+
+```
+linear user show <id> [flags]
+```
+
+Accepts a user UUID.
+
+Flags:
+```
+  --json   output as JSON object
+```
+
+Output fields: Name, Email, Role, Active, Created, Updated.
+
+Example:
+```
+linear user show abc123de-f456-7890-abcd-ef1234567890
+```

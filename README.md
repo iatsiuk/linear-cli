@@ -74,3 +74,124 @@ Flags:
   --version     Show version
   -h, --help    Show help
 ```
+
+## Issue Commands
+
+Manage Linear issues with the `issue` subcommand.
+
+### List issues
+
+```
+linear issue list [flags]
+```
+
+Flags:
+```
+  --team string        filter by team key (e.g. ENG)
+  --assignee string    filter by assignee display name
+  --state string       filter by workflow state name
+  --priority int       filter by priority: 0=none, 1=urgent, 2=high, 3=normal, 4=low
+  --limit int          maximum number of issues to return (default 50)
+  --include-archived   include archived issues
+  --order-by string    sort order: createdAt|updatedAt (default "updatedAt")
+  --json               output as JSON array
+```
+
+Output columns: ID, Title, Status, Priority, Assignee
+
+### Show issue
+
+```
+linear issue show <identifier> [flags]
+```
+
+Displays all fields for an issue: identifier, title, status, priority, team, assignee, due date, estimate, labels, URL, created/updated timestamps, and description.
+
+Flags:
+```
+  --json    output as JSON object
+```
+
+Example:
+```
+linear issue show ENG-42
+```
+
+### Create issue
+
+```
+linear issue create --title <title> --team <team> [flags]
+```
+
+Flags:
+```
+  --title string         issue title (required)
+  --team string          team key or ID (required)
+  --description string   issue description in markdown
+  --assignee string      assignee name, email, UUID, or "me"
+  --state string         workflow state name or ID
+  --priority int         priority: 0=none, 1=urgent, 2=high, 3=normal, 4=low
+  --label stringArray    label name or ID (repeatable)
+  --due-date string      due date (YYYY-MM-DD)
+  --estimate int         complexity estimate (integer)
+  --cycle string         cycle ID
+  --project string       project name or ID
+  --parent string        parent issue identifier or ID
+  --json                 output created issue as JSON
+```
+
+Example:
+```
+linear issue create --title "Fix login bug" --team ENG --priority 1 --assignee me
+```
+
+### Update issue
+
+```
+linear issue update <identifier> [flags]
+```
+
+Only flags explicitly provided are sent to the API - omitted flags leave fields unchanged.
+
+Flags:
+```
+  --title string            issue title
+  --description string      issue description in markdown
+  --assignee string         assignee name, email, UUID, or "me"
+  --state string            workflow state name or ID
+  --priority int            priority: 0=none, 1=urgent, 2=high, 3=normal, 4=low
+  --label stringArray       set labels, replacing all existing (repeatable)
+  --add-label stringArray   add label by name or ID (repeatable)
+  --remove-label stringArray remove label by name or ID (repeatable)
+  --due-date string         due date (YYYY-MM-DD)
+  --estimate int            complexity estimate (integer)
+  --cycle string            cycle ID
+  --project string          project name or ID
+  --parent string           parent issue identifier or ID
+  --json                    output updated issue as JSON
+```
+
+Example:
+```
+linear issue update ENG-42 --state Done --assignee me
+```
+
+### Delete issue
+
+```
+linear issue delete <identifier> [flags]
+```
+
+By default, moves the issue to trash (30-day grace period for recovery). Use `--archive` to archive instead.
+
+Flags:
+```
+  --archive   archive the issue instead of trashing it
+  --yes       skip confirmation prompt
+```
+
+Example:
+```
+linear issue delete ENG-42 --yes
+linear issue delete ENG-42 --archive
+```

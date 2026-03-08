@@ -2,10 +2,14 @@ package model
 
 // WorkflowState represents a Linear workflow state.
 type WorkflowState struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Color string `json:"color"`
-	Type  string `json:"type"`
+	ID          string  `json:"id"`
+	Name        string  `json:"name"`
+	Color       string  `json:"color"`
+	Type        string  `json:"type"`
+	Description *string `json:"description,omitempty"`
+	Position    float64 `json:"position,omitempty"`
+	Team        *Team   `json:"team,omitempty"`
+	CreatedAt   string  `json:"createdAt,omitempty"`
 }
 
 // User represents a Linear user.
@@ -39,7 +43,12 @@ type Team struct {
 
 // IssueLabel represents a Linear issue label.
 type IssueLabel struct {
-	ID    string `json:"id"`
-	Name  string `json:"name"`
-	Color string `json:"color"`
+	ID          string      `json:"id"`
+	Name        string      `json:"name"`
+	Color       string      `json:"color"`
+	Description *string     `json:"description,omitempty"`
+	IsGroup     bool        `json:"isGroup"`
+	Team        *Team       `json:"team,omitempty"`
+	Parent      *IssueLabel `json:"parent,omitempty"`
+	CreatedAt   string      `json:"createdAt,omitempty"`
 }

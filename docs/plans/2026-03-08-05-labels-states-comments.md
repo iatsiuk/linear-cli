@@ -39,14 +39,14 @@
 ## Implementation Steps
 
 ### Task 1: Label, State, Comment models (extend existing)
-- [ ] write tests for IssueLabel full struct deserialization
-- [ ] write tests for WorkflowState full struct deserialization
-- [ ] write tests for Comment struct deserialization (including nested user, parent)
-- [ ] extend models in `internal/model/`:
+- [x] write tests for IssueLabel full struct deserialization
+- [x] write tests for WorkflowState full struct deserialization
+- [x] write tests for Comment struct deserialization (including nested user, parent)
+- [x] extend models in `internal/model/`:
   - IssueLabel full: ID, Name, Color, Description, IsGroup, Team, Parent, CreatedAt
   - WorkflowState full: ID, Name, Color, Description, Position, Type, Team, CreatedAt
   - Comment: ID, Body, CreatedAt, UpdatedAt, EditedAt, URL, User, Issue(identifier)
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 2: GraphQL queries for labels, states, comments
 - [ ] write tests for query construction

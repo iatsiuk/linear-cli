@@ -56,13 +56,13 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 3: `linear project list/show` commands
-- [ ] write tests for project list: fetches projects, table output, filters
-- [ ] write tests for project show: fetches by ID, detailed output
-- [ ] create `internal/cmd/project.go`:
+- [x] write tests for project list: fetches projects, table output, filters
+- [x] write tests for project show: fetches by ID, detailed output
+- [x] create `internal/cmd/project.go`:
   - `project list`: flags `--team`, `--status`, `--health`, `--limit`, `--json`, `--include-archived`, `--order-by`
   - `project show <id>`: full project details
   - table columns: Name | Status | Health | Progress | Target Date
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 4: `linear project create/update/delete` commands
 - [ ] write tests for project create: required flags, mutation variables

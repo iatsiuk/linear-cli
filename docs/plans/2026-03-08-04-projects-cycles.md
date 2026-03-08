@@ -78,10 +78,10 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 5: Cycle GraphQL queries
-- [ ] write tests for cycle query string construction
-- [ ] create `internal/query/cycle.go`:
+- [x] write tests for cycle query string construction
+- [x] create `internal/query/cycle.go`:
   - CycleListQuery, CycleGetQuery
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 6: `linear cycle list/show/active` commands
 - [ ] write tests for cycle list: fetches cycles for team, table output

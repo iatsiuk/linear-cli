@@ -117,6 +117,18 @@ func printIssueDetail(cmd *cobra.Command, issue *model.Issue) error {
 		}
 	}
 
+	if issue.Parent != nil {
+		if err := writeLine("Parent", issue.Parent.Identifier+": "+issue.Parent.Title); err != nil {
+			return err
+		}
+	}
+
+	if issue.Project != nil {
+		if err := writeLine("Project", issue.Project.Name); err != nil {
+			return err
+		}
+	}
+
 	if issue.Description != nil && *issue.Description != "" {
 		_, err := fmt.Fprintf(w, "\n%s\n", *issue.Description)
 		return err

@@ -87,17 +87,54 @@ linear issue list [flags]
 
 Flags:
 ```
-  --team string        filter by team key (e.g. ENG)
-  --assignee string    filter by assignee display name
-  --state string       filter by workflow state name
-  --priority int       filter by priority: 0=none, 1=urgent, 2=high, 3=normal, 4=low
-  --limit int          maximum number of issues to return (default 50)
-  --include-archived   include archived issues
-  --order-by string    sort order: createdAt|updatedAt (default "updatedAt")
-  --json               output as JSON array
+  --team string             filter by team key (e.g. ENG)
+  --assignee string         filter by assignee display name
+  --state string            filter by workflow state name
+  --priority int            filter by priority: 0=none, 1=urgent, 2=high, 3=normal, 4=low
+  --limit int               maximum number of issues to return (default 50)
+  --include-archived        include archived issues
+  --order-by string         sort order: createdAt|updatedAt (default "updatedAt")
+  --json                    output as JSON array
+
+  --created-after string    issues created after date
+  --created-before string   issues created before date
+  --updated-after string    issues updated after date
+  --updated-before string   issues updated before date
+  --due-after string        issues with due date after
+  --due-before string       issues with due date before
+  --completed-after string  issues completed after date
+  --completed-before string issues completed before date
+  --priority-gte int        minimum priority value
+  --priority-lte int        maximum priority value
+  --my                      only issues assigned to me
+  --no-assignee             only issues with no assignee
+  --no-project              only issues with no project
+  --no-cycle                only issues with no cycle
+  --or                      combine filters with OR logic (default is AND)
 ```
 
 Output columns: ID, Title, Status, Priority, Assignee
+
+#### Filter date syntax
+
+Date flags accept:
+```
+  7d, 14d        N days ago (-P7D, -P14D)
+  2w, 4w         N weeks ago (-P2W, -P4W)
+  1m, 3m         N months ago (-P1M, -P3M)
+  today          current date (ISO 8601)
+  yesterday      yesterday's date (ISO 8601)
+  2026-03-01     exact ISO 8601 date
+  -P30D          ISO 8601 duration (passed directly to API)
+```
+
+Examples:
+```
+linear issue list --created-after 7d --priority-gte 2 --no-assignee
+linear issue list --team ENG --my --state "In Progress"
+linear issue list --due-before today --priority-lte 2
+linear issue list --updated-after 2w --or --no-project --no-cycle
+```
 
 ### Show issue
 
@@ -174,6 +211,39 @@ Flags:
 Example:
 ```
 linear issue update ENG-42 --state Done --assignee me
+```
+
+### Batch update issues
+
+```
+linear issue batch update [<id1> <id2> ...] [flags]
+```
+
+Updates multiple issues in a single API call. Accepts issue identifiers (e.g. ENG-42) as arguments or from stdin (one per line). Maximum 50 issues per batch.
+
+Flags:
+```
+  --assignee string          assignee name, email, UUID, or "me"
+  --state string             workflow state name or ID
+  --priority int             priority: 0=none, 1=urgent, 2=high, 3=normal, 4=low
+  --label stringArray        set labels, replacing all existing (repeatable)
+  --add-label stringArray    add label by name or ID (repeatable)
+  --remove-label stringArray remove label by name or ID (repeatable)
+  --project string           project name or ID
+  --cycle string             cycle ID
+  --json                     output updated issues as JSON array
+```
+
+At least one change flag is required. `--label` cannot be combined with `--add-label` or `--remove-label`.
+
+Note: `--state` resolves the state name workspace-wide. If multiple teams have states with the same name, the first match is used.
+
+Examples:
+```
+linear issue batch update ENG-1 ENG-2 ENG-3 --state Done
+linear issue batch update ENG-10 ENG-11 --assignee me --priority 2
+linear issue batch update ENG-5 ENG-6 --add-label bug --remove-label "needs triage"
+echo -e "ENG-1\nENG-2\nENG-3" | linear issue batch update --state "In Review"
 ```
 
 ### Delete issue
@@ -577,4 +647,77 @@ Output fields: Name, Email, Role, Active, Created, Updated.
 Example:
 ```
 linear user show abc123de-f456-7890-abcd-ef1234567890
+```
+
+## Search Command
+
+Full-text search across all issues.
+
+```
+linear search <query> [flags]
+```
+
+Flags:
+```
+  --team string   boost results for a specific team (team key, e.g. ENG)
+  --limit int     maximum number of results to return (default 25)
+  --json          output as JSON array
+```
+
+Output columns: ID | Title | Status | Team
+
+Examples:
+```
+linear search "login bug"
+linear search "payment timeout" --team ENG
+linear search "auth" --limit 10 --json
+```
+
+## Shell Completion
+
+Generate tab-completion scripts for your shell.
+
+```
+linear completion <shell>
+```
+
+Supported shells: bash, zsh, fish, powershell
+
+Setup:
+```
+# bash
+linear completion bash > /etc/bash_completion.d/linear
+
+# zsh
+linear completion zsh > "${fpath[1]}/_linear"
+
+# fish
+linear completion fish > ~/.config/fish/completions/linear.fish
+
+# powershell
+linear completion powershell >> $PROFILE
+```
+
+## Pipe-friendly Workflows
+
+All commands support `--json` output for use in pipelines. The `issue batch update` command reads identifiers from stdin when no arguments are given.
+
+Get all high-priority unassigned issues and assign them to me:
+```
+linear issue list --priority-gte 1 --no-assignee --json | jq -r '.[].identifier' | linear issue batch update --assignee me
+```
+
+Close all issues in a specific state:
+```
+linear issue list --state "Cancelled" --json | jq -r '.[].identifier' | linear issue batch update --state Done
+```
+
+Search and update by priority:
+```
+linear search "login" --json | jq -r '.[] | select(.priority == "Urgent") | .identifier' | linear issue batch update --assignee me
+```
+
+Export issues to CSV (using jq):
+```
+linear issue list --team ENG --json | jq -r '.[] | [.identifier, .title, .state.name] | @csv'
 ```

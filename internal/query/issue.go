@@ -73,3 +73,21 @@ mutation IssueArchive($id: String!) {
 	}
 }
 `
+
+// IssueBatchUpdateMutation updates multiple issues at once (max 50).
+const IssueBatchUpdateMutation = `
+mutation IssueBatchUpdate($ids: [UUID!]!, $input: IssueUpdateInput!) {
+	issueBatchUpdate(ids: $ids, input: $input) {
+		issues {` + issueFields + `}
+	}
+}
+`
+
+// IssueSearchQuery performs full-text search across issues.
+const IssueSearchQuery = `
+query SearchIssues($term: String!, $first: Int, $teamId: String) {
+	searchIssues(term: $term, first: $first, teamId: $teamId) {
+		nodes {` + issueFields + `}
+	}
+}
+`

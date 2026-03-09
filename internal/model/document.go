@@ -15,8 +15,3 @@ type Document struct {
 	CreatedAt  string   `json:"createdAt"`
 	UpdatedAt  string   `json:"updatedAt"`
 }
-
-// DocumentConnection wraps a list of documents (relay connection).
-type DocumentConnection struct {
-	Nodes []Document `json:"nodes"`
-}

@@ -4,12 +4,10 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 
-	"linear-cli/internal/api"
 	"linear-cli/internal/model"
 	"linear-cli/internal/output"
 	"linear-cli/internal/query"
@@ -18,8 +16,7 @@ import (
 type attachmentListResult struct {
 	Issue *struct {
 		Attachments struct {
-			Nodes    []model.Attachment `json:"nodes"`
-			PageInfo api.PageInfo       `json:"pageInfo"`
+			Nodes []model.Attachment `json:"nodes"`
 		} `json:"attachments"`
 	} `json:"issue"`
 }
@@ -80,23 +77,15 @@ func runAttachmentList(cmd *cobra.Command, args []string) error {
 	identifier := args[0]
 	ctx := context.Background()
 
-	attachments, err := api.PaginateAll(ctx, func(ctx context.Context, _ *string, _ int) (api.Connection[model.Attachment], error) {
-		vars := map[string]any{"issueId": identifier}
-		var result attachmentListResult
-		if err := client.Do(ctx, query.AttachmentListQuery, vars, &result); err != nil {
-			return api.Connection[model.Attachment]{}, err
-		}
-		if result.Issue == nil {
-			return api.Connection[model.Attachment]{}, fmt.Errorf("issue %q not found", identifier)
-		}
-		return api.Connection[model.Attachment]{
-			Nodes:    result.Issue.Attachments.Nodes,
-			PageInfo: result.Issue.Attachments.PageInfo,
-		}, nil
-	}, 50, 0)
-	if err != nil {
+	vars := map[string]any{"issueId": identifier}
+	var listResult attachmentListResult
+	if err := client.Do(ctx, query.AttachmentListQuery, vars, &listResult); err != nil {
 		return fmt.Errorf("list attachments: %w", err)
 	}
+	if listResult.Issue == nil {
+		return fmt.Errorf("issue %q not found", identifier)
+	}
+	attachments := listResult.Issue.Attachments.Nodes
 
 	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")
 	if jsonMode {
@@ -161,9 +150,6 @@ func runAttachmentCreate(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("upload file: %w", uploadErr)
 		}
 		attachmentURL = assetURL
-		if title == "" {
-			title = filepath.Base(fileFlag)
-		}
 	}
 
 	input := map[string]any{

@@ -11,8 +11,3 @@ type Attachment struct {
 	CreatedAt string  `json:"createdAt"`
 	UpdatedAt string  `json:"updatedAt"`
 }
-
-// AttachmentConnection wraps a list of attachments (relay connection).
-type AttachmentConnection struct {
-	Nodes []Attachment `json:"nodes"`
-}

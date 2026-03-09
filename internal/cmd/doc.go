@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"linear-cli/internal/api"
 	"linear-cli/internal/model"
 	"linear-cli/internal/output"
 	"linear-cli/internal/query"
@@ -75,9 +76,13 @@ func runDocList(cmd *cobra.Command, _ []string) error {
 	}
 
 	if projectID != "" {
+		resolvedID, err := api.ResolveProjectID(context.Background(), client, projectID)
+		if err != nil {
+			return err
+		}
 		vars["filter"] = map[string]any{
 			"project": map[string]any{
-				"id": map[string]any{"eq": projectID},
+				"id": map[string]any{"eq": resolvedID},
 			},
 		}
 	}

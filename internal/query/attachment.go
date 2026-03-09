@@ -17,17 +17,7 @@ query AttachmentList($issueId: String!) {
 	issue(id: $issueId) {
 		attachments(first: 50) {
 			nodes {` + attachmentFields + `}
-			pageInfo { hasNextPage endCursor }
 		}
-	}
-}
-`
-
-// AttachmentGetQuery fetches a single attachment by ID.
-const AttachmentGetQuery = `
-query AttachmentGet($id: String!) {
-	attachment(id: $id) {` + attachmentFields + `
-		issue { id identifier title }
 	}
 }
 `

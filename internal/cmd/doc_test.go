@@ -129,6 +129,7 @@ func TestDocListCommand_JSONOutput(t *testing.T) {
 }
 
 func TestDocListCommand_ProjectFilter(t *testing.T) {
+	const projectUUID = "550e8400-e29b-41d4-a716-446655440000"
 
 	var gotVars map[string]any
 	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
@@ -145,7 +146,7 @@ func TestDocListCommand_ProjectFilter(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"doc", "list", "--project", "proj-abc"})
+	root.SetArgs([]string{"doc", "list", "--project", projectUUID})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -163,8 +164,8 @@ func TestDocListCommand_ProjectFilter(t *testing.T) {
 	if !ok {
 		t.Fatalf("filter.project.id not set, got: %v", proj["id"])
 	}
-	if idFilter["eq"] != "proj-abc" {
-		t.Errorf("filter.project.id.eq = %v, want proj-abc", idFilter["eq"])
+	if idFilter["eq"] != projectUUID {
+		t.Errorf("filter.project.id.eq = %v, want %s", idFilter["eq"], projectUUID)
 	}
 }
 

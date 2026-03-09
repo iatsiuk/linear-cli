@@ -409,6 +409,137 @@ Example:
 linear cycle active --team ENG
 ```
 
+## Label Commands
+
+Manage Linear issue labels with the `label` subcommand.
+
+### List labels
+
+```
+linear label list [flags]
+```
+
+Flags:
+```
+  --team string   filter by team key (e.g. ENG); omit to list workspace labels
+  --json          output as JSON array
+```
+
+Output columns: Name | Color | Description | Team | Group
+
+Example:
+```
+linear label list
+linear label list --team ENG
+```
+
+### Create label
+
+```
+linear label create --name <name> --color <hex> [flags]
+```
+
+Flags:
+```
+  --name string          label name (required)
+  --color string         label color in hex format, e.g. #ff0000 (required)
+  --team string          team key or ID (omit for workspace-level label)
+  --description string   label description
+  --json                 output created label as JSON
+```
+
+Example:
+```
+linear label create --name "bug" --color "#e11d48" --team ENG
+```
+
+### Update label
+
+```
+linear label update <id> [flags]
+```
+
+Only flags explicitly provided are sent to the API - omitted flags leave fields unchanged.
+
+Flags:
+```
+  --name string          label name
+  --color string         label color in hex format
+  --description string   label description
+  --json                 output updated label as JSON
+```
+
+Example:
+```
+linear label update abc123 --color "#f97316"
+```
+
+## State Commands
+
+Manage Linear workflow states with the `state` subcommand.
+
+### List states
+
+```
+linear state list --team <key> [flags]
+```
+
+Output is grouped by state type: Triage, Backlog, Unstarted, Started, Completed, Canceled.
+
+Flags:
+```
+  --team string   team key (required)
+  --json          output as JSON array
+```
+
+Output columns: Name | Type | Color
+
+Example:
+```
+linear state list --team ENG
+```
+
+## Comment Commands
+
+Manage Linear issue comments with the `comment` subcommand.
+
+### List comments
+
+```
+linear comment list <issue-identifier> [flags]
+```
+
+Flags:
+```
+  --json   output as JSON array
+```
+
+Output columns: Author | Date | Body (truncated). Replies (threaded comments) are prefixed with `> `.
+
+Example:
+```
+linear comment list ENG-42
+```
+
+### Create comment
+
+```
+linear comment create <issue-identifier> --body <text> [flags]
+```
+
+Flags:
+```
+  --body string     comment body in markdown (required)
+  --parent string   parent comment ID for threading (reply to a comment)
+  --json            output created comment as JSON
+```
+
+Example:
+```
+linear comment create ENG-42 --body "Looks good, merging soon."
+linear comment create ENG-42 --body "Agreed." --parent abc123
+```
+
 ## User Commands
 
 Manage Linear users with the `user` subcommand.

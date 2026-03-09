@@ -107,8 +107,8 @@
 **comment list**: Author | Date | Body
 
 ### Task 7: [Final] Update documentation
-- [ ] update README.md with label, state, and comment commands usage
-- [ ] document all command flags and options
+- [x] update README.md with label, state, and comment commands usage
+- [x] document all command flags and options
 
 ## Post-Completion
 - Manual testing with real Linear workspace

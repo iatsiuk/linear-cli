@@ -194,9 +194,9 @@ using the same value passed to the `fileUpload` mutation.
 
 **Error from GCS:** `MalformedSecurityHeader: Header was included in signedheaders, but not in the request. ParameterName: content-type`
 
-- [ ] write test in `internal/api/upload_test.go`: verify PUT request includes `Content-Type` header matching the contentType passed to `fileUpload` mutation
-- [ ] fix `internal/api/upload.go`: add `req.Header.Set("Content-Type", contentType)` after applying API headers (after line 94); this requires passing `contentType` into the PUT section or restructuring slightly
-- [ ] run `make build` and tests -- must pass before next task
+- [x] write test in `internal/api/upload_test.go`: verify PUT request includes `Content-Type` header matching the contentType passed to `fileUpload` mutation
+- [x] fix `internal/api/upload.go`: add `req.Header.Set("Content-Type", contentType)` after applying API headers (after line 94); this requires passing `contentType` into the PUT section or restructuring slightly
+- [x] run `make build` and tests -- must pass before next task
 
 ### Task 8: Verify acceptance criteria
 

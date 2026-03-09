@@ -42,14 +42,14 @@
 ## Implementation Steps
 
 ### Task 1: Issue Relation model and queries
-- [ ] write tests for IssueRelation struct deserialization
-- [ ] create `internal/model/relation.go`:
+- [x] write tests for IssueRelation struct deserialization
+- [x] create `internal/model/relation.go`:
   - IssueRelation struct: ID, Type, Issue(Issue), RelatedIssue(Issue), CreatedAt
-- [ ] create `internal/query/relation.go`:
+- [x] create `internal/query/relation.go`:
   - RelationListQuery (via issue.relations + issue.inverseRelations)
   - RelationCreateMutation, RelationUpdateMutation, RelationDeleteMutation
-- [ ] write tests for query construction
-- [ ] run `make test` - must pass before next task
+- [x] write tests for query construction
+- [x] run `make test` - must pass before next task
 
 ### Task 2: `linear issue relation` commands
 - [ ] write tests for relation list: fetches relations for issue, shows type + direction

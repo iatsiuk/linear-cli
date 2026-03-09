@@ -391,6 +391,46 @@ func TestRelationDeleteCommand_SuccessFalse(t *testing.T) {
 	}
 }
 
+// TestRelationListCommand_ExtraArgs verifies error when too many arguments are provided.
+func TestRelationListCommand_ExtraArgs(t *testing.T) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "relation", "list", "ENG-1", "ENG-2"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when too many arguments provided")
+	}
+	if !strings.Contains(err.Error(), "accepts 1 argument") {
+		t.Errorf("error should mention accepts 1 argument, got: %v", err)
+	}
+}
+
+// TestRelationDeleteCommand_ExtraArgs verifies error when too many arguments are provided.
+func TestRelationDeleteCommand_ExtraArgs(t *testing.T) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "relation", "delete", "rel-1", "rel-2", "--yes"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when too many arguments provided")
+	}
+	if !strings.Contains(err.Error(), "accepts 1 argument") {
+		t.Errorf("error should mention accepts 1 argument, got: %v", err)
+	}
+}
+
 // TestRelationListCommand_JSONOutput verifies JSON output for relation list.
 func TestRelationListCommand_JSONOutput(t *testing.T) {
 	issue1 := makeIssue("ENG-1", "Issue 1", "Todo", "Medium", "")

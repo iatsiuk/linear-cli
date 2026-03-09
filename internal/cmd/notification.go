@@ -114,6 +114,7 @@ func newNotificationReadCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "read [id]",
 		Short: "Mark notification(s) as read",
+		Args:  cobra.MaximumNArgs(1),
 		RunE:  runNotificationRead,
 	}
 	cmd.Flags().Bool("all", false, "mark all notifications as read")
@@ -123,6 +124,9 @@ func newNotificationReadCommand() *cobra.Command {
 func runNotificationRead(cmd *cobra.Command, args []string) error {
 	allFlag, _ := cmd.Flags().GetBool("all")
 
+	if allFlag && len(args) > 0 {
+		return fmt.Errorf("cannot specify notification ID with --all flag")
+	}
 	if !allFlag && len(args) == 0 {
 		return fmt.Errorf("notification id is required, or use --all")
 	}
@@ -176,6 +180,7 @@ func newNotificationArchiveCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "archive [id]",
 		Short: "Archive notification(s)",
+		Args:  cobra.MaximumNArgs(1),
 		RunE:  runNotificationArchive,
 	}
 	cmd.Flags().Bool("all", false, "archive all notifications")
@@ -185,6 +190,9 @@ func newNotificationArchiveCommand() *cobra.Command {
 func runNotificationArchive(cmd *cobra.Command, args []string) error {
 	allFlag, _ := cmd.Flags().GetBool("all")
 
+	if allFlag && len(args) > 0 {
+		return fmt.Errorf("cannot specify notification ID with --all flag")
+	}
 	if !allFlag && len(args) == 0 {
 		return fmt.Errorf("notification id is required, or use --all")
 	}

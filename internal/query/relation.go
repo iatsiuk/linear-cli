@@ -49,16 +49,6 @@ mutation RelationCreate($input: IssueRelationCreateInput!) {
 }
 `
 
-// RelationUpdateMutation updates an existing issue relation.
-const RelationUpdateMutation = `
-mutation RelationUpdate($id: String!, $input: IssueRelationUpdateInput!) {
-	issueRelationUpdate(id: $id, input: $input) {
-		success
-		issueRelation {` + relationFields + `}
-	}
-}
-`
-
 // RelationDeleteMutation deletes an issue relation by ID.
 const RelationDeleteMutation = `
 mutation RelationDelete($id: String!) {

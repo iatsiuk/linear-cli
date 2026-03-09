@@ -360,6 +360,46 @@ func TestNotificationArchiveCommand_All(t *testing.T) {
 	}
 }
 
+// TestNotificationReadCommand_AllWithID verifies error when --all and ID are both provided.
+func TestNotificationReadCommand_AllWithID(t *testing.T) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"notification", "read", "notif-1", "--all"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when both ID and --all provided")
+	}
+	if !strings.Contains(err.Error(), "--all") {
+		t.Errorf("error should mention --all flag, got: %v", err)
+	}
+}
+
+// TestNotificationArchiveCommand_AllWithID verifies error when --all and ID are both provided.
+func TestNotificationArchiveCommand_AllWithID(t *testing.T) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"notification", "archive", "notif-1", "--all"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when both ID and --all provided")
+	}
+	if !strings.Contains(err.Error(), "--all") {
+		t.Errorf("error should mention --all flag, got: %v", err)
+	}
+}
+
 // TestNotificationArchiveCommand_MissingID verifies error when no id and no --all.
 func TestNotificationArchiveCommand_MissingID(t *testing.T) {
 	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {})

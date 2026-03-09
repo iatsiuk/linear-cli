@@ -63,6 +63,9 @@ func newRelationListCommand() *cobra.Command {
 			if len(args) == 0 {
 				return fmt.Errorf("issue identifier is required (e.g. ENG-42)")
 			}
+			if len(args) > 1 {
+				return fmt.Errorf("accepts 1 argument, received %d", len(args))
+			}
 			return nil
 		},
 		RunE: runRelationList,
@@ -131,6 +134,9 @@ func newRelationCreateCommand() *cobra.Command {
 			if len(args) == 0 {
 				return fmt.Errorf("issue identifier is required (e.g. ENG-42)")
 			}
+			if len(args) > 1 {
+				return fmt.Errorf("accepts 1 argument, received %d", len(args))
+			}
 			return nil
 		},
 		RunE: runRelationCreate,
@@ -188,6 +194,9 @@ func newRelationDeleteCommand() *cobra.Command {
 		Args: func(_ *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf("relation ID is required")
+			}
+			if len(args) > 1 {
+				return fmt.Errorf("accepts 1 argument, received %d", len(args))
 			}
 			return nil
 		},

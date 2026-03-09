@@ -97,6 +97,35 @@ func TestIssueBranchCommand_JSONOutput(t *testing.T) {
 	}
 }
 
+func TestIssueBranchCommand_AutoDetect(t *testing.T) {
+	var gotBranch string
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if v, ok := body.Variables["branchName"].(string); ok {
+			gotBranch = v
+		}
+		writeJSONResponse(w, branchSearchResponse(makeDetailedIssue()))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "branch"})
+
+	if err := root.Execute(); err != nil {
+		t.Skipf("git not available or not in repo: %v", err)
+	}
+
+	if gotBranch == "" || gotBranch == "HEAD" {
+		t.Errorf("expected non-empty branch name from auto-detect, got %q", gotBranch)
+	}
+}
+
 func TestIssueBranchCommand_NotFound(t *testing.T) {
 	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
 		writeJSONResponse(w, branchSearchResponse(nil))

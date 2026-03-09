@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -58,10 +59,18 @@ func runIssueBranch(cmd *cobra.Command, args []string) error {
 
 func resolveBranchName(args []string) (string, error) {
 	if len(args) > 0 {
-		return strings.TrimSpace(args[0]), nil
+		branch := strings.TrimSpace(args[0])
+		if branch == "" {
+			return "", fmt.Errorf("branch name cannot be empty")
+		}
+		return branch, nil
 	}
 	out, err := exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD").Output()
 	if err != nil {
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && len(exitErr.Stderr) > 0 {
+			return "", fmt.Errorf("get current git branch: %s", strings.TrimSpace(string(exitErr.Stderr)))
+		}
 		return "", fmt.Errorf("get current git branch: %w", err)
 	}
 	branch := strings.TrimSpace(string(out))

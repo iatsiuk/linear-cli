@@ -49,3 +49,12 @@ mutation NotificationArchiveAll($input: NotificationEntityInput!) {
 	}
 }
 `
+
+// NotificationArchiveMutation archives a single notification.
+const NotificationArchiveMutation = `
+mutation NotificationArchive($id: String!) {
+	notificationArchive(id: $id) {
+		success
+	}
+}
+`

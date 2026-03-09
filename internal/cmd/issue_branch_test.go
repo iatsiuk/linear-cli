@@ -19,7 +19,7 @@ func branchSearchResponse(issue map[string]any) map[string]any {
 }
 
 func TestIssueBranchCommand_TableOutput(t *testing.T) {
-issue := makeDetailedIssue()
+	issue := makeDetailedIssue()
 	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
 		writeJSONResponse(w, branchSearchResponse(issue))
 	})
@@ -45,7 +45,7 @@ issue := makeDetailedIssue()
 }
 
 func TestIssueBranchCommand_SendsBranchName(t *testing.T) {
-var gotVars map[string]any
+	var gotVars map[string]any
 	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
 		var body struct {
 			Variables map[string]any `json:"variables"`
@@ -72,7 +72,7 @@ var gotVars map[string]any
 }
 
 func TestIssueBranchCommand_JSONOutput(t *testing.T) {
-issue := makeDetailedIssue()
+	issue := makeDetailedIssue()
 	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
 		writeJSONResponse(w, branchSearchResponse(issue))
 	})
@@ -98,7 +98,7 @@ issue := makeDetailedIssue()
 }
 
 func TestIssueBranchCommand_NotFound(t *testing.T) {
-server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
 		writeJSONResponse(w, branchSearchResponse(nil))
 	})
 	setupIssueTest(t, server)

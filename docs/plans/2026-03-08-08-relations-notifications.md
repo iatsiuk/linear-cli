@@ -84,16 +84,16 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 5: `linear notification` commands
-- [ ] write tests for notification list: fetches notifications, table output
-- [ ] write tests for notification read/archive: sends correct mutations
-- [ ] create `internal/cmd/notification.go`:
+- [x] write tests for notification list: fetches notifications, table output
+- [x] write tests for notification read/archive: sends correct mutations
+- [x] create `internal/cmd/notification.go`:
   - `notification list`: flags `--unread`, `--limit`, `--json`
   - `notification read <id>`: marks single notification as read
   - `notification read --all`: marks all as read (`notificationMarkReadAll`)
   - `notification archive <id>`: archives single notification
   - `notification archive --all`: archives all (`notificationArchiveAll`)
   - table columns: Type | Created | Read
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 6: Verify acceptance criteria
 - [ ] verify `linear issue relation list ENG-123` shows issue relations

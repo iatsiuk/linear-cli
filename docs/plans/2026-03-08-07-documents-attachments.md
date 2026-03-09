@@ -42,13 +42,13 @@
 ## Implementation Steps
 
 ### Task 1: Document model and queries
-- [ ] write tests for Document struct deserialization (all key fields, nullable fields)
-- [ ] create `internal/model/document.go`:
+- [x] write tests for Document struct deserialization (all key fields, nullable fields)
+- [x] create `internal/model/document.go`:
   - Document struct: ID, Title, Content(*string), Creator(*User), Project(*Project), CreatedAt, UpdatedAt, ArchivedAt
-- [ ] create `internal/query/document.go`:
+- [x] create `internal/query/document.go`:
   - DocumentListQuery, DocumentGetQuery, DocumentCreateMutation, DocumentUpdateMutation, DocumentDeleteMutation
-- [ ] write tests for query construction
-- [ ] run `make test` - must pass before next task
+- [x] write tests for query construction
+- [x] run `make test` - must pass before next task
 
 ### Task 2: `linear doc list/show` commands
 - [ ] write tests for doc list: fetches documents, table output, filters

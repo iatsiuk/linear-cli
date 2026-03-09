@@ -1,6 +1,6 @@
 package query
 
-// documentFields is the common field selection for Document.
+// documentFields is the common field selection for Document (includes content).
 const documentFields = `
 	id
 	title
@@ -16,11 +16,26 @@ const documentFields = `
 	project { id name }
 `
 
+// documentListFields is the field selection for listing documents (excludes content for efficiency).
+const documentListFields = `
+	id
+	title
+	slugId
+	url
+	createdAt
+	updatedAt
+	archivedAt
+	hiddenAt
+	trashed
+	creator { id displayName email }
+	project { id name }
+`
+
 // DocumentListQuery fetches documents, optionally filtered by project.
 const DocumentListQuery = `
 query DocumentList($first: Int, $after: String, $filter: DocumentFilter, $includeArchived: Boolean) {
 	documents(first: $first, after: $after, filter: $filter, includeArchived: $includeArchived) {
-		nodes {` + documentFields + `}
+		nodes {` + documentListFields + `}
 		pageInfo { hasNextPage endCursor }
 	}
 }

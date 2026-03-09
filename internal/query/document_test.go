@@ -23,7 +23,6 @@ func TestDocumentListQuery(t *testing.T) {
 		{"endCursor", "endCursor"},
 		{"id field", "id"},
 		{"title field", "title"},
-		{"content field", "content"},
 		{"creator block", "creator {"},
 		{"project block", "project {"},
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math"
 	"mime"
 	"net/http"
 	"os"
@@ -61,6 +62,9 @@ func (c *Client) Upload(ctx context.Context, filePath string) (string, error) {
 
 	filename := filepath.Base(filePath)
 	contentType := contentTypeFromName(filename)
+	if info.Size() > math.MaxInt32 {
+		return "", fmt.Errorf("file too large: %d bytes (max 2 GB)", info.Size())
+	}
 	size := int(info.Size())
 
 	vars := map[string]any{

@@ -11,12 +11,13 @@ const attachmentFields = `
 	creator { id displayName email }
 `
 
-// AttachmentListQuery fetches attachments for a given issue.
+// AttachmentListQuery fetches attachments for a given issue (capped at 50).
 const AttachmentListQuery = `
 query AttachmentList($issueId: String!) {
 	issue(id: $issueId) {
 		attachments(first: 50) {
 			nodes {` + attachmentFields + `}
+			pageInfo { hasNextPage }
 		}
 	}
 }

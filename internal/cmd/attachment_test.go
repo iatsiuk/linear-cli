@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 
 	"linear-cli/internal/cmd"
@@ -408,13 +409,13 @@ func TestAttachmentDeleteCommand_MissingID(t *testing.T) {
 // newUploadServer creates a PUT server and a queued GraphQL server whose
 // fileUpload response points to the PUT server. Returns both servers and
 // a flag indicating whether a PUT was received.
-func newUploadServer(t *testing.T, assetURL string, putStatus int, extraResponses []map[string]any) (*httptest.Server, *httptest.Server, *bool, *[]map[string]any) {
+func newUploadServer(t *testing.T, assetURL string, putStatus int, extraResponses []map[string]any) (*httptest.Server, *httptest.Server, *atomic.Bool, *[]map[string]any) {
 	t.Helper()
 
-	putReceived := false
+	var putReceived atomic.Bool
 	putServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPut {
-			putReceived = true
+			putReceived.Store(true)
 		}
 		w.WriteHeader(putStatus)
 	}))
@@ -486,7 +487,7 @@ func TestAttachmentCreateCommand_WithFile(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if !*putReceived {
+	if !putReceived.Load() {
 		t.Error("expected PUT to upload server, but none received")
 	}
 

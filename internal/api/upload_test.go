@@ -7,22 +7,23 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
 )
 
 // newUploadTestServers creates a GraphQL test server (for the fileUpload mutation)
 // and a separate PUT server (for the actual file upload).
 // The GraphQL server returns the PUT server URL as uploadUrl.
-func newUploadTestServers(t *testing.T, putStatus int, assetUrl string) (gqlServer *httptest.Server, putServer *httptest.Server, putReceived *bool) {
+func newUploadTestServers(t *testing.T, putStatus int, assetUrl string) (gqlServer *httptest.Server, putServer *httptest.Server, putReceived *atomic.Bool) {
 	t.Helper()
 
-	received := false
+	var received atomic.Bool
 	putServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPut {
 			http.Error(w, "expected PUT", http.StatusMethodNotAllowed)
 			return
 		}
-		received = true
+		received.Store(true)
 		w.WriteHeader(putStatus)
 	}))
 	t.Cleanup(putServer.Close)
@@ -73,7 +74,7 @@ func TestUpload_HappyPath(t *testing.T) {
 	if got != assetUrl {
 		t.Errorf("assetUrl = %q, want %q", got, assetUrl)
 	}
-	if !*putReceived {
+	if !putReceived.Load() {
 		t.Error("expected PUT request to upload server, but none received")
 	}
 }

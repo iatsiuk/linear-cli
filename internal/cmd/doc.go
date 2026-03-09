@@ -39,6 +39,9 @@ func newDocCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newDocListCommand())
 	cmd.AddCommand(newDocShowCommand())
+	cmd.AddCommand(newDocCreateCommand())
+	cmd.AddCommand(newDocUpdateCommand())
+	cmd.AddCommand(newDocDeleteCommand())
 	return cmd
 }
 

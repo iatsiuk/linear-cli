@@ -60,20 +60,20 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 3: `linear doc create/update/delete` commands
-- [ ] write tests for doc create: required title, sends mutation
-- [ ] write tests for doc update: partial update, correct mutation
-- [ ] write tests for doc delete: trash mutation (30-day grace), confirmation
-- [ ] create `internal/cmd/doc_create.go`:
+- [x] write tests for doc create: required title, sends mutation
+- [x] write tests for doc update: partial update, correct mutation
+- [x] write tests for doc delete: trash mutation (30-day grace), confirmation
+- [x] create `internal/cmd/doc_create.go`:
   - flags: `--title` (required), `--content`, `--project`
   - `--content-file` flag: read content from file
-- [ ] create `internal/cmd/doc_update.go`:
+- [x] create `internal/cmd/doc_update.go`:
   - flags: `--title`, `--content`, `--content-file`
   - accepts document ID or URL identifier as argument
-- [ ] create `internal/cmd/doc_delete.go`:
+- [x] create `internal/cmd/doc_delete.go`:
   - `documentDelete` (trash, 30-day grace)
   - `--restore` flag: `documentUnarchive` to restore from trash
   - `--yes` to skip confirmation
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 4: Attachment model and queries
 - [ ] write tests for Attachment struct deserialization

@@ -74,14 +74,14 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 4: Notification model and queries
-- [ ] write tests for Notification struct deserialization
-- [ ] create `internal/model/notification.go`:
+- [x] write tests for Notification struct deserialization
+- [x] create `internal/model/notification.go`:
   - Notification struct: ID, Type, ReadAt, ArchivedAt, CreatedAt
-- [ ] create `internal/query/notification.go`:
+- [x] create `internal/query/notification.go`:
   - NotificationListQuery, NotificationUpdateMutation
   - NotificationMarkReadAllMutation, NotificationArchiveAllMutation
-- [ ] write tests for query construction
-- [ ] run `make test` - must pass before next task
+- [x] write tests for query construction
+- [x] run `make test` - must pass before next task
 
 ### Task 5: `linear notification` commands
 - [ ] write tests for notification list: fetches notifications, table output

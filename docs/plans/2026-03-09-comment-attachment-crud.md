@@ -128,15 +128,15 @@ TDD: write cmd tests first, then implement the command.
 
 Query to fetch a single attachment by ID (needed for `show` and `download`).
 
-- [ ] write test in `internal/query/attachment_test.go`:
+- [x] write test in `internal/query/attachment_test.go`:
   - `TestAttachmentShowQuery` -- verify operation name, `$id` variable, `attachment` block, fields include `url`, `title`, `creator`
-- [ ] add `AttachmentShowQuery` to `internal/query/attachment.go`:
+- [x] add `AttachmentShowQuery` to `internal/query/attachment.go`:
   ```
   query AttachmentShow($id: String!) {
     attachment(id: $id) { ...attachmentFields }
   }
   ```
-- [ ] run `make build` and tests -- must pass before next task
+- [x] run `make build` and tests -- must pass before next task
 
 ### Task 5: Implement `attachment show` command
 

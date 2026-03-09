@@ -9,7 +9,7 @@ const labelFields = `
 	isGroup
 	createdAt
 	team { id name key }
-	parent { id name color }
+	parent { id name color isGroup }
 `
 
 // LabelListQuery fetches issue labels with optional filter.

@@ -217,17 +217,6 @@ func newLabelUpdateCommand() *cobra.Command {
 }
 
 func runLabelUpdate(cmd *cobra.Command, args []string) error {
-	client, err := newClientFromConfig()
-	if err != nil {
-		return err
-	}
-	ctx := context.Background()
-
-	id, err := api.ResolveLabelID(ctx, client, args[0], "")
-	if err != nil {
-		return err
-	}
-
 	f := cmd.Flags()
 	input := map[string]any{}
 
@@ -245,6 +234,17 @@ func runLabelUpdate(cmd *cobra.Command, args []string) error {
 	}
 	if len(input) == 0 {
 		return fmt.Errorf("no fields to update: specify at least one flag")
+	}
+
+	client, err := newClientFromConfig()
+	if err != nil {
+		return err
+	}
+	ctx := context.Background()
+
+	id, err := api.ResolveLabelID(ctx, client, args[0], "")
+	if err != nil {
+		return err
 	}
 
 	vars := map[string]any{"id": id, "input": input}

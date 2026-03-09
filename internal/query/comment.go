@@ -9,7 +9,7 @@ const commentFields = `
 	editedAt
 	url
 	user { id displayName email }
-	parent { id body }
+	parent { id body createdAt updatedAt url }
 `
 
 // CommentListQuery fetches comments for an issue.

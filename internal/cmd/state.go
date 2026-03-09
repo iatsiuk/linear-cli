@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -108,6 +109,16 @@ func runStateList(cmd *cobra.Command, _ []string) error {
 		if len(group) == 0 {
 			continue
 		}
+		sort.Slice(group, func(i, j int) bool {
+			pi, pj := float64(0), float64(0)
+			if group[i].Position != nil {
+				pi = *group[i].Position
+			}
+			if group[j].Position != nil {
+				pj = *group[j].Position
+			}
+			return pi < pj
+		})
 		label := strings.ToUpper(typeKey[:1]) + typeKey[1:]
 		if !first {
 			if _, err := fmt.Fprintln(w); err != nil {

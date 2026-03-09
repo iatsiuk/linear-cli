@@ -58,9 +58,12 @@ func runDocDelete(cmd *cobra.Command, args []string) error {
 		if restore {
 			action = "restore"
 		}
-		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Are you sure you want to %s document %s? [y/N] ", action, docID)
+		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to %s document %s? [y/N] ", action, docID)
 		scanner := bufio.NewScanner(cmd.InOrStdin())
 		scanner.Scan()
+		if err := scanner.Err(); err != nil {
+			return fmt.Errorf("read confirmation: %w", err)
+		}
 		answer := strings.TrimSpace(scanner.Text())
 		if !strings.EqualFold(answer, "y") && !strings.EqualFold(answer, "yes") {
 			return fmt.Errorf("aborted")

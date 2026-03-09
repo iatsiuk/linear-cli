@@ -14,7 +14,10 @@ import (
 
 type docListResult struct {
 	Documents struct {
-		Nodes []model.Document `json:"nodes"`
+		Nodes    []model.Document `json:"nodes"`
+		PageInfo struct {
+			HasNextPage bool `json:"hasNextPage"`
+		} `json:"pageInfo"`
 	} `json:"documents"`
 }
 
@@ -91,6 +94,9 @@ func runDocList(cmd *cobra.Command, _ []string) error {
 	var result docListResult
 	if err := client.Do(ctx, query.DocumentListQuery, vars, &result); err != nil {
 		return fmt.Errorf("list documents: %w", err)
+	}
+	if result.Documents.PageInfo.HasNextPage {
+		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "warning: showing first %d documents; more exist\n", limit)
 	}
 
 	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")

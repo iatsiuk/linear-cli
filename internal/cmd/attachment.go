@@ -16,7 +16,10 @@ import (
 type attachmentListResult struct {
 	Issue *struct {
 		Attachments struct {
-			Nodes []model.Attachment `json:"nodes"`
+			Nodes    []model.Attachment `json:"nodes"`
+			PageInfo struct {
+				HasNextPage bool `json:"hasNextPage"`
+			} `json:"pageInfo"`
 		} `json:"attachments"`
 	} `json:"issue"`
 }
@@ -87,6 +90,9 @@ func runAttachmentList(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("issue %q not found", identifier)
 	}
 	attachments := listResult.Issue.Attachments.Nodes
+	if listResult.Issue.Attachments.PageInfo.HasNextPage {
+		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "warning: showing first 50 attachments; more exist\n")
+	}
 
 	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")
 	if jsonMode {
@@ -205,9 +211,12 @@ func runAttachmentDelete(cmd *cobra.Command, args []string) error {
 	yes, _ := cmd.Flags().GetBool("yes")
 
 	if !yes {
-		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Are you sure you want to delete attachment %s? [y/N] ", attID)
+		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "Are you sure you want to delete attachment %s? [y/N] ", attID)
 		scanner := bufio.NewScanner(cmd.InOrStdin())
 		scanner.Scan()
+		if err := scanner.Err(); err != nil {
+			return fmt.Errorf("read confirmation: %w", err)
+		}
 		answer := strings.TrimSpace(scanner.Text())
 		if !strings.EqualFold(answer, "y") && !strings.EqualFold(answer, "yes") {
 			return fmt.Errorf("aborted")

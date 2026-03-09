@@ -76,13 +76,13 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 4: Attachment model and queries
-- [ ] write tests for Attachment struct deserialization
-- [ ] create `internal/model/attachment.go`:
+- [x] write tests for Attachment struct deserialization
+- [x] create `internal/model/attachment.go`:
   - Attachment struct: ID, Title, URL, Issue, Creator, CreatedAt, UpdatedAt
-- [ ] create `internal/query/attachment.go`:
+- [x] create `internal/query/attachment.go`:
   - AttachmentListQuery, AttachmentGetQuery, AttachmentCreateMutation, AttachmentDeleteMutation
-- [ ] write tests for query construction
-- [ ] run `make test` - must pass before next task
+- [x] write tests for query construction
+- [x] run `make test` - must pass before next task
 
 ### Task 5: `linear attachment list/create/delete` commands
 - [ ] write tests for attachment list: fetches for issue, table output

@@ -19,6 +19,10 @@ import (
 	"github.com/iatsiuk/linear-cli/internal/query"
 )
 
+// TrustedDownloadHostSuffix restricts Authorization header to matching hosts.
+// Overridable in tests.
+var TrustedDownloadHostSuffix = "linear.app"
+
 type attachmentShowResult struct {
 	Attachment *model.Attachment `json:"attachment"`
 }
@@ -179,7 +183,10 @@ func runAttachmentDownload(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("build download request: %w", err)
 	}
-	req.Header.Set("Authorization", client.APIKey())
+	// only attach auth header for trusted linear.app hosts to avoid leaking the API key to third-party URLs
+	if strings.HasSuffix(req.URL.Hostname(), TrustedDownloadHostSuffix) {
+		req.Header.Set("Authorization", client.APIKey())
+	}
 	resp, err := dlClient.Do(req) //nolint:gosec // URL comes from Linear API response
 	if err != nil {
 		return fmt.Errorf("download attachment: %w", err)

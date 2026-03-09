@@ -696,23 +696,29 @@ func newDownloadTestServersCapture(t *testing.T, attID, filename string, fileCon
 	return gqlServer, fileServer, &capturedAuth
 }
 
-// TestAttachmentDownload_AuthHeaderNoBearerPrefix verifies Authorization header is set to the API key with no Bearer prefix.
+// TestAttachmentDownload_AuthHeaderNoBearerPrefix verifies Authorization header is set to the API key with no Bearer prefix
+// when the attachment URL is from a trusted linear.app host.
 func TestAttachmentDownload_AuthHeaderNoBearerPrefix(t *testing.T) {
 	const attID = "dl-auth-2"
 	content := []byte("secure content")
+
+	// override trusted host suffix so the local test server is treated as trusted
+	orig := cmd.TrustedDownloadHostSuffix
+	cmd.TrustedDownloadHostSuffix = "127.0.0.1"
+	t.Cleanup(func() { cmd.TrustedDownloadHostSuffix = orig })
 
 	gqlServer, _, capturedAuth := newDownloadTestServersCapture(t, attID, "secret2.pdf", content)
 	setupIssueTest(t, gqlServer)
 
 	dir := t.TempDir()
-	orig, err := os.Getwd()
+	origDir, err := os.Getwd()
 	if err != nil {
 		t.Fatalf("getwd: %v", err)
 	}
 	if err := os.Chdir(dir); err != nil {
 		t.Fatalf("chdir: %v", err)
 	}
-	t.Cleanup(func() { _ = os.Chdir(orig) })
+	t.Cleanup(func() { _ = os.Chdir(origDir) })
 
 	var out bytes.Buffer
 	root := cmd.NewRootCommand("test")
@@ -734,6 +740,41 @@ func TestAttachmentDownload_AuthHeaderNoBearerPrefix(t *testing.T) {
 	// verify it's the API key value directly
 	if auth != "lin_api_testkey" {
 		t.Errorf("Authorization header should be API key, got: %s", auth)
+	}
+}
+
+// TestAttachmentDownload_NoAuthForThirdPartyURL verifies that the Authorization header is NOT sent
+// to non-linear.app hosts (third-party attachment URLs) to prevent API key leakage.
+func TestAttachmentDownload_NoAuthForThirdPartyURL(t *testing.T) {
+	const attID = "dl-auth-3"
+	content := []byte("public content")
+
+	// TrustedDownloadHostSuffix is "linear.app" by default; test server is at 127.0.0.1 which won't match
+	gqlServer, _, capturedAuth := newDownloadTestServersCapture(t, attID, "public.pdf", content)
+	setupIssueTest(t, gqlServer)
+
+	dir := t.TempDir()
+	origDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("chdir: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(origDir) })
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "download", attID})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if *capturedAuth != "" {
+		t.Errorf("Authorization header should NOT be sent to non-linear.app hosts, got: %s", *capturedAuth)
 	}
 }
 

@@ -10,8 +10,8 @@ const customViewFields = `
 
 // CustomViewListQuery fetches custom views for the user.
 const CustomViewListQuery = `
-query CustomViewList($first: Int) {
-	customViews(first: $first) {
+query CustomViewList {
+	customViews {
 		nodes {` + customViewFields + `}
 	}
 }

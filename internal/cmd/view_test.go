@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"linear-cli/internal/cmd"
+	"linear-cli/internal/model"
 )
 
 func makeCustomView(id, name, modelName string, shared bool, description *string) map[string]any {
@@ -230,20 +231,23 @@ func TestViewShowCommand_MissingID(t *testing.T) {
 func TestCustomViewDeserialization(t *testing.T) {
 	data := `{"id":"cv-1","name":"Test View","modelName":"Issue","shared":true,"description":"A test view"}`
 
-	var v map[string]any
+	var v model.CustomView
 	if err := json.Unmarshal([]byte(data), &v); err != nil {
 		t.Fatalf("failed to unmarshal: %v", err)
 	}
-	if v["id"] != "cv-1" {
-		t.Errorf("id = %v, want cv-1", v["id"])
+	if v.ID != "cv-1" {
+		t.Errorf("ID = %v, want cv-1", v.ID)
 	}
-	if v["name"] != "Test View" {
-		t.Errorf("name = %v, want 'Test View'", v["name"])
+	if v.Name != "Test View" {
+		t.Errorf("Name = %v, want 'Test View'", v.Name)
 	}
-	if v["modelName"] != "Issue" {
-		t.Errorf("modelName = %v, want 'Issue'", v["modelName"])
+	if v.ModelName != "Issue" {
+		t.Errorf("ModelName = %v, want 'Issue'", v.ModelName)
 	}
-	if v["shared"] != true {
-		t.Errorf("shared = %v, want true", v["shared"])
+	if !v.Shared {
+		t.Errorf("Shared = %v, want true", v.Shared)
+	}
+	if v.Description == nil || *v.Description != "A test view" {
+		t.Errorf("Description = %v, want 'A test view'", v.Description)
 	}
 }

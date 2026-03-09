@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"linear-cli/internal/cmd"
+	"linear-cli/internal/model"
 )
 
 func makeTemplate(id, name, tmplType string, description *string) map[string]any {
@@ -214,13 +215,7 @@ func TestTemplateModelDeserialization(t *testing.T) {
 		"templateData": {"key": "value"}
 	}`
 
-	var tmpl struct {
-		ID           string          `json:"id"`
-		Name         string          `json:"name"`
-		Type         string          `json:"type"`
-		Description  *string         `json:"description,omitempty"`
-		TemplateData json.RawMessage `json:"templateData,omitempty"`
-	}
+	var tmpl model.Template
 	if err := json.Unmarshal([]byte(input), &tmpl); err != nil {
 		t.Fatalf("deserialization failed: %v", err)
 	}

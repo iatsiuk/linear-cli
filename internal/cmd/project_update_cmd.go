@@ -84,10 +84,14 @@ func runProjectUpdateCheckinList(cmd *cobra.Command, args []string) error {
 
 	rows := make([]ProjectUpdateCheckinRow, len(result.Project.ProjectUpdates.Nodes))
 	for i, u := range result.Project.ProjectUpdates.Nodes {
+		date := u.CreatedAt
+		if len(date) > 10 {
+			date = date[:10]
+		}
 		rows[i] = ProjectUpdateCheckinRow{
 			Health: u.Health,
 			Author: u.User.DisplayName,
-			Date:   u.CreatedAt[:10],
+			Date:   date,
 			Body:   truncate(u.Body, 60),
 		}
 	}
@@ -154,7 +158,11 @@ func runProjectUpdateCheckinCreate(cmd *cobra.Command, args []string) error {
 	if jsonMode {
 		return output.NewFormatter(true).Format(cmd.OutOrStdout(), pu)
 	}
-	_, err = fmt.Fprintf(cmd.OutOrStdout(), "%s  %s  %s\n", pu.ID, pu.Health, pu.CreatedAt[:10])
+	date := pu.CreatedAt
+	if len(date) > 10 {
+		date = date[:10]
+	}
+	_, err = fmt.Fprintf(cmd.OutOrStdout(), "%s  %s  %s\n", pu.ID, pu.Health, date)
 	return err
 }
 

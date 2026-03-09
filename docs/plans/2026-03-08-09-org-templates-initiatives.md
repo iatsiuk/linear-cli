@@ -131,16 +131,16 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 9: Verify acceptance criteria
-- [ ] verify `linear org` shows organization info
-- [ ] verify `linear project update list/create` works for status check-ins
-- [ ] verify `linear project milestone list/create` works
-- [ ] verify `linear team member list/add/remove` works
-- [ ] verify `linear template list` shows templates
-- [ ] verify `linear initiative list/create` works
-- [ ] verify `linear search "query" --type project` searches projects
-- [ ] verify `linear view list` shows custom views
-- [ ] run `make test` - full suite must pass
-- [ ] run `make build` - lint + build must pass
+- [x] verify `linear org` shows organization info
+- [x] verify `linear project update list/create` works for status check-ins
+- [x] verify `linear project milestone list/create` works
+- [x] verify `linear team member list/add/remove` works
+- [x] verify `linear template list` shows templates
+- [x] verify `linear initiative list/create` works
+- [x] verify `linear search "query" --type project` searches projects
+- [x] verify `linear view list` shows custom views
+- [x] run `make test` - full suite must pass
+- [x] run `make build` - lint + build must pass
 
 ### Task 10: [Final] Update documentation
 - [ ] update README.md with all new commands

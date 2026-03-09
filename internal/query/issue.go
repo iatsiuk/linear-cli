@@ -82,3 +82,12 @@ mutation IssueBatchUpdate($ids: [UUID!]!, $input: IssueUpdateInput!) {
 	}
 }
 `
+
+// IssueSearchQuery performs full-text search across issues.
+const IssueSearchQuery = `
+query SearchIssues($term: String!, $first: Int, $teamId: String) {
+	searchIssues(term: $term, first: $first, teamId: $teamId) {
+		nodes {` + issueFields + `}
+	}
+}
+`

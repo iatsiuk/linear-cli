@@ -52,15 +52,15 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 2: `linear issue relation` commands
-- [ ] write tests for relation list: fetches relations for issue, shows type + direction
-- [ ] write tests for relation create: required fields, correct mutation
-- [ ] write tests for relation delete: sends delete, returns DeletePayload (entityId only)
-- [ ] create `internal/cmd/issue_relation.go`:
+- [x] write tests for relation list: fetches relations for issue, shows type + direction
+- [x] write tests for relation create: required fields, correct mutation
+- [x] write tests for relation delete: sends delete, returns DeletePayload (entityId only)
+- [x] create `internal/cmd/issue_relation.go`:
   - `issue relation list <identifier>`: shows relations (blocks, blocked by, duplicates, related)
   - `issue relation create <identifier>`: flags `--related <identifier>`, `--type` (blocks|duplicate|related|similar)
   - `issue relation delete <relation-id>`: `--yes` to skip confirmation
   - table columns: Type | Direction | Related Issue | Title
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 3: `linear issue branch` command
 - [ ] write tests for branch lookup: sends issueVcsBranchSearch, returns issue

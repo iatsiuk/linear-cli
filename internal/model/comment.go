@@ -12,8 +12,3 @@ type Comment struct {
 	Issue     *Issue   `json:"issue,omitempty"`
 	Parent    *Comment `json:"parent,omitempty"`
 }
-
-// CommentConnection wraps a list of comments (relay connection).
-type CommentConnection struct {
-	Nodes []Comment `json:"nodes"`
-}

@@ -124,6 +124,9 @@ func TestCommentListCommand_ThreadedOutput(t *testing.T) {
 	if !strings.Contains(result, "Parent comment") {
 		t.Errorf("output should contain parent comment body, got:\n%s", result)
 	}
+	if strings.Contains(result, "> Parent comment") {
+		t.Errorf("parent comment should not be prefixed with '> ', got:\n%s", result)
+	}
 }
 
 // TestCommentListCommand_JSONOutput verifies JSON output for comment list.
@@ -159,6 +162,30 @@ func TestCommentListCommand_JSONOutput(t *testing.T) {
 	}
 }
 
+// TestCommentListCommand_IssueNotFound verifies error when issue is not found.
+func TestCommentListCommand_IssueNotFound(t *testing.T) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeJSONResponse(w, map[string]any{
+			"data": map[string]any{"issue": nil},
+		})
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "list", "ENG-999"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when issue not found")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("error should mention not found, got: %v", err)
+	}
+}
+
 // TestCommentListCommand_MissingIdentifier verifies error when identifier is missing.
 func TestCommentListCommand_MissingIdentifier(t *testing.T) {
 	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {})
@@ -176,16 +203,11 @@ func TestCommentListCommand_MissingIdentifier(t *testing.T) {
 	}
 }
 
-// TestCommentCreateCommand_Basic verifies that create sends issue UUID and body.
+// TestCommentCreateCommand_Basic verifies that create sends issue identifier and body.
 func TestCommentCreateCommand_Basic(t *testing.T) {
-	const issueUUID = "issue-uuid-0000-0000-0000-000000000001"
-	issue := makeIssue("ENG-1", "Fix bug", "In Progress", "Urgent", "")
-	issue["id"] = issueUUID
-
 	comment := makeComment("new-comment-id", "This is a comment", "Alice", nil)
 
 	server, bodies := newQueuedServer(t, []map[string]any{
-		{"data": map[string]any{"issue": issue}},
 		commentCreateResponse(comment),
 	})
 	setupIssueTest(t, server)
@@ -205,15 +227,15 @@ func TestCommentCreateCommand_Basic(t *testing.T) {
 		t.Errorf("output should contain comment ID, got: %s", result)
 	}
 
-	if len(*bodies) < 2 {
-		t.Fatalf("expected 2 requests, got %d", len(*bodies))
+	if len(*bodies) < 1 {
+		t.Fatalf("expected 1 request, got %d", len(*bodies))
 	}
-	input, ok := (*bodies)[1]["input"].(map[string]any)
+	input, ok := (*bodies)[0]["input"].(map[string]any)
 	if !ok {
-		t.Fatalf("input not set: %v", (*bodies)[1])
+		t.Fatalf("input not set: %v", (*bodies)[0])
 	}
-	if input["issueId"] != issueUUID {
-		t.Errorf("issueId = %v, want %s", input["issueId"], issueUUID)
+	if input["issueId"] != "ENG-1" {
+		t.Errorf("issueId = %v, want ENG-1", input["issueId"])
 	}
 	if input["body"] != "This is a comment" {
 		t.Errorf("body = %v, want 'This is a comment'", input["body"])
@@ -222,15 +244,10 @@ func TestCommentCreateCommand_Basic(t *testing.T) {
 
 // TestCommentCreateCommand_WithParent verifies threading via --parent flag.
 func TestCommentCreateCommand_WithParent(t *testing.T) {
-	const issueUUID = "issue-uuid-0000-0000-0000-000000000002"
 	const parentID = "parent-comment-uuid-001"
-	issue := makeIssue("ENG-2", "Add feature", "Backlog", "Medium", "")
-	issue["id"] = issueUUID
-
 	comment := makeComment("reply-id", "Reply text", "Bob", map[string]any{"id": parentID})
 
 	server, bodies := newQueuedServer(t, []map[string]any{
-		{"data": map[string]any{"issue": issue}},
 		commentCreateResponse(comment),
 	})
 	setupIssueTest(t, server)
@@ -245,12 +262,12 @@ func TestCommentCreateCommand_WithParent(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if len(*bodies) < 2 {
-		t.Fatalf("expected 2 requests, got %d", len(*bodies))
+	if len(*bodies) < 1 {
+		t.Fatalf("expected 1 request, got %d", len(*bodies))
 	}
-	input, ok := (*bodies)[1]["input"].(map[string]any)
+	input, ok := (*bodies)[0]["input"].(map[string]any)
 	if !ok {
-		t.Fatalf("input not set: %v", (*bodies)[1])
+		t.Fatalf("input not set: %v", (*bodies)[0])
 	}
 	if input["parentId"] != parentID {
 		t.Errorf("parentId = %v, want %s", input["parentId"], parentID)
@@ -279,12 +296,7 @@ func TestCommentCreateCommand_MissingBody(t *testing.T) {
 
 // TestCommentCreateCommand_SuccessFalse verifies error when mutation returns success=false.
 func TestCommentCreateCommand_SuccessFalse(t *testing.T) {
-	const issueUUID = "issue-uuid-0000-0000-0000-000000000003"
-	issue := makeIssue("ENG-3", "Some issue", "Todo", "Low", "")
-	issue["id"] = issueUUID
-
 	server, _ := newQueuedServer(t, []map[string]any{
-		{"data": map[string]any{"issue": issue}},
 		{
 			"data": map[string]any{
 				"commentCreate": map[string]any{
@@ -313,14 +325,9 @@ func TestCommentCreateCommand_SuccessFalse(t *testing.T) {
 
 // TestCommentCreateCommand_JSONOutput verifies JSON output for comment create.
 func TestCommentCreateCommand_JSONOutput(t *testing.T) {
-	const issueUUID = "issue-uuid-0000-0000-0000-000000000004"
-	issue := makeIssue("ENG-4", "Some issue", "Todo", "Low", "")
-	issue["id"] = issueUUID
-
 	comment := makeComment("json-comment-id", "A comment", "Carol", nil)
 
 	server, _ := newQueuedServer(t, []map[string]any{
-		{"data": map[string]any{"issue": issue}},
 		commentCreateResponse(comment),
 	})
 	setupIssueTest(t, server)

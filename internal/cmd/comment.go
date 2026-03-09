@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"linear-cli/internal/api"
 	"linear-cli/internal/model"
 	"linear-cli/internal/output"
 	"linear-cli/internal/query"
@@ -14,7 +15,8 @@ import (
 type commentListResult struct {
 	Issue *struct {
 		Comments struct {
-			Nodes []model.Comment `json:"nodes"`
+			Nodes    []model.Comment `json:"nodes"`
+			PageInfo api.PageInfo    `json:"pageInfo"`
 		} `json:"comments"`
 	} `json:"issue"`
 }
@@ -69,16 +71,26 @@ func runCommentList(cmd *cobra.Command, args []string) error {
 	identifier := args[0]
 	ctx := context.Background()
 
-	vars := map[string]any{"issueId": identifier, "first": 250}
-	var result commentListResult
-	if err := client.Do(ctx, query.CommentListQuery, vars, &result); err != nil {
+	comments, err := api.PaginateAll(ctx, func(ctx context.Context, after *string, first int) (api.Connection[model.Comment], error) {
+		vars := map[string]any{"issueId": identifier, "first": first}
+		if after != nil {
+			vars["after"] = *after
+		}
+		var result commentListResult
+		if err := client.Do(ctx, query.CommentListQuery, vars, &result); err != nil {
+			return api.Connection[model.Comment]{}, err
+		}
+		if result.Issue == nil {
+			return api.Connection[model.Comment]{}, fmt.Errorf("issue %q not found", identifier)
+		}
+		return api.Connection[model.Comment]{
+			Nodes:    result.Issue.Comments.Nodes,
+			PageInfo: result.Issue.Comments.PageInfo,
+		}, nil
+	}, 50, 0)
+	if err != nil {
 		return fmt.Errorf("list comments: %w", err)
 	}
-	if result.Issue == nil {
-		return fmt.Errorf("issue %q not found", identifier)
-	}
-
-	comments := result.Issue.Comments.Nodes
 	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")
 
 	if jsonMode {
@@ -132,21 +144,12 @@ func runCommentCreate(cmd *cobra.Command, args []string) error {
 
 	identifier := args[0]
 
-	// fetch issue to get its UUID
-	var getResult issueGetResult
-	if err := client.Do(ctx, query.IssueGetQuery, map[string]any{"id": identifier}, &getResult); err != nil {
-		return fmt.Errorf("get issue: %w", err)
-	}
-	if getResult.Issue == nil {
-		return fmt.Errorf("issue %q not found", identifier)
-	}
-
 	f := cmd.Flags()
 	body, _ := f.GetString("body")
 	parentID, _ := f.GetString("parent")
 
 	input := map[string]any{
-		"issueId": getResult.Issue.ID,
+		"issueId": identifier,
 		"body":    body,
 	}
 	if parentID != "" {

@@ -64,6 +64,11 @@ func TestStateListCommand_TableOutput(t *testing.T) {
 	}
 
 	result := out.String()
+	for _, col := range []string{"NAME", "TYPE", "COLOR"} {
+		if !strings.Contains(result, col) {
+			t.Errorf("output should contain %s column header, got:\n%s", col, result)
+		}
+	}
 	if !strings.Contains(result, "Backlog") {
 		t.Errorf("output should contain Backlog state, got:\n%s", result)
 	}

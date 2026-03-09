@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -21,16 +22,6 @@ type stateListResult struct {
 
 // stateTypeOrder defines the display order for workflow state types.
 var stateTypeOrder = []string{"triage", "backlog", "unstarted", "started", "completed", "canceled"}
-
-// stateTypeLabel maps type keys to human-readable headers.
-var stateTypeLabel = map[string]string{
-	"triage":    "Triage",
-	"backlog":   "Backlog",
-	"unstarted": "Unstarted",
-	"started":   "Started",
-	"completed": "Completed",
-	"canceled":  "Canceled",
-}
 
 // StateRow is a display row for the state list table.
 type StateRow struct {
@@ -117,7 +108,7 @@ func runStateList(cmd *cobra.Command, _ []string) error {
 		if len(group) == 0 {
 			continue
 		}
-		label := stateTypeLabel[typeKey]
+		label := strings.ToUpper(typeKey[:1]) + typeKey[1:]
 		if !first {
 			if _, err := fmt.Fprintln(w); err != nil {
 				return err

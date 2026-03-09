@@ -39,7 +39,7 @@ func TestWorkflowStateDeserialization(t *testing.T) {
 	if state.Description == nil || *state.Description != "Work has begun" {
 		t.Errorf("Description: unexpected value %v", state.Description)
 	}
-	if state.Position != 2.5 {
+	if state.Position == nil || *state.Position != 2.5 {
 		t.Errorf("Position: got %v, want 2.5", state.Position)
 	}
 	if state.CreatedAt != "2026-01-01T00:00:00.000Z" {

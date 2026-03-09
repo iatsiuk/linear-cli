@@ -51,13 +51,13 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 2: `linear doc list/show` commands
-- [ ] write tests for doc list: fetches documents, table output, filters
-- [ ] write tests for doc show: fetches by ID, displays full content
-- [ ] create `internal/cmd/doc.go`:
+- [x] write tests for doc list: fetches documents, table output, filters
+- [x] write tests for doc show: fetches by ID, displays full content
+- [x] create `internal/cmd/doc.go`:
   - `doc list`: flags `--project`, `--limit`, `--json`, `--include-archived`
   - `doc show <id>`: full document details with content
   - table columns: Title | Project | Creator | Updated
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 3: `linear doc create/update/delete` commands
 - [ ] write tests for doc create: required title, sends mutation

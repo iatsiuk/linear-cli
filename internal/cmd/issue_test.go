@@ -499,6 +499,195 @@ func TestIssueListCommand_AssigneeFilter(t *testing.T) {
 	}
 }
 
+func TestIssueListCommand_CreatedAfterFilter(t *testing.T) {
+
+	var gotVars map[string]any
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		gotVars = body.Variables
+		writeJSONResponse(w, issueListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "list", "--created-after", "7d"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	filter, ok := gotVars["filter"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables.filter not set, got: %v", gotVars["filter"])
+	}
+	createdAt, ok := filter["createdAt"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.createdAt not set, got: %v", filter)
+	}
+	if createdAt["gt"] != "-P7D" {
+		t.Errorf("filter.createdAt.gt = %v, want -P7D", createdAt["gt"])
+	}
+}
+
+func TestIssueListCommand_PriorityGteFilter(t *testing.T) {
+
+	var gotVars map[string]any
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		gotVars = body.Variables
+		writeJSONResponse(w, issueListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "list", "--priority-gte", "2"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	filter, ok := gotVars["filter"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables.filter not set, got: %v", gotVars["filter"])
+	}
+	priority, ok := filter["priority"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.priority not set, got: %v", filter)
+	}
+	if priority["gte"] != float64(2) {
+		t.Errorf("filter.priority.gte = %v, want 2", priority["gte"])
+	}
+}
+
+func TestIssueListCommand_NoAssigneeFilter(t *testing.T) {
+
+	var gotVars map[string]any
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		gotVars = body.Variables
+		writeJSONResponse(w, issueListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "list", "--no-assignee"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	filter, ok := gotVars["filter"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables.filter not set, got: %v", gotVars["filter"])
+	}
+	assignee, ok := filter["assignee"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.assignee not set, got: %v", filter)
+	}
+	if assignee["null"] != true {
+		t.Errorf("filter.assignee.null = %v, want true", assignee["null"])
+	}
+}
+
+func TestIssueListCommand_MyFilter(t *testing.T) {
+
+	var gotVars map[string]any
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		gotVars = body.Variables
+		writeJSONResponse(w, issueListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "list", "--my"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	filter, ok := gotVars["filter"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables.filter not set, got: %v", gotVars["filter"])
+	}
+	assignee, ok := filter["assignee"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.assignee not set, got: %v", filter)
+	}
+	isMe, ok := assignee["isMe"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.assignee.isMe not set, got: %v", assignee)
+	}
+	if isMe["eq"] != true {
+		t.Errorf("filter.assignee.isMe.eq = %v, want true", isMe["eq"])
+	}
+}
+
+func TestIssueListCommand_CombinedTeamAndAdvancedFilters(t *testing.T) {
+
+	var gotVars map[string]any
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		gotVars = body.Variables
+		writeJSONResponse(w, issueListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "list", "--team", "ENG", "--created-after", "7d", "--priority-gte", "2"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	filter, ok := gotVars["filter"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables.filter not set, got: %v", gotVars["filter"])
+	}
+	// team from base flags
+	if _, ok := filter["team"]; !ok {
+		t.Error("filter.team not set")
+	}
+	// createdAt from advanced filter
+	if _, ok := filter["createdAt"]; !ok {
+		t.Error("filter.createdAt not set")
+	}
+	// priority from advanced filter
+	if _, ok := filter["priority"]; !ok {
+		t.Error("filter.priority not set")
+	}
+}
+
 func TestIssueListCommand_OrderByFlag(t *testing.T) {
 
 	var gotVars map[string]any

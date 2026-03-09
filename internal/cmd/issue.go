@@ -9,6 +9,7 @@ import (
 
 	"linear-cli/internal/api"
 	"linear-cli/internal/config"
+	"linear-cli/internal/filter"
 	"linear-cli/internal/model"
 	"linear-cli/internal/output"
 	"linear-cli/internal/query"
@@ -59,6 +60,7 @@ func newIssueListCommand() *cobra.Command {
 	f.Int("limit", 50, "maximum number of issues to return")
 	f.Bool("include-archived", false, "include archived issues")
 	f.String("order-by", "updatedAt", "sort order (createdAt|updatedAt)")
+	filter.AddFlags(cmd)
 	return cmd
 }
 
@@ -85,21 +87,39 @@ func runIssueList(cmd *cobra.Command, _ []string) error {
 		vars["orderBy"] = orderBy
 	}
 
-	filter := map[string]any{}
+	issueFilter := map[string]any{}
 	if teamKey != "" {
-		filter["team"] = map[string]any{"key": map[string]any{"eq": teamKey}}
+		issueFilter["team"] = map[string]any{"key": map[string]any{"eq": teamKey}}
 	}
 	if assignee != "" {
-		filter["assignee"] = map[string]any{"displayName": map[string]any{"eq": assignee}}
+		issueFilter["assignee"] = map[string]any{"displayName": map[string]any{"eq": assignee}}
 	}
 	if stateName != "" {
-		filter["state"] = map[string]any{"name": map[string]any{"eq": stateName}}
+		issueFilter["state"] = map[string]any{"name": map[string]any{"eq": stateName}}
 	}
 	if priority >= 0 {
-		filter["priority"] = map[string]any{"eq": float64(priority)}
+		issueFilter["priority"] = map[string]any{"eq": float64(priority)}
 	}
-	if len(filter) > 0 {
-		vars["filter"] = filter
+
+	advancedFilter, err := filter.BuildFromFlags(f)
+	if err != nil {
+		return fmt.Errorf("build filter: %w", err)
+	}
+	for k, v := range advancedFilter {
+		if existing, ok := issueFilter[k].(map[string]any); ok {
+			if srcMap, ok2 := v.(map[string]any); ok2 {
+				for sk, sv := range srcMap {
+					existing[sk] = sv
+				}
+				issueFilter[k] = existing
+				continue
+			}
+		}
+		issueFilter[k] = v
+	}
+
+	if len(issueFilter) > 0 {
+		vars["filter"] = issueFilter
 	}
 
 	var result issueListResult

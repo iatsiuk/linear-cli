@@ -27,7 +27,6 @@ var stateTypeOrder = []string{"triage", "backlog", "unstarted", "started", "comp
 // StateRow is a display row for the state list table.
 type StateRow struct {
 	Name  string `json:"name"`
-	Type  string `json:"type"`
 	Color string `json:"color"`
 }
 
@@ -110,14 +109,7 @@ func runStateList(cmd *cobra.Command, _ []string) error {
 			continue
 		}
 		sort.Slice(group, func(i, j int) bool {
-			pi, pj := float64(0), float64(0)
-			if group[i].Position != nil {
-				pi = *group[i].Position
-			}
-			if group[j].Position != nil {
-				pj = *group[j].Position
-			}
-			return pi < pj
+			return group[i].Position < group[j].Position
 		})
 		label := strings.ToUpper(typeKey[:1]) + typeKey[1:]
 		if !first {
@@ -133,7 +125,6 @@ func runStateList(cmd *cobra.Command, _ []string) error {
 		for i, s := range group {
 			rows[i] = StateRow{
 				Name:  s.Name,
-				Type:  s.Type,
 				Color: s.Color,
 			}
 		}

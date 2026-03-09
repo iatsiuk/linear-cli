@@ -57,6 +57,9 @@ func runDocCreate(cmd *cobra.Command, _ []string) error {
 		if err != nil {
 			return fmt.Errorf("read content file: %w", err)
 		}
+		if len(data) == 0 {
+			return fmt.Errorf("content file is empty")
+		}
 		content = string(data)
 	}
 

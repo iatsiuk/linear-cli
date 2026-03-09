@@ -170,8 +170,11 @@ func runAttachmentCreate(cmd *cobra.Command, args []string) error {
 	if err := client.Do(ctx, query.AttachmentCreateMutation, vars, &result); err != nil {
 		return fmt.Errorf("create attachment: %w", err)
 	}
-	if !result.AttachmentCreate.Success || result.AttachmentCreate.Attachment == nil {
+	if !result.AttachmentCreate.Success {
 		return fmt.Errorf("create attachment: mutation returned success=false")
+	}
+	if result.AttachmentCreate.Attachment == nil {
+		return fmt.Errorf("create attachment: no attachment in response")
 	}
 
 	a := result.AttachmentCreate.Attachment

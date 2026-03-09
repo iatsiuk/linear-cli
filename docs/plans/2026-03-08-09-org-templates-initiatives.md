@@ -50,18 +50,18 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 2: Project Updates (status check-ins)
-- [ ] write tests for ProjectUpdate struct deserialization
-- [ ] write tests for query/mutation construction
-- [ ] create `internal/model/project_update.go`:
+- [x] write tests for ProjectUpdate struct deserialization
+- [x] write tests for query/mutation construction
+- [x] create `internal/model/project_update.go`:
   - ProjectUpdate struct: ID, Body, Health, User, Project, CreatedAt
-- [ ] create `internal/query/project_update.go`:
+- [x] create `internal/query/project_update.go`:
   - ProjectUpdateListQuery, ProjectUpdateCreateMutation, ProjectUpdateArchiveMutation
-- [ ] create `internal/cmd/project_update_cmd.go`:
+- [x] create `internal/cmd/project_update_cmd.go`:
   - `project update list <project-id>`: shows status check-ins
   - `project update create <project-id>`: flags `--body` (required), `--health` (onTrack|atRisk|offTrack)
   - `project update archive <id>`: archives check-in (replaces deprecated `projectUpdateDelete`)
   - table columns: Health | Author | Date | Body (truncated)
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 3: Project Milestones
 - [ ] write tests for ProjectMilestone struct deserialization

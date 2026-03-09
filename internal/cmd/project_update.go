@@ -37,6 +37,9 @@ func newProjectUpdateCommand() *cobra.Command {
 	f.String("state", "", "project state type or UUID (backlog|planned|started|paused|completed|canceled)")
 	f.String("target-date", "", "target date (YYYY-MM-DD)")
 	f.String("start-date", "", "start date (YYYY-MM-DD)")
+	cmd.AddCommand(newProjectUpdateListCheckinCommand())
+	cmd.AddCommand(newProjectUpdateCreateCheckinCommand())
+	cmd.AddCommand(newProjectUpdateArchiveCheckinCommand())
 	return cmd
 }
 

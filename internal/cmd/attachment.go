@@ -184,7 +184,8 @@ func runAttachmentDownload(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("build download request: %w", err)
 	}
 	// only attach auth header for trusted linear.app hosts to avoid leaking the API key to third-party URLs
-	if strings.HasSuffix(req.URL.Hostname(), TrustedDownloadHostSuffix) {
+	hostname := req.URL.Hostname()
+	if hostname == TrustedDownloadHostSuffix || strings.HasSuffix(hostname, "."+TrustedDownloadHostSuffix) {
 		req.Header.Set("Authorization", client.APIKey())
 	}
 	resp, err := dlClient.Do(req) //nolint:gosec // URL comes from Linear API response

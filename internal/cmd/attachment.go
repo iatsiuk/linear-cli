@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -170,7 +169,7 @@ func runAttachmentDownload(cmd *cobra.Command, args []string) error {
 	if !toStdout && dest == "" {
 		dest = filenameFromURL(fileURL)
 		if dest == "" {
-			dest = "attachment-" + attID
+			dest = filepath.Base("attachment-" + attID)
 		}
 	}
 
@@ -255,7 +254,7 @@ func runAttachmentList(cmd *cobra.Command, args []string) error {
 	}
 
 	identifier := args[0]
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	vars := map[string]any{"issueId": identifier}
 	var listResult attachmentListResult
@@ -311,7 +310,7 @@ func runAttachmentCreate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	identifier := args[0]
 	f := cmd.Flags()

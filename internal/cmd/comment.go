@@ -187,7 +187,7 @@ func runCommentList(cmd *cobra.Command, args []string) error {
 	}
 
 	identifier := args[0]
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	comments, err := api.PaginateAll(ctx, func(ctx context.Context, after *string, first int) (api.Connection[model.Comment], error) {
 		vars := map[string]any{"issueId": identifier, "first": first}
@@ -258,7 +258,7 @@ func runCommentCreate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	identifier := args[0]
 

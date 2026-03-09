@@ -147,6 +147,22 @@ func TestIssueArchiveMutation(t *testing.T) {
 	}
 }
 
+func TestIssueFieldsContainsParent(t *testing.T) {
+	t.Parallel()
+	want := "parent { id identifier title }"
+	if !strings.Contains(issueFields, want) {
+		t.Errorf("issueFields missing %q", want)
+	}
+}
+
+func TestIssueFieldsContainsProject(t *testing.T) {
+	t.Parallel()
+	want := "project { id name }"
+	if !strings.Contains(issueFields, want) {
+		t.Errorf("issueFields missing %q", want)
+	}
+}
+
 func TestIssueFieldsPresence(t *testing.T) {
 	t.Parallel()
 	// all queries must include the common issue fields

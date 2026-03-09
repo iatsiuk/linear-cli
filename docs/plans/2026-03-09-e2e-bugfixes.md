@@ -72,23 +72,23 @@ Fall back to `os.UserConfigDir()` + `linear-cli` on other OSes (Windows, etc.).
 Verify against schema: `Issue.parent` (nullable `Issue`), `Issue.project` (nullable `Project`).
 Check `Project` type in schema for available fields.
 
-- [ ] write tests in `internal/query/issue_test.go`:
+- [x] write tests in `internal/query/issue_test.go`:
   - `TestIssueFieldsContainsParent` -- verify `issueFields` contains `parent { id identifier title }`
   - `TestIssueFieldsContainsProject` -- verify `issueFields` contains `project { id name }`
-- [ ] write tests in `internal/model/issue_test.go`:
+- [x] write tests in `internal/model/issue_test.go`:
   - `TestIssueUnmarshal_WithParent` -- verify Issue JSON with parent unmarshals correctly
   - `TestIssueUnmarshal_WithProject` -- verify Issue JSON with project unmarshals correctly
   - `TestIssueUnmarshal_NilParentProject` -- verify omitted parent/project unmarshal as nil
-- [ ] add `Parent` field to `Issue` struct in `internal/model/issue.go`:
+- [x] add `Parent` field to `Issue` struct in `internal/model/issue.go`:
   - type: pointer to a lightweight struct (id, identifier, title) -- avoid recursive `*Issue`
   - JSON tag: `json:"parent,omitempty"`
-- [ ] add `Project` field to `Issue` struct in `internal/model/issue.go`:
+- [x] add `Project` field to `Issue` struct in `internal/model/issue.go`:
   - type: pointer to a lightweight struct (id, name)
   - JSON tag: `json:"project,omitempty"`
-- [ ] update `issueFields` constant in `internal/query/issue.go`:
+- [x] update `issueFields` constant in `internal/query/issue.go`:
   - add `parent { id identifier title }`
   - add `project { id name }`
-- [ ] run `make build` and tests -- must pass before next task
+- [x] run `make build` and tests -- must pass before next task
 
 ### Task 3: Fix ResolveUserID to try displayName
 

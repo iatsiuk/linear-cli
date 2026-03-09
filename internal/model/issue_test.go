@@ -60,6 +60,107 @@ func TestIssueDeserialization(t *testing.T) {
 	}
 }
 
+func TestIssueUnmarshal_WithParent(t *testing.T) {
+	t.Parallel()
+
+	raw := `{
+		"id": "abc-5",
+		"identifier": "ENG-5",
+		"title": "Child issue",
+		"priority": 0,
+		"priorityLabel": "No priority",
+		"url": "https://linear.app/issue/ENG-5",
+		"createdAt": "2026-01-01T00:00:00.000Z",
+		"updatedAt": "2026-01-01T00:00:00.000Z",
+		"state": {"id": "s1", "name": "Backlog", "color": "#ccc", "type": "backlog"},
+		"team": {"id": "t1", "name": "Engineering", "key": "ENG"},
+		"labels": {"nodes": []},
+		"parent": {"id": "p1", "identifier": "ENG-1", "title": "Parent issue"}
+	}`
+
+	var issue Issue
+	if err := json.Unmarshal([]byte(raw), &issue); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+
+	if issue.Parent == nil {
+		t.Fatal("Parent should not be nil")
+	}
+	if issue.Parent.ID != "p1" {
+		t.Errorf("Parent.ID: got %q, want %q", issue.Parent.ID, "p1")
+	}
+	if issue.Parent.Identifier != "ENG-1" {
+		t.Errorf("Parent.Identifier: got %q, want %q", issue.Parent.Identifier, "ENG-1")
+	}
+	if issue.Parent.Title != "Parent issue" {
+		t.Errorf("Parent.Title: got %q, want %q", issue.Parent.Title, "Parent issue")
+	}
+}
+
+func TestIssueUnmarshal_WithProject(t *testing.T) {
+	t.Parallel()
+
+	raw := `{
+		"id": "abc-6",
+		"identifier": "ENG-6",
+		"title": "Issue with project",
+		"priority": 0,
+		"priorityLabel": "No priority",
+		"url": "https://linear.app/issue/ENG-6",
+		"createdAt": "2026-01-01T00:00:00.000Z",
+		"updatedAt": "2026-01-01T00:00:00.000Z",
+		"state": {"id": "s1", "name": "Backlog", "color": "#ccc", "type": "backlog"},
+		"team": {"id": "t1", "name": "Engineering", "key": "ENG"},
+		"labels": {"nodes": []},
+		"project": {"id": "proj1", "name": "My Project"}
+	}`
+
+	var issue Issue
+	if err := json.Unmarshal([]byte(raw), &issue); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+
+	if issue.Project == nil {
+		t.Fatal("Project should not be nil")
+	}
+	if issue.Project.ID != "proj1" {
+		t.Errorf("Project.ID: got %q, want %q", issue.Project.ID, "proj1")
+	}
+	if issue.Project.Name != "My Project" {
+		t.Errorf("Project.Name: got %q, want %q", issue.Project.Name, "My Project")
+	}
+}
+
+func TestIssueUnmarshal_NilParentProject(t *testing.T) {
+	t.Parallel()
+
+	raw := `{
+		"id": "abc-7",
+		"identifier": "ENG-7",
+		"title": "No parent no project",
+		"priority": 0,
+		"priorityLabel": "No priority",
+		"url": "https://linear.app/issue/ENG-7",
+		"createdAt": "2026-01-01T00:00:00.000Z",
+		"updatedAt": "2026-01-01T00:00:00.000Z",
+		"state": {"id": "s1", "name": "Backlog", "color": "#ccc", "type": "backlog"},
+		"team": {"id": "t1", "name": "Engineering", "key": "ENG"},
+		"labels": {"nodes": []}
+	}`
+
+	var issue Issue
+	if err := json.Unmarshal([]byte(raw), &issue); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+
+	if issue.Parent != nil {
+		t.Errorf("Parent should be nil, got %+v", issue.Parent)
+	}
+	if issue.Project != nil {
+		t.Errorf("Project should be nil, got %+v", issue.Project)
+	}
+}
+
 func TestIssueNullableFields(t *testing.T) {
 	t.Parallel()
 

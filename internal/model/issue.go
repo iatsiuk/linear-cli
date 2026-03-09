@@ -5,6 +5,19 @@ type IssueLabelConnection struct {
 	Nodes []IssueLabel `json:"nodes"`
 }
 
+// IssueRef is a lightweight reference to a parent issue.
+type IssueRef struct {
+	ID         string `json:"id"`
+	Identifier string `json:"identifier"`
+	Title      string `json:"title"`
+}
+
+// ProjectRef is a lightweight reference to a project.
+type ProjectRef struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
 // Issue represents a Linear issue.
 type Issue struct {
 	ID            string               `json:"id"`
@@ -22,4 +35,6 @@ type Issue struct {
 	Assignee      *User                `json:"assignee,omitempty"`
 	Team          Team                 `json:"team"`
 	Labels        IssueLabelConnection `json:"labels"`
+	Parent        *IssueRef            `json:"parent,omitempty"`
+	Project       *ProjectRef          `json:"project,omitempty"`
 }

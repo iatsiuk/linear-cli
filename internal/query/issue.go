@@ -17,6 +17,8 @@ const issueFields = `
 	assignee { id displayName email }
 	team { id name key }
 	labels { nodes { id name color } }
+	parent { id identifier title }
+	project { id name }
 `
 
 // IssueListQuery fetches issues with optional pagination and filter.

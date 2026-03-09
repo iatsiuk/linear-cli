@@ -40,11 +40,13 @@ func newViewCommand() *cobra.Command {
 }
 
 func newViewListCommand() *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "List custom views",
 		RunE:  runViewList,
 	}
+	cmd.Flags().Int("limit", 50, "maximum number of views to return")
+	return cmd
 }
 
 func runViewList(cmd *cobra.Command, _ []string) error {
@@ -53,8 +55,10 @@ func runViewList(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	limit, _ := cmd.Flags().GetInt("limit")
+	vars := map[string]any{"first": limit}
 	var result customViewListResult
-	if err := client.Do(context.Background(), query.CustomViewListQuery, nil, &result); err != nil {
+	if err := client.Do(context.Background(), query.CustomViewListQuery, vars, &result); err != nil {
 		return fmt.Errorf("list custom views: %w", err)
 	}
 

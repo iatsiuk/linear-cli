@@ -13,10 +13,14 @@ const teamMembershipFields = `
 
 // TeamMemberListQuery fetches memberships for a specific team.
 const TeamMemberListQuery = `
-query TeamMemberList($teamId: String!, $first: Int) {
+query TeamMemberList($teamId: String!, $first: Int, $after: String) {
 	team(id: $teamId) {
-		memberships(first: $first) {
+		memberships(first: $first, after: $after) {
 			nodes {` + teamMembershipFields + `}
+			pageInfo {
+				hasNextPage
+				endCursor
+			}
 		}
 	}
 }

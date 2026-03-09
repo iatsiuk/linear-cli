@@ -227,6 +227,7 @@ func newInitiativeUpdateCommand() *cobra.Command {
 	f := cmd.Flags()
 	f.String("name", "", "initiative name")
 	f.String("description", "", "initiative description")
+	f.String("status", "", "initiative status (Active, Completed, Planned)")
 	return cmd
 }
 
@@ -246,6 +247,15 @@ func runInitiativeUpdate(cmd *cobra.Command, args []string) error {
 	if f.Changed("description") {
 		v, _ := f.GetString("description")
 		input["description"] = v
+	}
+	if f.Changed("status") {
+		v, _ := f.GetString("status")
+		switch v {
+		case "Active", "Completed", "Planned":
+		default:
+			return fmt.Errorf("invalid status %q: must be Active, Completed, or Planned", v)
+		}
+		input["status"] = v
 	}
 	if len(input) == 0 {
 		return fmt.Errorf("no fields to update: specify at least one flag")

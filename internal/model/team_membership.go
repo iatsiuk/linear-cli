@@ -13,5 +13,6 @@ type TeamMembership struct {
 
 // TeamMembershipConnection wraps a paginated list of TeamMembership nodes.
 type TeamMembershipConnection struct {
-	Nodes []TeamMembership `json:"nodes"`
+	Nodes    []TeamMembership `json:"nodes"`
+	PageInfo PageInfo         `json:"pageInfo"`
 }

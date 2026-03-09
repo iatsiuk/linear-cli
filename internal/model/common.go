@@ -1,5 +1,11 @@
 package model
 
+// PageInfo holds cursor-based pagination metadata.
+type PageInfo struct {
+	HasNextPage bool   `json:"hasNextPage"`
+	EndCursor   string `json:"endCursor"`
+}
+
 // WorkflowState represents a Linear workflow state.
 type WorkflowState struct {
 	ID          string  `json:"id"`

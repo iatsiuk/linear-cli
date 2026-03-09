@@ -216,19 +216,29 @@ func runTeamMemberRemove(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// fetch memberships to find the membership ID for this user
-	vars := map[string]any{"teamId": teamID, "first": 250}
-	var listResult teamMemberListResult
-	if err := client.Do(ctx, query.TeamMemberListQuery, vars, &listResult); err != nil {
-		return fmt.Errorf("list team members: %w", err)
-	}
-
+	// fetch memberships with pagination to find the membership ID for this user
 	membershipID := ""
-	for _, m := range listResult.Team.Memberships.Nodes {
-		if m.User.ID == userID {
-			membershipID = m.ID
+	var cursor *string
+	for {
+		vars := map[string]any{"teamId": teamID, "first": 250}
+		if cursor != nil {
+			vars["after"] = *cursor
+		}
+		var listResult teamMemberListResult
+		if err := client.Do(ctx, query.TeamMemberListQuery, vars, &listResult); err != nil {
+			return fmt.Errorf("list team members: %w", err)
+		}
+		for _, m := range listResult.Team.Memberships.Nodes {
+			if m.User.ID == userID {
+				membershipID = m.ID
+				break
+			}
+		}
+		if membershipID != "" || !listResult.Team.Memberships.PageInfo.HasNextPage {
 			break
 		}
+		end := listResult.Team.Memberships.PageInfo.EndCursor
+		cursor = &end
 	}
 	if membershipID == "" {
 		return fmt.Errorf("user %q is not a member of team %q", args[1], args[0])

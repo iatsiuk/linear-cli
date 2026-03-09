@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"linear-cli/internal/cmd"
-	"linear-cli/internal/model"
+	"github.com/iatsiuk/linear-cli/internal/cmd"
+	"github.com/iatsiuk/linear-cli/internal/model"
 )
 
 func makeTemplate(id, name, tmplType string, description *string) map[string]any {

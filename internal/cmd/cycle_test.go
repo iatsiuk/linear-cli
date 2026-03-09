@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"linear-cli/internal/cmd"
+	"github.com/iatsiuk/linear-cli/internal/cmd"
 )
 
 func cycleListResponse(cycles []map[string]any) map[string]any {

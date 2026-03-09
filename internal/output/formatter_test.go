@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"linear-cli/internal/output"
+	"github.com/iatsiuk/linear-cli/internal/output"
 )
 
 type row struct {

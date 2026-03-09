@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"linear-cli/internal/cmd"
+	"github.com/iatsiuk/linear-cli/internal/cmd"
 )
 
 func makeComment(id, body, authorName string, parent map[string]any) map[string]any {

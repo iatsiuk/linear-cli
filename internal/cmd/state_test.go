@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"linear-cli/internal/cmd"
+	"github.com/iatsiuk/linear-cli/internal/cmd"
 )
 
 func makeState(id, name, stateType, color string, position float64, teamKey string) map[string]any {

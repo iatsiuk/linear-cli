@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"linear-cli/internal/cmd"
+	"github.com/iatsiuk/linear-cli/internal/cmd"
 )
 
 func projectListResponse(projects []map[string]any) map[string]any {

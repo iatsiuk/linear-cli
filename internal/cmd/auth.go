@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 
-	"linear-cli/internal/config"
+	"github.com/iatsiuk/linear-cli/internal/config"
 )
 
 func newAuthCommand() *cobra.Command {

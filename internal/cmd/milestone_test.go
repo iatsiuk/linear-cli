@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"linear-cli/internal/cmd"
+	"github.com/iatsiuk/linear-cli/internal/cmd"
 )
 
 func makeMilestone(id, name, status string, targetDate *string, description *string) map[string]any {

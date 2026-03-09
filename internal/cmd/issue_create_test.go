@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"linear-cli/internal/cmd"
+	"github.com/iatsiuk/linear-cli/internal/cmd"
 )
 
 // newQueuedServer creates a test server that serves queued responses in order and

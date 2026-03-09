@@ -4,12 +4,23 @@ Command-line interface for the Linear project management API.
 
 ## Installation
 
+### Homebrew
+
+```
+brew install iatsiuk/tap/linear-cli
+```
+
+### Binary releases
+
+Download pre-built binaries for Linux and macOS from
+[GitHub Releases](https://github.com/iatsiuk/linear-cli/releases).
+
 ### From source
 
 Requirements: Go 1.25+
 
 ```
-git clone https://github.com/your-org/linear-cli
+git clone https://github.com/iatsiuk/linear-cli
 cd linear-cli
 make build
 ```

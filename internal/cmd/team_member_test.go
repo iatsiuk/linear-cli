@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"linear-cli/internal/cmd"
+	"github.com/iatsiuk/linear-cli/internal/cmd"
 )
 
 func makeTeamMembership(id, userID, displayName, email string, owner bool) map[string]any {

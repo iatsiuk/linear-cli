@@ -7,12 +7,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"linear-cli/internal/api"
-	"linear-cli/internal/config"
-	"linear-cli/internal/filter"
-	"linear-cli/internal/model"
-	"linear-cli/internal/output"
-	"linear-cli/internal/query"
+	"github.com/iatsiuk/linear-cli/internal/api"
+	"github.com/iatsiuk/linear-cli/internal/config"
+	"github.com/iatsiuk/linear-cli/internal/filter"
+	"github.com/iatsiuk/linear-cli/internal/model"
+	"github.com/iatsiuk/linear-cli/internal/output"
+	"github.com/iatsiuk/linear-cli/internal/query"
 )
 
 func newIssueCommand() *cobra.Command {

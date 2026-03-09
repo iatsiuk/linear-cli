@@ -6,9 +6,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"linear-cli/internal/model"
-	"linear-cli/internal/output"
-	"linear-cli/internal/query"
+	"github.com/iatsiuk/linear-cli/internal/model"
+	"github.com/iatsiuk/linear-cli/internal/output"
+	"github.com/iatsiuk/linear-cli/internal/query"
 )
 
 type customViewListResult struct {

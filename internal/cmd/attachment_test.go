@@ -12,7 +12,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"linear-cli/internal/cmd"
+	"github.com/iatsiuk/linear-cli/internal/cmd"
 )
 
 func makeAttachment(id, title, url string) map[string]any {

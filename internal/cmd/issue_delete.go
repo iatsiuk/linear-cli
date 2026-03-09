@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"linear-cli/internal/query"
+	"github.com/iatsiuk/linear-cli/internal/query"
 )
 
 type issueDeleteResult struct {

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"linear-cli/internal/cmd"
+	"github.com/iatsiuk/linear-cli/internal/cmd"
 )
 
 func makeProjectUpdateCheckin(id, health, authorName, createdAt, body string) map[string]any {

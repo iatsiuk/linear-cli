@@ -21,6 +21,15 @@ archives:
 checksum:
   name_template: "checksums.txt"
 
+homebrew_casks:
+  - name: linear-cli
+    repository:
+      owner: iatsiuk
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: "https://github.com/iatsiuk/linear-cli"
+    description: "CLI tool for Linear - manage issues, projects, and teams from the terminal"
+
 changelog:
   sort: asc
   filters:

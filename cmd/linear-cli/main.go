@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"linear-cli/internal/cmd"
+	"github.com/iatsiuk/linear-cli/internal/cmd"
 )
 
 var version = "dev"

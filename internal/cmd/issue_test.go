@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	"linear-cli/internal/cmd"
+	"github.com/iatsiuk/linear-cli/internal/cmd"
 )
 
 // issueListResponse builds a minimal GraphQL response for issue list queries.

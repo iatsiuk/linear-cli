@@ -83,13 +83,13 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 6: Verify acceptance criteria
-- [ ] verify `linear label list` shows workspace and team labels
-- [ ] verify `linear label create` creates label
-- [ ] verify `linear state list --team X` shows grouped workflow states
-- [ ] verify `linear comment list ABC-123` shows issue comments
-- [ ] verify `linear comment create ABC-123 --body "text"` creates comment
-- [ ] run `make test` - full suite must pass
-- [ ] run `make build` - lint + build must pass
+- [x] verify `linear label list` shows workspace and team labels
+- [x] verify `linear label create` creates label
+- [x] verify `linear state list --team X` shows grouped workflow states
+- [x] verify `linear comment list ABC-123` shows issue comments
+- [x] verify `linear comment create ABC-123 --body "text"` creates comment
+- [x] run `make test` - full suite must pass
+- [x] run `make build` - lint + build must pass
 
 ## Technical Details
 

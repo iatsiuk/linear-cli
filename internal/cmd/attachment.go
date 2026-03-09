@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -194,7 +195,7 @@ func runAttachmentDownload(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	dir := path.Dir(dest)
+	dir := filepath.Dir(dest)
 	tmp, err := os.CreateTemp(dir, ".dl-*")
 	if err != nil {
 		return fmt.Errorf("create temp file: %w", err)
@@ -383,7 +384,7 @@ func runAttachmentDelete(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	attID := args[0]
 	yes, _ := cmd.Flags().GetBool("yes")

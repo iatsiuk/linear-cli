@@ -88,7 +88,7 @@ func runCommentUpdate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	id := args[0]
 	body, _ := cmd.Flags().GetString("body")
@@ -137,7 +137,7 @@ func runCommentDelete(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	id := args[0]
 	yes, _ := cmd.Flags().GetBool("yes")

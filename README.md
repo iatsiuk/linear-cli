@@ -673,6 +673,178 @@ linear search "payment timeout" --team ENG
 linear search "auth" --limit 10 --json
 ```
 
+## Document Commands
+
+Manage Linear documents with the `doc` subcommand.
+
+### List documents
+
+```
+linear doc list [flags]
+```
+
+Flags:
+```
+  --project string       filter by project name or ID
+  --limit int            maximum number of documents to return (default 50)
+  --include-archived     include archived documents
+  --json                 output as JSON array
+```
+
+Output columns: Title | Project | Creator | Updated
+
+### Show document
+
+```
+linear doc show <id> [flags]
+```
+
+Flags:
+```
+  --json   output as JSON object
+```
+
+Output fields: Title, Project, Creator, Created, Updated, URL, and content body.
+
+Example:
+```
+linear doc show abc123
+```
+
+### Create document
+
+```
+linear doc create --title <title> [flags]
+```
+
+Flags:
+```
+  --title string         document title (required)
+  --content string       document content in markdown
+  --content-file string  read content from a file (mutually exclusive with --content)
+  --project string       project name or ID
+  --json                 output created document as JSON
+```
+
+Examples:
+```
+linear doc create --title "Architecture Overview" --content "# Overview\n..."
+linear doc create --title "Meeting Notes" --content-file notes.md --project "Q2 Launch"
+```
+
+### Update document
+
+```
+linear doc update <id> [flags]
+```
+
+Only flags explicitly provided are sent to the API - omitted flags leave fields unchanged.
+
+Flags:
+```
+  --title string         new document title
+  --content string       new document content in markdown
+  --content-file string  read content from a file (mutually exclusive with --content)
+  --json                 output updated document as JSON
+```
+
+Example:
+```
+linear doc update abc123 --title "Updated Title"
+```
+
+### Delete document
+
+```
+linear doc delete <id> [flags]
+```
+
+Moves the document to trash with a 30-day grace period. Use `--restore` to restore a trashed document.
+
+Flags:
+```
+  --restore   restore document from trash instead of deleting
+  --yes       skip confirmation prompt
+```
+
+Examples:
+```
+linear doc delete abc123 --yes
+linear doc delete abc123 --restore
+```
+
+## Attachment Commands
+
+Manage Linear issue attachments with the `attachment` subcommand. Attachment creation is idempotent: using the same URL and issue produces an update rather than a duplicate.
+
+### List attachments
+
+```
+linear attachment list <issue-identifier> [flags]
+```
+
+Flags:
+```
+  --json   output as JSON array
+```
+
+Output columns: Title | URL | Created
+
+Example:
+```
+linear attachment list ENG-42
+```
+
+### Create attachment
+
+```
+linear attachment create <issue-identifier> [flags]
+```
+
+Flags:
+```
+  --title string   attachment title (required)
+  --url string     attachment URL (mutually exclusive with --file)
+  --file string    local file to upload and attach (mutually exclusive with --url)
+  --json           output created attachment as JSON
+```
+
+Prints the created attachment ID on success.
+
+Examples:
+```
+linear attachment create ENG-42 --url "https://example.com/spec.pdf" --title "Spec"
+linear attachment create ENG-42 --file ./screenshot.png --title "Screenshot"
+```
+
+When `--file` is used, the file is uploaded to Linear's storage first (see File Upload Workflow below), and the returned asset URL is used for the attachment.
+
+### Delete attachment
+
+```
+linear attachment delete <id> [flags]
+```
+
+Flags:
+```
+  --yes   skip confirmation prompt
+```
+
+Example:
+```
+linear attachment delete abc123 --yes
+```
+
+## File Upload Workflow
+
+When using `attachment create --file`, the CLI performs a two-step upload:
+
+1. Calls the `fileUpload` mutation with the file's content type, name, and size to get a pre-signed upload URL and a final asset URL.
+2. HTTP PUT the file to the pre-signed upload URL with the headers returned in step 1.
+3. Uses the asset URL as the attachment URL.
+
+The asset URL is a permanent Linear-hosted URL that can be embedded in issue descriptions or other content.
+
 ## Shell Completion
 
 Generate tab-completion scripts for your shell.

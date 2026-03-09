@@ -169,6 +169,9 @@ func runIssueBatchUpdate(cmd *cobra.Command, args []string) error {
 
 	if f.Changed("cycle") {
 		cycle, _ := f.GetString("cycle")
+		if cycle == "" {
+			return fmt.Errorf("--cycle value cannot be empty")
+		}
 		input["cycleId"] = cycle
 	}
 

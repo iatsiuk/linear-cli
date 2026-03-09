@@ -105,6 +105,12 @@ func runIssueList(cmd *cobra.Command, _ []string) error {
 		issueFilter["state"] = map[string]any{"name": map[string]any{"eq": stateName}}
 	}
 	if priority >= 0 {
+		if gte, _ := f.GetInt("priority-gte"); gte >= 0 {
+			return fmt.Errorf("--priority and --priority-gte are mutually exclusive")
+		}
+		if lte, _ := f.GetInt("priority-lte"); lte >= 0 {
+			return fmt.Errorf("--priority and --priority-lte are mutually exclusive")
+		}
 		issueFilter["priority"] = map[string]any{"eq": float64(priority)}
 	}
 

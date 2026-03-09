@@ -153,7 +153,7 @@ func runAttachmentDownload(cmd *cobra.Command, args []string) error {
 	attID := args[0]
 	vars := map[string]any{"id": attID}
 	var result attachmentShowResult
-	if err := client.Do(context.Background(), query.AttachmentShowQuery, vars, &result); err != nil {
+	if err := client.Do(cmd.Context(), query.AttachmentShowQuery, vars, &result); err != nil {
 		return fmt.Errorf("show attachment: %w", err)
 	}
 	if result.Attachment == nil {

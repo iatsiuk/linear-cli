@@ -533,16 +533,15 @@ func newUploadServer(t *testing.T, assetURL string, putStatus int, extraResponse
 		}
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		mu.Lock()
+		defer mu.Unlock()
 		*bodies = append(*bodies, body.Variables)
 		if idx >= len(allResponses) {
 			t.Errorf("unexpected request %d", idx+1)
-			mu.Unlock()
 			http.Error(w, "too many requests", 500)
 			return
 		}
 		resp := allResponses[idx]
 		idx++
-		mu.Unlock()
 		writeJSONResponse(w, resp)
 	}))
 	t.Cleanup(gqlServer.Close)

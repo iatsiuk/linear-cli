@@ -200,15 +200,15 @@ using the same value passed to the `fileUpload` mutation.
 
 ### Task 8: Verify acceptance criteria
 
-- [ ] verify `comment update <id> --body "new text"` works (unit tests pass)
-- [ ] verify `comment delete <id> --yes` works (unit tests pass)
-- [ ] verify `attachment show <id>` works (unit tests pass)
-- [ ] verify `attachment download <id>` works (unit tests pass)
-- [ ] verify `attachment download <id> -o -` writes to stdout (unit tests pass)
-- [ ] verify existing comment/attachment tests still pass (no regressions)
-- [ ] verify file upload fix (if root cause identified)
-- [ ] run full test suite: `go test -race ./...`
-- [ ] run linter: `make build`
+- [x] verify `comment update <id> --body "new text"` works (unit tests pass)
+- [x] verify `comment delete <id> --yes` works (unit tests pass)
+- [x] verify `attachment show <id>` works (unit tests pass)
+- [x] verify `attachment download <id>` works (unit tests pass)
+- [x] verify `attachment download <id> -o -` writes to stdout (unit tests pass)
+- [x] verify existing comment/attachment tests still pass (no regressions)
+- [x] verify file upload fix (if root cause identified)
+- [x] run full test suite: `go test -race ./...`
+- [x] run linter: `make build`
 
 ## Technical Details
 

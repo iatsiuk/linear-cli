@@ -96,15 +96,15 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 6: File upload support
-- [ ] write tests for two-step upload: fileUpload mutation, PUT to uploadUrl
-- [ ] create `internal/api/upload.go`:
+- [x] write tests for two-step upload: fileUpload mutation, PUT to uploadUrl
+- [x] create `internal/api/upload.go`:
   - `Upload(ctx, client, filePath) (assetURL string, error)`:
     1. call `fileUpload` mutation with contentType, filename, size
     2. PUT file to returned `uploadUrl` with provided headers
     3. return `assetUrl` for use in descriptions/attachments
-- [ ] add `--file` flag to `attachment create`: uploads file, then creates attachment with assetUrl
-- [ ] write tests for upload errors (file not found, upload failure)
-- [ ] run `make test` - must pass before next task
+- [x] add `--file` flag to `attachment create`: uploads file, then creates attachment with assetUrl
+- [x] write tests for upload errors (file not found, upload failure)
+- [x] run `make test` - must pass before next task
 
 ### Task 7: Verify acceptance criteria
 - [ ] verify `linear doc list` shows documents

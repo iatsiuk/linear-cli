@@ -4,7 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 
 	"linear-cli/internal/cmd"
@@ -397,5 +401,185 @@ func TestAttachmentDeleteCommand_MissingID(t *testing.T) {
 	err := root.Execute()
 	if err == nil {
 		t.Fatal("expected error when ID is missing")
+	}
+}
+
+// newUploadServer creates a PUT server and a queued GraphQL server whose
+// fileUpload response points to the PUT server. Returns both servers and
+// a flag indicating whether a PUT was received.
+func newUploadServer(t *testing.T, assetURL string, putStatus int, extraResponses []map[string]any) (*httptest.Server, *httptest.Server, *bool, *[]map[string]any) {
+	t.Helper()
+
+	putReceived := false
+	putServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPut {
+			putReceived = true
+		}
+		w.WriteHeader(putStatus)
+	}))
+	t.Cleanup(putServer.Close)
+
+	uploadResp := map[string]any{
+		"data": map[string]any{
+			"fileUpload": map[string]any{
+				"success": true,
+				"uploadFile": map[string]any{
+					"assetUrl":  assetURL,
+					"uploadUrl": putServer.URL + "/upload",
+					"headers":   []map[string]any{},
+				},
+			},
+		},
+	}
+
+	allResponses := append([]map[string]any{uploadResp}, extraResponses...)
+	bodies := &[]map[string]any{}
+	var mu sync.Mutex
+	idx := 0
+	gqlServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		mu.Lock()
+		*bodies = append(*bodies, body.Variables)
+		if idx >= len(allResponses) {
+			t.Errorf("unexpected request %d", idx+1)
+			mu.Unlock()
+			http.Error(w, "too many requests", 500)
+			return
+		}
+		resp := allResponses[idx]
+		idx++
+		mu.Unlock()
+		writeJSONResponse(w, resp)
+	}))
+	t.Cleanup(gqlServer.Close)
+
+	return gqlServer, putServer, &putReceived, bodies
+}
+
+// TestAttachmentCreateCommand_WithFile verifies two-step upload: fileUpload mutation + PUT + attachmentCreate.
+func TestAttachmentCreateCommand_WithFile(t *testing.T) {
+	const assetURL = "https://cdn.linear.app/org/screenshot.png"
+	att := makeAttachment("upload-att-id", "screenshot.png", assetURL)
+
+	gqlServer, _, putReceived, bodies := newUploadServer(t, assetURL, http.StatusOK, []map[string]any{
+		attachmentCreateResponse(att),
+	})
+	setupIssueTest(t, gqlServer)
+
+	dir := t.TempDir()
+	filePath := filepath.Join(dir, "screenshot.png")
+	if err := os.WriteFile(filePath, []byte("fake png"), 0o600); err != nil {
+		t.Fatalf("write temp file: %v", err)
+	}
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "create", "ENG-5", "--file", filePath, "--title", "screenshot.png"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if !*putReceived {
+		t.Error("expected PUT to upload server, but none received")
+	}
+
+	result := out.String()
+	if !strings.Contains(result, "upload-att-id") {
+		t.Errorf("output should contain attachment ID, got: %s", result)
+	}
+
+	// verify attachmentCreate received the assetURL
+	if len(*bodies) < 2 {
+		t.Fatalf("expected 2 requests (fileUpload + attachmentCreate), got %d", len(*bodies))
+	}
+	input, ok := (*bodies)[1]["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("attachmentCreate input not set: %v", (*bodies)[1])
+	}
+	if input["url"] != assetURL {
+		t.Errorf("attachmentCreate url = %v, want %q", input["url"], assetURL)
+	}
+}
+
+// TestAttachmentCreateCommand_FileNotFound verifies error when --file points to missing file.
+func TestAttachmentCreateCommand_FileNotFound(t *testing.T) {
+	gqlServer, _, _, _ := newUploadServer(t, "", http.StatusOK, nil)
+	setupIssueTest(t, gqlServer)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "create", "ENG-1", "--file", "/nonexistent/file.png", "--title", "Nope"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error for missing file, got nil")
+	}
+}
+
+// TestAttachmentCreateCommand_UploadFailure verifies error when PUT returns non-2xx.
+func TestAttachmentCreateCommand_UploadFailure(t *testing.T) {
+	gqlServer, _, _, _ := newUploadServer(t, "https://cdn.linear.app/x.png", http.StatusForbidden, nil)
+	setupIssueTest(t, gqlServer)
+
+	dir := t.TempDir()
+	filePath := filepath.Join(dir, "image.png")
+	if err := os.WriteFile(filePath, []byte("data"), 0o600); err != nil {
+		t.Fatalf("write temp file: %v", err)
+	}
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "create", "ENG-1", "--file", filePath, "--title", "Image"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when upload returns 403, got nil")
+	}
+}
+
+// TestAttachmentCreateCommand_MutuallyExclusive verifies error when both --url and --file are provided.
+func TestAttachmentCreateCommand_MutuallyExclusive(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "create", "ENG-1", "--url", "https://example.com", "--file", "/tmp/f.png", "--title", "T"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when both --url and --file are provided")
+	}
+	if !strings.Contains(err.Error(), "mutually exclusive") {
+		t.Errorf("error should mention mutually exclusive, got: %v", err)
+	}
+}
+
+// TestAttachmentCreateCommand_NeitherURLNorFile verifies error when neither --url nor --file is provided.
+func TestAttachmentCreateCommand_NeitherURLNorFile(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "create", "ENG-1", "--title", "T"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when neither --url nor --file is provided")
 	}
 }

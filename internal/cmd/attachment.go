@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -126,9 +127,9 @@ func newAttachmentCreateCommand() *cobra.Command {
 		RunE: runAttachmentCreate,
 	}
 	f := cmd.Flags()
-	f.String("url", "", "attachment URL (required)")
+	f.String("url", "", "attachment URL (mutually exclusive with --file)")
 	f.String("title", "", "attachment title (required)")
-	_ = cmd.MarkFlagRequired("url")
+	f.String("file", "", "local file to upload and attach")
 	_ = cmd.MarkFlagRequired("title")
 	return cmd
 }
@@ -142,12 +143,32 @@ func runAttachmentCreate(cmd *cobra.Command, args []string) error {
 
 	identifier := args[0]
 	f := cmd.Flags()
-	url, _ := f.GetString("url")
+	urlFlag, _ := f.GetString("url")
 	title, _ := f.GetString("title")
+	fileFlag, _ := f.GetString("file")
+
+	if urlFlag == "" && fileFlag == "" {
+		return fmt.Errorf("one of --url or --file is required")
+	}
+	if urlFlag != "" && fileFlag != "" {
+		return fmt.Errorf("--url and --file are mutually exclusive")
+	}
+
+	attachmentURL := urlFlag
+	if fileFlag != "" {
+		assetURL, uploadErr := client.Upload(ctx, fileFlag)
+		if uploadErr != nil {
+			return fmt.Errorf("upload file: %w", uploadErr)
+		}
+		attachmentURL = assetURL
+		if title == "" {
+			title = filepath.Base(fileFlag)
+		}
+	}
 
 	input := map[string]any{
 		"issueId": identifier,
-		"url":     url,
+		"url":     attachmentURL,
 		"title":   title,
 	}
 

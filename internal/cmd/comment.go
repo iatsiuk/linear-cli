@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -34,6 +36,12 @@ type commentUpdateResult struct {
 	} `json:"commentUpdate"`
 }
 
+type commentDeleteResult struct {
+	CommentDelete struct {
+		Success bool `json:"success"`
+	} `json:"commentDelete"`
+}
+
 // CommentRow is a display row for the comment list table.
 type CommentRow struct {
 	Author string `json:"author"`
@@ -52,6 +60,7 @@ func newCommentCommand() *cobra.Command {
 	cmd.AddCommand(newCommentListCommand())
 	cmd.AddCommand(newCommentCreateCommand())
 	cmd.AddCommand(newCommentUpdateCmd())
+	cmd.AddCommand(newCommentDeleteCmd())
 	return cmd
 }
 
@@ -100,6 +109,53 @@ func runCommentUpdate(cmd *cobra.Command, args []string) error {
 		return output.NewFormatter(true).Format(cmd.OutOrStdout(), result.CommentUpdate.Comment)
 	}
 	_, err = fmt.Fprintf(cmd.OutOrStdout(), "Comment %s updated.\n", id)
+	return err
+}
+
+func newCommentDeleteCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "delete <comment-id>",
+		Short: "Delete a comment",
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("comment ID is required")
+			}
+			return nil
+		},
+		RunE: runCommentDelete,
+	}
+	cmd.Flags().Bool("yes", false, "skip confirmation prompt")
+	return cmd
+}
+
+func runCommentDelete(cmd *cobra.Command, args []string) error {
+	client, err := newClientFromConfig()
+	if err != nil {
+		return err
+	}
+	ctx := context.Background()
+
+	id := args[0]
+	yes, _ := cmd.Flags().GetBool("yes")
+
+	if !yes {
+		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Delete comment %s? [y/N] ", id)
+		scanner := bufio.NewScanner(cmd.InOrStdin())
+		scanner.Scan()
+		answer := strings.TrimSpace(scanner.Text())
+		if !strings.EqualFold(answer, "y") && !strings.EqualFold(answer, "yes") {
+			return fmt.Errorf("aborted")
+		}
+	}
+
+	var result commentDeleteResult
+	if err := client.Do(ctx, query.CommentDeleteMutation, map[string]any{"id": id}, &result); err != nil {
+		return fmt.Errorf("delete comment: %w", err)
+	}
+	if !result.CommentDelete.Success {
+		return fmt.Errorf("delete comment: mutation returned success=false")
+	}
+	_, err = fmt.Fprintf(cmd.OutOrStdout(), "Comment %s deleted.\n", id)
 	return err
 }
 

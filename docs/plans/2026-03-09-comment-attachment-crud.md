@@ -109,20 +109,20 @@ TDD: write cmd tests first, then implement the command.
 
 TDD: write cmd tests first, then implement the command.
 
-- [ ] write tests in `internal/cmd/comment_test.go`:
+- [x] write tests in `internal/cmd/comment_test.go`:
   - `TestCommentDelete_Success` -- mock server returns success=true; verify confirmation message
   - `TestCommentDelete_WithYesFlag` -- verify `--yes` skips confirmation
   - `TestCommentDelete_Abort` -- verify user declining confirmation aborts
   - `TestCommentDelete_NotFound` -- verify error on API error
   - `TestCommentDelete_MutationFails` -- verify error when success=false
-- [ ] implement `newCommentDeleteCmd()` in `internal/cmd/comment.go`:
+- [x] implement `newCommentDeleteCmd()` in `internal/cmd/comment.go`:
   - accepts comment UUID as positional arg
   - `--yes` flag to skip confirmation
   - confirmation prompt: `Delete comment <id>? [y/N]`
   - calls `CommentDeleteMutation`
   - output: `Comment <id> deleted.`
-- [ ] register in comment command tree: `cmd.AddCommand(newCommentDeleteCmd())`
-- [ ] run `make build` and tests -- must pass before next task
+- [x] register in comment command tree: `cmd.AddCommand(newCommentDeleteCmd())`
+- [x] run `make build` and tests -- must pass before next task
 
 ### Task 4: Add AttachmentShowQuery
 

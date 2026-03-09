@@ -463,6 +463,133 @@ func TestCommentUpdate_VerifyInput(t *testing.T) {
 	}
 }
 
+func commentDeleteResponse(success bool) map[string]any {
+	return map[string]any{
+		"data": map[string]any{
+			"commentDelete": map[string]any{
+				"success": success,
+			},
+		},
+	}
+}
+
+// TestCommentDelete_Success verifies deletion with --yes flag outputs confirmation.
+func TestCommentDelete_Success(t *testing.T) {
+	server, _ := newQueuedServer(t, []map[string]any{
+		commentDeleteResponse(true),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "delete", "comment-uuid-1", "--yes"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	result := out.String()
+	if !strings.Contains(result, "comment-uuid-1") {
+		t.Errorf("output should contain comment ID, got: %s", result)
+	}
+	if !strings.Contains(result, "deleted") {
+		t.Errorf("output should contain 'deleted', got: %s", result)
+	}
+}
+
+// TestCommentDelete_WithYesFlag verifies that --yes skips confirmation prompt.
+func TestCommentDelete_WithYesFlag(t *testing.T) {
+	server, bodies := newQueuedServer(t, []map[string]any{
+		commentDeleteResponse(true),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetIn(strings.NewReader("")) // empty stdin - should not be read
+	root.SetArgs([]string{"comment", "delete", "skip-confirm-id", "--yes"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) != 1 {
+		t.Fatalf("expected 1 request, got %d", len(*bodies))
+	}
+	if (*bodies)[0]["id"] != "skip-confirm-id" {
+		t.Errorf("id = %v, want skip-confirm-id", (*bodies)[0]["id"])
+	}
+}
+
+// TestCommentDelete_Abort verifies that declining confirmation aborts deletion.
+func TestCommentDelete_Abort(t *testing.T) {
+	server, bodies := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetIn(strings.NewReader("n\n"))
+	root.SetArgs([]string{"comment", "delete", "comment-abort-id"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when user declines confirmation")
+	}
+	if !strings.Contains(err.Error(), "aborted") {
+		t.Errorf("error should mention aborted, got: %v", err)
+	}
+	if len(*bodies) != 0 {
+		t.Errorf("expected 0 requests (no mutation), got %d", len(*bodies))
+	}
+}
+
+// TestCommentDelete_NotFound verifies error when API returns error.
+func TestCommentDelete_NotFound(t *testing.T) {
+	server, _ := newQueuedServer(t, []map[string]any{
+		{"errors": []map[string]any{{"message": "Comment not found"}}},
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "delete", "nonexistent-id", "--yes"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when comment not found")
+	}
+}
+
+// TestCommentDelete_MutationFails verifies error when mutation returns success=false.
+func TestCommentDelete_MutationFails(t *testing.T) {
+	server, _ := newQueuedServer(t, []map[string]any{
+		commentDeleteResponse(false),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "delete", "fail-id", "--yes"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when success=false")
+	}
+	if !strings.Contains(err.Error(), "success=false") {
+		t.Errorf("error should mention success=false, got: %v", err)
+	}
+}
+
 // TestCommentCreateCommand_JSONOutput verifies JSON output for comment create.
 func TestCommentCreateCommand_JSONOutput(t *testing.T) {
 	comment := makeComment("json-comment-id", "A comment", "Carol", nil)

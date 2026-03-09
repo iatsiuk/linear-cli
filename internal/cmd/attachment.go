@@ -193,13 +193,16 @@ func runAttachmentDownload(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("create file: %w", err)
 	}
-	defer func() { _ = f.Close() }()
 
-	n, err := io.Copy(f, resp.Body)
-	if err != nil {
-		_ = f.Close()
+	n, copyErr := io.Copy(f, resp.Body)
+	closeErr := f.Close()
+	if copyErr != nil {
 		_ = os.Remove(dest)
-		return fmt.Errorf("write file: %w", err)
+		return fmt.Errorf("write file: %w", copyErr)
+	}
+	if closeErr != nil {
+		_ = os.Remove(dest)
+		return fmt.Errorf("close file: %w", closeErr)
 	}
 
 	_, err = fmt.Fprintf(cmd.OutOrStdout(), "Downloaded: %s (%d bytes)\n", dest, n)

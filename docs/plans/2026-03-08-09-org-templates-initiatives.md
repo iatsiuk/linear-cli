@@ -122,13 +122,13 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 8: Custom Views
-- [ ] write tests for CustomView struct deserialization
-- [ ] create `internal/cmd/view.go`:
+- [x] write tests for CustomView struct deserialization
+- [x] create `internal/cmd/view.go`:
   - `view list`: shows saved custom views
   - `view show <id>`: shows view details (filters, sorting)
   - supports `--json`
   - table columns: Name | Type | Shared
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 9: Verify acceptance criteria
 - [ ] verify `linear org` shows organization info

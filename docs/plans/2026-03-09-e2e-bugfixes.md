@@ -95,16 +95,16 @@ Check `Project` type in schema for available fields.
 Schema: `User.name: String!` (full name), `User.displayName: String!` (display name).
 Current code only tries `name` then `email`. Users may pass `displayName` value.
 
-- [ ] write tests in `internal/api/resolver_test.go`:
+- [x] write tests in `internal/api/resolver_test.go`:
   - `TestResolveUserID_ByDisplayName` -- name query returns empty, displayName query returns match
   - `TestResolveUserID_ByName` -- name query returns match (existing behavior)
   - `TestResolveUserID_ByEmail` -- name and displayName return empty, email returns match
   - `TestResolveUserID_NotFound` -- all three queries return empty, error returned
-- [ ] update `ResolveUserID` in `internal/api/resolver.go`:
+- [x] update `ResolveUserID` in `internal/api/resolver.go`:
   - add `qDisplayName` query: `users(filter: { displayName: { eq: $displayName } }, first: 1)`
   - resolution order: name -> displayName -> email
   - verify `displayName` filter field exists in schema's `UserFilter` type
-- [ ] run `make build` and tests -- must pass before next task
+- [x] run `make build` and tests -- must pass before next task
 
 ### Task 4: Fix batch update state resolution with team context
 

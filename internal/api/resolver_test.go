@@ -188,9 +188,9 @@ func TestResolveUserID_ByName(t *testing.T) {
 	}
 }
 
-func TestResolveUserID_ByEmail(t *testing.T) {
+func TestResolveUserID_ByDisplayName(t *testing.T) {
 	t.Parallel()
-	// first request (name lookup) returns empty; second (email lookup) returns a match
+	// name lookup returns empty; displayName lookup returns match
 	calls := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -198,6 +198,42 @@ func TestResolveUserID_ByEmail(t *testing.T) {
 		var resp map[string]any
 		if calls == 1 {
 			// name lookup - no match
+			resp = map[string]any{"data": map[string]any{"users": map[string]any{"nodes": []any{}}}}
+		} else {
+			// displayName lookup - match
+			resp = map[string]any{"data": map[string]any{"users": map[string]any{
+				"nodes": []map[string]any{{"id": "user-uuid-1234-5678-90ab-cdef01234567"}},
+			}}}
+		}
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			t.Errorf("encode response: %v", err)
+		}
+	}))
+	defer srv.Close()
+
+	c := NewClient("key", WithEndpoint(srv.URL))
+	got, err := ResolveUserID(context.Background(), c, "alice_display")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != "user-uuid-1234-5678-90ab-cdef01234567" {
+		t.Errorf("unexpected id: %q", got)
+	}
+	if calls != 2 {
+		t.Errorf("expected 2 API calls (name then displayName), got %d", calls)
+	}
+}
+
+func TestResolveUserID_ByEmail(t *testing.T) {
+	t.Parallel()
+	// name and displayName lookups return empty; email lookup returns match
+	calls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		calls++
+		var resp map[string]any
+		if calls < 3 {
+			// name and displayName lookups - no match
 			resp = map[string]any{"data": map[string]any{"users": map[string]any{"nodes": []any{}}}}
 		} else {
 			// email lookup - match
@@ -219,8 +255,8 @@ func TestResolveUserID_ByEmail(t *testing.T) {
 	if got != "user-uuid-1234-5678-90ab-cdef01234567" {
 		t.Errorf("unexpected id: %q", got)
 	}
-	if calls != 2 {
-		t.Errorf("expected 2 API calls (name then email), got %d", calls)
+	if calls != 3 {
+		t.Errorf("expected 3 API calls (name, displayName, email), got %d", calls)
 	}
 }
 

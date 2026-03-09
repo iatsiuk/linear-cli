@@ -97,10 +97,16 @@ func ResolveUserID(ctx context.Context, c *Client, nameOrEmail string) (string, 
 		Users nodeConnection `json:"users"`
 	}
 
-	// try matching name first; if that returns nothing, try email
+	// try name -> displayName -> email
 	const qName = `
 		query ResolveUserByName($name: String!) {
 			users(filter: { name: { eq: $name } }, first: 1) {
+				nodes { id }
+			}
+		}`
+	const qDisplayName = `
+		query ResolveUserByDisplayName($displayName: String!) {
+			users(filter: { displayName: { eq: $displayName } }, first: 1) {
 				nodes { id }
 			}
 		}`
@@ -115,7 +121,11 @@ func ResolveUserID(ctx context.Context, c *Client, nameOrEmail string) (string, 
 		return "", fmt.Errorf("resolve user %q: %w", nameOrEmail, err)
 	}
 	if len(result.Users.Nodes) == 0 {
-		// retry by email
+		if err := c.Do(ctx, qDisplayName, map[string]any{"displayName": nameOrEmail}, &result); err != nil {
+			return "", fmt.Errorf("resolve user %q: %w", nameOrEmail, err)
+		}
+	}
+	if len(result.Users.Nodes) == 0 {
 		if err := c.Do(ctx, qEmail, map[string]any{"email": nameOrEmail}, &result); err != nil {
 			return "", fmt.Errorf("resolve user %q: %w", nameOrEmail, err)
 		}

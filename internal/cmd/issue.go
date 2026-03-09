@@ -28,6 +28,7 @@ func newIssueCommand() *cobra.Command {
 	cmd.AddCommand(newIssueCreateCommand())
 	cmd.AddCommand(newIssueUpdateCommand())
 	cmd.AddCommand(newIssueDeleteCommand())
+	cmd.AddCommand(newIssueBatchCommand())
 	return cmd
 }
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -78,6 +79,9 @@ func runDocCreate(cmd *cobra.Command, _ []string) error {
 	vars := map[string]any{"input": input}
 	var result docCreateResult
 	if err := client.Do(ctx, query.DocumentCreateMutation, vars, &result); err != nil {
+		if strings.Contains(err.Error(), "Argument Validation Error") {
+			return fmt.Errorf("create document: %w (try adding --project flag)", err)
+		}
 		return fmt.Errorf("create document: %w", err)
 	}
 	if !result.DocumentCreate.Success {

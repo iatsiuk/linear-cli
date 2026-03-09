@@ -140,13 +140,13 @@ Schema: `DocumentCreateInput.projectId` is nullable, but some workspaces require
 Also: `--json` is already implemented but `e2e-errors.md` reports it doesn't work --
 investigate and fix if needed.
 
-- [ ] write tests in `internal/cmd/doc_create_test.go`:
+- [x] write tests in `internal/cmd/doc_create_test.go`:
   - `TestDocCreate_ArgumentValidationError` -- verify clear error message when API returns "Argument Validation Error"
   - `TestDocCreate_HintProjectFlag` -- verify error suggests `--project` flag
-- [ ] update `runDocCreate` in `internal/cmd/doc_create.go`:
+- [x] update `runDocCreate` in `internal/cmd/doc_create.go`:
   - catch "Argument Validation Error" and append hint: `(try adding --project flag)`
   - verify `--json` output works in tests (may already work -- confirm and add test if missing)
-- [ ] run `make build` and tests -- must pass before next task
+- [x] run `make build` and tests -- must pass before next task
 
 ### Task 7: Verify acceptance criteria
 

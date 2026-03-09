@@ -219,3 +219,53 @@ func TestDocCreateCommand_SuccessFalse(t *testing.T) {
 		t.Errorf("error should mention success=false, got: %v", err)
 	}
 }
+
+func TestDocCreate_ArgumentValidationError(t *testing.T) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeJSONResponse(w, map[string]any{
+			"errors": []map[string]any{
+				{"message": "Argument Validation Error"},
+			},
+		})
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"doc", "create", "--title", "Test"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error on Argument Validation Error")
+	}
+	if !strings.Contains(err.Error(), "Argument Validation Error") {
+		t.Errorf("error should contain 'Argument Validation Error', got: %v", err)
+	}
+}
+
+func TestDocCreate_HintProjectFlag(t *testing.T) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeJSONResponse(w, map[string]any{
+			"errors": []map[string]any{
+				{"message": "Argument Validation Error"},
+			},
+		})
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"doc", "create", "--title", "Test"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error on Argument Validation Error")
+	}
+	if !strings.Contains(err.Error(), "--project") {
+		t.Errorf("error should suggest --project flag, got: %v", err)
+	}
+}

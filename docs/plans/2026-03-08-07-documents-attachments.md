@@ -107,14 +107,14 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 7: Verify acceptance criteria
-- [ ] verify `linear doc list` shows documents
-- [ ] verify `linear doc create --title "Test" --content "..."` creates document
-- [ ] verify `linear doc delete` trashes document, `--restore` restores
-- [ ] verify `linear attachment create ENG-123 --url "..."` creates attachment
-- [ ] verify `linear attachment create ENG-123 --file ./screenshot.png` uploads and attaches
-- [ ] verify idempotent attachment creation (same url+issue = update)
-- [ ] run `make test` - full suite must pass
-- [ ] run `make build` - lint + build must pass
+- [x] verify `linear doc list` shows documents
+- [x] verify `linear doc create --title "Test" --content "..."` creates document
+- [x] verify `linear doc delete` trashes document, `--restore` restores
+- [x] verify `linear attachment create ENG-123 --url "..."` creates attachment
+- [x] verify `linear attachment create ENG-123 --file ./screenshot.png` uploads and attaches
+- [x] verify idempotent attachment creation (same url+issue = update)
+- [x] run `make test` - full suite must pass
+- [x] run `make build` - lint + build must pass
 
 ## Technical Details
 

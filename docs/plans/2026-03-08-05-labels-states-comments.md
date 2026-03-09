@@ -74,13 +74,13 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 5: `linear comment list/create` commands
-- [ ] write tests for comment list: fetches comments for issue, displays threaded
-- [ ] write tests for comment create: sends mutation with correct input
-- [ ] create `internal/cmd/comment.go`:
+- [x] write tests for comment list: fetches comments for issue, displays threaded
+- [x] write tests for comment create: sends mutation with correct input
+- [x] create `internal/cmd/comment.go`:
   - `comment list <issue-identifier>`: shows comments for an issue, flag `--json`
   - `comment create <issue-identifier>`: flags `--body` (required), `--parent` (for threading)
   - table columns: Author | Date | Body (truncated)
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 6: Verify acceptance criteria
 - [ ] verify `linear label list` shows workspace and team labels

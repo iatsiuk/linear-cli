@@ -1,0 +1,348 @@
+package cmd_test
+
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"strings"
+	"testing"
+
+	"linear-cli/internal/cmd"
+)
+
+func makeComment(id, body, authorName string, parent map[string]any) map[string]any {
+	c := map[string]any{
+		"id":        id,
+		"body":      body,
+		"createdAt": "2026-01-01T10:00:00Z",
+		"updatedAt": "2026-01-01T10:00:00Z",
+		"url":       "https://linear.app/comment/" + id,
+	}
+	if authorName != "" {
+		c["user"] = map[string]any{
+			"id":          "user-" + id,
+			"displayName": authorName,
+			"email":       authorName + "@example.com",
+		}
+	}
+	if parent != nil {
+		c["parent"] = parent
+	}
+	return c
+}
+
+func commentListResponse(identifier string, comments []map[string]any) map[string]any {
+	return map[string]any{
+		"data": map[string]any{
+			"issue": map[string]any{
+				"id":         "issue-uuid-" + identifier,
+				"identifier": identifier,
+				"comments": map[string]any{
+					"nodes":    comments,
+					"pageInfo": map[string]any{"hasNextPage": false, "endCursor": nil},
+				},
+			},
+		},
+	}
+}
+
+func commentCreateResponse(comment map[string]any) map[string]any {
+	return map[string]any{
+		"data": map[string]any{
+			"commentCreate": map[string]any{
+				"success": true,
+				"comment": comment,
+			},
+		},
+	}
+}
+
+// TestCommentListCommand_TableOutput verifies table output for comment list.
+func TestCommentListCommand_TableOutput(t *testing.T) {
+	comments := []map[string]any{
+		makeComment("c1", "First comment", "Alice", nil),
+		makeComment("c2", "Second comment", "Bob", nil),
+	}
+
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeJSONResponse(w, commentListResponse("ENG-1", comments))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "list", "ENG-1"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	result := out.String()
+	for _, col := range []string{"AUTHOR", "DATE", "BODY"} {
+		if !strings.Contains(result, col) {
+			t.Errorf("output should contain %s column header, got:\n%s", col, result)
+		}
+	}
+	if !strings.Contains(result, "Alice") {
+		t.Errorf("output should contain author Alice, got:\n%s", result)
+	}
+	if !strings.Contains(result, "First comment") {
+		t.Errorf("output should contain comment body, got:\n%s", result)
+	}
+	if !strings.Contains(result, "Bob") {
+		t.Errorf("output should contain author Bob, got:\n%s", result)
+	}
+}
+
+// TestCommentListCommand_ThreadedOutput verifies that replies are prefixed.
+func TestCommentListCommand_ThreadedOutput(t *testing.T) {
+	parent := makeComment("c1", "Parent comment", "Alice", nil)
+	reply := makeComment("c2", "Reply comment", "Bob", map[string]any{"id": "c1", "body": "Parent comment"})
+	comments := []map[string]any{parent, reply}
+
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeJSONResponse(w, commentListResponse("ENG-2", comments))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "list", "ENG-2"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	result := out.String()
+	if !strings.Contains(result, "> Reply comment") {
+		t.Errorf("reply should be prefixed with '> ', got:\n%s", result)
+	}
+	if !strings.Contains(result, "Parent comment") {
+		t.Errorf("output should contain parent comment body, got:\n%s", result)
+	}
+}
+
+// TestCommentListCommand_JSONOutput verifies JSON output for comment list.
+func TestCommentListCommand_JSONOutput(t *testing.T) {
+	comments := []map[string]any{
+		makeComment("c1", "Hello world", "Alice", nil),
+	}
+
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeJSONResponse(w, commentListResponse("ENG-1", comments))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"--json", "comment", "list", "ENG-1"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var decoded []map[string]any
+	if err := json.Unmarshal(out.Bytes(), &decoded); err != nil {
+		t.Fatalf("output is not valid JSON: %v\noutput: %s", err, out.String())
+	}
+	if len(decoded) != 1 {
+		t.Fatalf("expected 1 comment, got %d", len(decoded))
+	}
+	if decoded[0]["body"] != "Hello world" {
+		t.Errorf("expected body 'Hello world', got %v", decoded[0]["body"])
+	}
+}
+
+// TestCommentListCommand_MissingIdentifier verifies error when identifier is missing.
+func TestCommentListCommand_MissingIdentifier(t *testing.T) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "list"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when identifier is missing")
+	}
+}
+
+// TestCommentCreateCommand_Basic verifies that create sends issue UUID and body.
+func TestCommentCreateCommand_Basic(t *testing.T) {
+	const issueUUID = "issue-uuid-0000-0000-0000-000000000001"
+	issue := makeIssue("ENG-1", "Fix bug", "In Progress", "Urgent", "")
+	issue["id"] = issueUUID
+
+	comment := makeComment("new-comment-id", "This is a comment", "Alice", nil)
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		{"data": map[string]any{"issue": issue}},
+		commentCreateResponse(comment),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "create", "ENG-1", "--body", "This is a comment"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	result := out.String()
+	if !strings.Contains(result, "new-comment-id") {
+		t.Errorf("output should contain comment ID, got: %s", result)
+	}
+
+	if len(*bodies) < 2 {
+		t.Fatalf("expected 2 requests, got %d", len(*bodies))
+	}
+	input, ok := (*bodies)[1]["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("input not set: %v", (*bodies)[1])
+	}
+	if input["issueId"] != issueUUID {
+		t.Errorf("issueId = %v, want %s", input["issueId"], issueUUID)
+	}
+	if input["body"] != "This is a comment" {
+		t.Errorf("body = %v, want 'This is a comment'", input["body"])
+	}
+}
+
+// TestCommentCreateCommand_WithParent verifies threading via --parent flag.
+func TestCommentCreateCommand_WithParent(t *testing.T) {
+	const issueUUID = "issue-uuid-0000-0000-0000-000000000002"
+	const parentID = "parent-comment-uuid-001"
+	issue := makeIssue("ENG-2", "Add feature", "Backlog", "Medium", "")
+	issue["id"] = issueUUID
+
+	comment := makeComment("reply-id", "Reply text", "Bob", map[string]any{"id": parentID})
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		{"data": map[string]any{"issue": issue}},
+		commentCreateResponse(comment),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "create", "ENG-2", "--body", "Reply text", "--parent", parentID})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) < 2 {
+		t.Fatalf("expected 2 requests, got %d", len(*bodies))
+	}
+	input, ok := (*bodies)[1]["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("input not set: %v", (*bodies)[1])
+	}
+	if input["parentId"] != parentID {
+		t.Errorf("parentId = %v, want %s", input["parentId"], parentID)
+	}
+}
+
+// TestCommentCreateCommand_MissingBody verifies error when --body is not provided.
+func TestCommentCreateCommand_MissingBody(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "create", "ENG-1"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when --body is missing")
+	}
+	if !strings.Contains(err.Error(), "body") {
+		t.Errorf("error should mention body, got: %v", err)
+	}
+}
+
+// TestCommentCreateCommand_SuccessFalse verifies error when mutation returns success=false.
+func TestCommentCreateCommand_SuccessFalse(t *testing.T) {
+	const issueUUID = "issue-uuid-0000-0000-0000-000000000003"
+	issue := makeIssue("ENG-3", "Some issue", "Todo", "Low", "")
+	issue["id"] = issueUUID
+
+	server, _ := newQueuedServer(t, []map[string]any{
+		{"data": map[string]any{"issue": issue}},
+		{
+			"data": map[string]any{
+				"commentCreate": map[string]any{
+					"success": false,
+					"comment": nil,
+				},
+			},
+		},
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "create", "ENG-3", "--body", "Test"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when success=false")
+	}
+	if !strings.Contains(err.Error(), "success=false") {
+		t.Errorf("error should mention success=false, got: %v", err)
+	}
+}
+
+// TestCommentCreateCommand_JSONOutput verifies JSON output for comment create.
+func TestCommentCreateCommand_JSONOutput(t *testing.T) {
+	const issueUUID = "issue-uuid-0000-0000-0000-000000000004"
+	issue := makeIssue("ENG-4", "Some issue", "Todo", "Low", "")
+	issue["id"] = issueUUID
+
+	comment := makeComment("json-comment-id", "A comment", "Carol", nil)
+
+	server, _ := newQueuedServer(t, []map[string]any{
+		{"data": map[string]any{"issue": issue}},
+		commentCreateResponse(comment),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"--json", "comment", "create", "ENG-4", "--body", "A comment"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var decoded map[string]any
+	if err := json.Unmarshal(out.Bytes(), &decoded); err != nil {
+		t.Fatalf("output is not valid JSON: %v\noutput: %s", err, out.String())
+	}
+	if decoded["id"] != "json-comment-id" {
+		t.Errorf("expected id 'json-comment-id', got %v", decoded["id"])
+	}
+	if decoded["body"] != "A comment" {
+		t.Errorf("expected body 'A comment', got %v", decoded["body"])
+	}
+}

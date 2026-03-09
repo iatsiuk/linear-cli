@@ -164,14 +164,14 @@ Display attachment metadata (title, URL, creator, dates).
 
 Download attachment file to disk. Fetches attachment metadata via GraphQL, then HTTP GET on the `url` field.
 
-- [ ] write tests in `internal/cmd/attachment_test.go`:
+- [x] write tests in `internal/cmd/attachment_test.go`:
   - `TestAttachmentDownload_Success` -- mock GraphQL + mock HTTP file server; verify file saved to disk with correct content
   - `TestAttachmentDownload_CustomOutput` -- verify `--output` flag saves to specified path
   - `TestAttachmentDownload_StdoutDash` -- verify `--output -` writes to stdout
   - `TestAttachmentDownload_NotFound` -- verify error when attachment not found
   - `TestAttachmentDownload_HTTPError` -- verify error when file URL returns non-2xx
   - `TestAttachmentDownload_FilenameFromURL` -- verify default filename derived from URL path
-- [ ] implement `newAttachmentDownloadCommand()` in `internal/cmd/attachment.go`:
+- [x] implement `newAttachmentDownloadCommand()` in `internal/cmd/attachment.go`:
   - accepts attachment UUID as positional arg
   - `--output` / `-o` flag -- destination path (default: filename from URL, saved to current dir)
   - `--output -` -- write to stdout (for piping)
@@ -181,8 +181,8 @@ Download attachment file to disk. Fetches attachment metadata via GraphQL, then 
     3. save response body to file (or stdout)
     4. print: `Downloaded: <filename> (<size>)` (unless stdout mode)
   - use `client.HTTPClient` or plain `http.Client` for the download (no auth needed, Linear CDN URLs are signed)
-- [ ] register: `cmd.AddCommand(newAttachmentDownloadCommand())`
-- [ ] run `make build` and tests -- must pass before next task
+- [x] register: `cmd.AddCommand(newAttachmentDownloadCommand())`
+- [x] run `make build` and tests -- must pass before next task
 
 ### Task 7: Fix attachment file upload (HTTP 400)
 

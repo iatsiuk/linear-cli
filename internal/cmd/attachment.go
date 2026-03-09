@@ -4,6 +4,11 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"path"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -60,6 +65,7 @@ func newAttachmentCommand() *cobra.Command {
 	cmd.AddCommand(newAttachmentShowCommand())
 	cmd.AddCommand(newAttachmentCreateCommand())
 	cmd.AddCommand(newAttachmentDeleteCommand())
+	cmd.AddCommand(newAttachmentDownloadCommand())
 	return cmd
 }
 
@@ -119,6 +125,96 @@ func runAttachmentShow(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	return writeLine("Updated", a.UpdatedAt)
+}
+
+func newAttachmentDownloadCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "download <id>",
+		Short: "Download an attachment file",
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("attachment id is required")
+			}
+			return nil
+		},
+		RunE: runAttachmentDownload,
+	}
+	cmd.Flags().StringP("output", "o", "", "destination path ('-' for stdout)")
+	return cmd
+}
+
+func runAttachmentDownload(cmd *cobra.Command, args []string) error {
+	client, err := newClientFromConfig()
+	if err != nil {
+		return err
+	}
+
+	attID := args[0]
+	vars := map[string]any{"id": attID}
+	var result attachmentShowResult
+	if err := client.Do(context.Background(), query.AttachmentShowQuery, vars, &result); err != nil {
+		return fmt.Errorf("show attachment: %w", err)
+	}
+	if result.Attachment == nil {
+		return fmt.Errorf("attachment %q not found", attID)
+	}
+
+	fileURL := result.Attachment.URL
+	outputFlag, _ := cmd.Flags().GetString("output")
+
+	// determine destination: stdout, explicit path, or filename from URL
+	toStdout := outputFlag == "-"
+	dest := outputFlag
+	if !toStdout && dest == "" {
+		dest = filenameFromURL(fileURL)
+		if dest == "" {
+			dest = "attachment-" + attID
+		}
+	}
+
+	// download file
+	//nolint:noctx // no context needed; CDN URLs are pre-signed
+	resp, err := http.Get(fileURL) //nolint:gosec // URL comes from Linear API response
+	if err != nil {
+		return fmt.Errorf("download attachment: %w", err)
+	}
+	defer func() { _, _ = io.Copy(io.Discard, resp.Body); _ = resp.Body.Close() }()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("download attachment: unexpected status %d", resp.StatusCode)
+	}
+
+	if toStdout {
+		_, err = io.Copy(cmd.OutOrStdout(), resp.Body)
+		return err
+	}
+
+	f, err := os.Create(dest)
+	if err != nil {
+		return fmt.Errorf("create file: %w", err)
+	}
+	defer func() { _ = f.Close() }()
+
+	n, err := io.Copy(f, resp.Body)
+	if err != nil {
+		return fmt.Errorf("write file: %w", err)
+	}
+
+	_, err = fmt.Fprintf(cmd.OutOrStdout(), "Downloaded: %s (%d bytes)\n", dest, n)
+	return err
+}
+
+// filenameFromURL returns the last non-empty path segment of rawURL, or "".
+func filenameFromURL(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return ""
+	}
+	base := path.Base(u.Path)
+	if base == "." || base == "/" {
+		return ""
+	}
+	return base
 }
 
 func newAttachmentListCommand() *cobra.Command {

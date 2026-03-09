@@ -125,6 +125,17 @@ Use functions in `internal/api/resolver.go` to convert human-readable names to U
 
 Pattern: if input already matches UUID regex, return immediately without API call.
 
+### Filter Builder
+
+Use `internal/filter` to add advanced issue filter flags and build `IssueFilter` variables:
+- `filter.AddFlags(cmd)` - registers all filter flags on a command
+- `filter.BuildFromFlags(f)` - constructs an `IssueFilter` map from parsed flags; returns nil if no flags set
+- `filter.ParseDate(s)` - converts CLI date aliases (7d, 2w, today, yesterday) to Linear API format
+
+Flags added: `--created-after`, `--created-before`, `--updated-after`, `--updated-before`,
+`--due-after`, `--due-before`, `--completed-after`, `--completed-before`, `--no-assignee`,
+`--no-project`, `--no-cycle`, `--priority-gte`, `--priority-lte`, `--my`, `--or`.
+
 ### Partial Update Mutations
 
 Use `map[string]any` for mutation input variables when partial updates are needed.

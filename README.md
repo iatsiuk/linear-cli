@@ -236,6 +236,8 @@ Flags:
 
 At least one change flag is required. `--label` cannot be combined with `--add-label` or `--remove-label`.
 
+Note: `--state` resolves the state name workspace-wide. If multiple teams have states with the same name, the first match is used.
+
 Examples:
 ```
 linear issue batch update ENG-1 ENG-2 ENG-3 --state Done
@@ -691,6 +693,9 @@ linear completion zsh > "${fpath[1]}/_linear"
 
 # fish
 linear completion fish > ~/.config/fish/completions/linear.fish
+
+# powershell
+linear completion powershell >> $PROFILE
 ```
 
 ## Pipe-friendly Workflows

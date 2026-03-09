@@ -54,8 +54,9 @@ func runSearch(cmd *cobra.Command, args []string) error {
 		"first": limit,
 	}
 
+	ctx := context.Background()
 	if teamKey != "" {
-		teamID, err := api.ResolveTeamID(context.Background(), client, teamKey)
+		teamID, err := api.ResolveTeamID(ctx, client, teamKey)
 		if err != nil {
 			return fmt.Errorf("resolve team: %w", err)
 		}
@@ -63,7 +64,7 @@ func runSearch(cmd *cobra.Command, args []string) error {
 	}
 
 	var result searchResult
-	if err := client.Do(context.Background(), query.IssueSearchQuery, vars, &result); err != nil {
+	if err := client.Do(ctx, query.IssueSearchQuery, vars, &result); err != nil {
 		return fmt.Errorf("search issues: %w", err)
 	}
 

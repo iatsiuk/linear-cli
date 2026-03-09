@@ -97,7 +97,12 @@ func BuildFromFlags(f *pflag.FlagSet) (map[string]any, error) {
 		}
 	}
 
-	if v, _ := f.GetBool("no-assignee"); v {
+	my, _ := f.GetBool("my")
+	noAssignee, _ := f.GetBool("no-assignee")
+	if my && noAssignee {
+		return nil, fmt.Errorf("--my and --no-assignee are mutually exclusive")
+	}
+	if noAssignee {
 		conds = append(conds, condition{"assignee", map[string]any{"null": true}})
 	}
 	if v, _ := f.GetBool("no-project"); v {
@@ -106,7 +111,7 @@ func BuildFromFlags(f *pflag.FlagSet) (map[string]any, error) {
 	if v, _ := f.GetBool("no-cycle"); v {
 		conds = append(conds, condition{"cycle", map[string]any{"null": true}})
 	}
-	if v, _ := f.GetBool("my"); v {
+	if my {
 		conds = append(conds, condition{"assignee", map[string]any{"isMe": map[string]any{"eq": true}}})
 	}
 

@@ -234,12 +234,8 @@ func TestIssueBatchUpdate_ValidationNoIdentifiers(t *testing.T) {
 }
 
 func TestIssueBatchUpdate_ValidationNoChangeFlag(t *testing.T) {
-	issue1 := makeIssue("ENG-50", "Flag issue", "Todo", "Low", "")
-	issue1["id"] = "uuid-50"
-
-	server, _ := newQueuedServer(t, []map[string]any{
-		issueGetResponse(issue1),
-	})
+	// the "no fields to update" check happens before identifier resolution, so no API calls are made
+	server, _ := newQueuedServer(t, nil)
 	setupIssueTest(t, server)
 
 	var out bytes.Buffer
@@ -254,6 +250,26 @@ func TestIssueBatchUpdate_ValidationNoChangeFlag(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "no fields to update") {
 		t.Errorf("error should mention 'no fields to update', got: %v", err)
+	}
+}
+
+func TestIssueBatchUpdate_InvalidPriority(t *testing.T) {
+	// priority validation happens before identifier resolution, so no API calls are made
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "batch", "update", "ENG-1", "--priority", "5"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error for priority out of range")
+	}
+	if !strings.Contains(err.Error(), "priority must be 0-4") {
+		t.Errorf("error should mention priority range, got: %v", err)
 	}
 }
 
@@ -285,12 +301,8 @@ func TestIssueBatchUpdate_ValidationTooManyItems(t *testing.T) {
 }
 
 func TestIssueBatchUpdate_ValidationLabelConflict(t *testing.T) {
-	issue1 := makeIssue("ENG-60", "Label conflict", "Todo", "Low", "")
-	issue1["id"] = "uuid-60"
-
-	server, _ := newQueuedServer(t, []map[string]any{
-		issueGetResponse(issue1),
-	})
+	// label conflict check happens before identifier resolution, so no API calls are made
+	server, _ := newQueuedServer(t, nil)
 	setupIssueTest(t, server)
 
 	var out bytes.Buffer
@@ -357,5 +369,75 @@ func TestIssueBatchUpdate_PriorityFlag(t *testing.T) {
 	}
 	if input["priority"] != float64(1) {
 		t.Errorf("input.priority = %v, want 1", input["priority"])
+	}
+}
+
+func TestIssueBatchUpdate_AddLabelFlag(t *testing.T) {
+	issue1 := makeIssue("ENG-80", "Add label issue", "Todo", "Low", "")
+	issue1["id"] = "uuid-80"
+
+	// validUUID1 is already a UUID, so ResolveLabelID returns it without an API call
+	server, bodies := newQueuedServer(t, []map[string]any{
+		issueGetResponse(issue1),
+		issueBatchUpdateResponse([]map[string]any{issue1}),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "batch", "update", "ENG-80", "--add-label", validUUID1})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	batchVars := (*bodies)[1]
+	input, ok := batchVars["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("input not set: %v", batchVars)
+	}
+	addedIDs, ok := input["addedLabelIds"].([]any)
+	if !ok {
+		t.Fatalf("addedLabelIds not set or wrong type: %v", input)
+	}
+	if len(addedIDs) != 1 || addedIDs[0] != validUUID1 {
+		t.Errorf("addedLabelIds = %v, want [%s]", addedIDs, validUUID1)
+	}
+}
+
+func TestIssueBatchUpdate_RemoveLabelFlag(t *testing.T) {
+	issue1 := makeIssue("ENG-81", "Remove label issue", "Todo", "Low", "")
+	issue1["id"] = "uuid-81"
+
+	// validUUID1 is already a UUID, so ResolveLabelID returns it without an API call
+	server, bodies := newQueuedServer(t, []map[string]any{
+		issueGetResponse(issue1),
+		issueBatchUpdateResponse([]map[string]any{issue1}),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "batch", "update", "ENG-81", "--remove-label", validUUID1})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	batchVars := (*bodies)[1]
+	input, ok := batchVars["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("input not set: %v", batchVars)
+	}
+	removedIDs, ok := input["removedLabelIds"].([]any)
+	if !ok {
+		t.Fatalf("removedLabelIds not set or wrong type: %v", input)
+	}
+	if len(removedIDs) != 1 || removedIDs[0] != validUUID1 {
+		t.Errorf("removedLabelIds = %v, want [%s]", removedIDs, validUUID1)
 	}
 }

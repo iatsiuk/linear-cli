@@ -93,6 +93,12 @@ func runIssueList(cmd *cobra.Command, _ []string) error {
 		issueFilter["team"] = map[string]any{"key": map[string]any{"eq": teamKey}}
 	}
 	if assignee != "" {
+		if my, _ := f.GetBool("my"); my {
+			return fmt.Errorf("--assignee and --my are mutually exclusive")
+		}
+		if noAssignee, _ := f.GetBool("no-assignee"); noAssignee {
+			return fmt.Errorf("--assignee and --no-assignee are mutually exclusive")
+		}
 		issueFilter["assignee"] = map[string]any{"displayName": map[string]any{"eq": assignee}}
 	}
 	if stateName != "" {

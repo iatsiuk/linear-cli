@@ -142,10 +142,13 @@ func TestSearchCommand_WithTeamFlag(t *testing.T) {
 	if len(*bodies) != 2 {
 		t.Fatalf("expected 2 requests (team resolve + search), got %d", len(*bodies))
 	}
-	// second request is the search, should include teamId
+	// second request is the search, should include teamId and preserve term
 	searchVars := (*bodies)[1]
 	if searchVars["teamId"] != "team-uuid-123" {
 		t.Errorf("teamId = %v, want team-uuid-123", searchVars["teamId"])
+	}
+	if searchVars["term"] != "filtered" {
+		t.Errorf("term = %v, want filtered", searchVars["term"])
 	}
 }
 

@@ -38,8 +38,9 @@ func TestCompletionCommand_Bash(t *testing.T) {
 	}
 
 	result := out.String()
-	if !strings.Contains(result, "bash") {
-		t.Errorf("bash completion output should contain 'bash', got:\n%s", result)
+	// COMPREPLY is a bash builtin array used only in bash completion scripts
+	if !strings.Contains(result, "COMPREPLY") {
+		t.Errorf("bash completion output should contain 'COMPREPLY', got:\n%s", result)
 	}
 }
 

@@ -150,14 +150,14 @@ investigate and fix if needed.
 
 ### Task 7: Verify acceptance criteria
 
-- [ ] verify config path resolves to `~/.config/linear-cli/config.yaml` on macOS (unit tests)
-- [ ] verify `issue show --json` includes parent and project fields (unit tests)
-- [ ] verify `ResolveUserID` finds users by displayName (unit tests)
-- [ ] verify batch update resolves state within correct team (unit tests)
-- [ ] verify attachment download passes auth header (unit tests)
-- [ ] verify doc create shows helpful error without --project (unit tests)
-- [ ] run full test suite: `go test -race ./...`
-- [ ] run linter: `make build`
+- [x] verify config path resolves to `~/.config/linear-cli/config.yaml` on macOS (unit tests)
+- [x] verify `issue show --json` includes parent and project fields (unit tests)
+- [x] verify `ResolveUserID` finds users by displayName (unit tests)
+- [x] verify batch update resolves state within correct team (unit tests)
+- [x] verify attachment download passes auth header (unit tests)
+- [x] verify doc create shows helpful error without --project (unit tests)
+- [x] run full test suite: `go test -race ./...`
+- [x] run linter: `make build`
 
 ## Technical Details
 

@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -173,8 +174,12 @@ func runAttachmentDownload(cmd *cobra.Command, args []string) error {
 	}
 
 	// download file
-	//nolint:noctx // no context needed; CDN URLs are pre-signed
-	resp, err := http.Get(fileURL) //nolint:gosec // URL comes from Linear API response
+	dlClient := &http.Client{Timeout: 5 * time.Minute}
+	req, err := http.NewRequestWithContext(cmd.Context(), http.MethodGet, fileURL, nil)
+	if err != nil {
+		return fmt.Errorf("build download request: %w", err)
+	}
+	resp, err := dlClient.Do(req) //nolint:gosec // URL comes from Linear API response
 	if err != nil {
 		return fmt.Errorf("download attachment: %w", err)
 	}

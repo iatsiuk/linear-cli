@@ -266,6 +266,147 @@ linear issue delete ENG-42 --yes
 linear issue delete ENG-42 --archive
 ```
 
+### Issue relations
+
+Manage relations between issues with the `issue relation` subcommand.
+
+#### List relations
+
+```
+linear issue relation list <issue-identifier>
+```
+
+Shows all outgoing and incoming relations for an issue.
+
+Output columns: Type | Direction | Related Issue | Title
+
+Example:
+```
+linear issue relation list ENG-42
+```
+
+#### Create relation
+
+```
+linear issue relation create <issue-identifier> [flags]
+```
+
+Flags:
+```
+  --related string   identifier of the related issue (required)
+  --type string      relation type: blocks|duplicate|related|similar (default "related")
+  --json             output created relation as JSON
+```
+
+Relation types:
+- `blocks` - this issue blocks the related issue
+- `duplicate` - this issue is a duplicate of the related issue
+- `related` - issues are related
+- `similar` - issues are similar
+
+Examples:
+```
+linear issue relation create ENG-42 --related ENG-99 --type blocks
+linear issue relation create ENG-42 --related ENG-10 --type duplicate
+```
+
+#### Delete relation
+
+```
+linear issue relation delete <relation-id> [flags]
+```
+
+Flags:
+```
+  --yes   skip confirmation prompt
+```
+
+Example:
+```
+linear issue relation delete abc123 --yes
+```
+
+### Branch lookup
+
+```
+linear issue branch [branch-name] [flags]
+```
+
+Looks up the Linear issue linked to a git branch name. If no branch name is provided, uses the current git branch (from `git rev-parse --abbrev-ref HEAD`).
+
+Displays full issue details (same as `issue show`).
+
+Flags:
+```
+  --json   output as JSON object
+```
+
+Examples:
+```
+linear issue branch
+linear issue branch feature/eng-42-fix-login
+```
+
+## Notification Commands
+
+Manage Linear notifications with the `notification` subcommand.
+
+### List notifications
+
+```
+linear notification list [flags]
+```
+
+Flags:
+```
+  --unread       show only unread notifications
+  --limit int    maximum number of notifications to fetch (default 50)
+  --json         output as JSON array
+```
+
+Output columns: ID | Type | Created | Read
+
+Examples:
+```
+linear notification list
+linear notification list --unread
+linear notification list --limit 20 --json
+```
+
+### Mark notifications as read
+
+```
+linear notification read [id] [flags]
+```
+
+Flags:
+```
+  --all   mark all notifications as read
+```
+
+Examples:
+```
+linear notification read abc123
+linear notification read --all
+```
+
+### Archive notifications
+
+```
+linear notification archive [id] [flags]
+```
+
+Flags:
+```
+  --all   archive all notifications
+```
+
+Examples:
+```
+linear notification archive abc123
+linear notification archive --all
+```
+
 ## Me Command
 
 Show the currently authenticated user.

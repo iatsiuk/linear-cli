@@ -125,8 +125,8 @@ mutation { issueRelationDelete(id: "...") { success entityId } }
 Returns `entityId: String!` (no entity object).
 
 ### Task 7: [Final] Update documentation
-- [ ] update README.md with relation, branch, and notification commands usage
-- [ ] document all command flags and options
+- [x] update README.md with relation, branch, and notification commands usage
+- [x] document all command flags and options
 
 ## Post-Completion
 - Manual testing with real issue relations

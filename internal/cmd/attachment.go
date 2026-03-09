@@ -92,7 +92,7 @@ func runAttachmentShow(cmd *cobra.Command, args []string) error {
 
 	vars := map[string]any{"id": args[0]}
 	var result attachmentShowResult
-	if err := client.Do(context.Background(), query.AttachmentShowQuery, vars, &result); err != nil {
+	if err := client.Do(cmd.Context(), query.AttachmentShowQuery, vars, &result); err != nil {
 		return fmt.Errorf("show attachment: %w", err)
 	}
 	if result.Attachment == nil {
@@ -206,7 +206,6 @@ func runAttachmentDownload(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("write file: %w", copyErr)
 	}
 	if closeErr != nil {
-		_ = os.Remove(dest)
 		return fmt.Errorf("close file: %w", closeErr)
 	}
 

@@ -130,8 +130,8 @@
 **attachment list**: Title | URL | Created
 
 ### Task 8: [Final] Update documentation
-- [ ] update README.md with document and attachment commands usage
-- [ ] document file upload workflow
+- [x] update README.md with document and attachment commands usage
+- [x] document file upload workflow
 
 ## Post-Completion
 - Manual testing with file uploads (images, PDFs)

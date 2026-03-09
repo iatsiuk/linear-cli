@@ -79,14 +79,14 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 4: Team Membership
-- [ ] write tests for TeamMembership struct deserialization
-- [ ] write tests for query/mutation construction
-- [ ] create `internal/cmd/team_member.go`:
+- [x] write tests for TeamMembership struct deserialization
+- [x] write tests for query/mutation construction
+- [x] create `internal/cmd/team_member.go`:
   - `team member list <team-key>`: shows team members
   - `team member add <team-key> <user>`: creates team membership
   - `team member remove <team-key> <user>`: deletes team membership
   - table columns: Name | Email | Role
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 5: Templates
 - [ ] write tests for Template struct deserialization

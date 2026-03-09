@@ -42,6 +42,7 @@ func newTeamCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newTeamListCommand())
 	cmd.AddCommand(newTeamShowCommand())
+	cmd.AddCommand(newTeamMemberCommand())
 	return cmd
 }
 

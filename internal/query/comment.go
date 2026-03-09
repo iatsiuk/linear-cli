@@ -33,3 +33,21 @@ mutation CommentCreate($input: CommentCreateInput!) {
 	}
 }
 `
+
+// CommentUpdateMutation updates an existing comment.
+const CommentUpdateMutation = `
+mutation CommentUpdate($id: String!, $input: CommentUpdateInput!) {
+	commentUpdate(id: $id, input: $input) {
+		comment {` + commentFields + `}
+	}
+}
+`
+
+// CommentDeleteMutation deletes a comment.
+const CommentDeleteMutation = `
+mutation CommentDelete($id: String!) {
+	commentDelete(id: $id) {
+		success
+	}
+}
+`

@@ -68,10 +68,10 @@
 
 Write query strings and tests first, then verify they compile.
 
-- [ ] write tests in `internal/query/comment_test.go`:
+- [x] write tests in `internal/query/comment_test.go`:
   - `TestCommentUpdateMutation` -- verify operation name, `$id` and `$input` variables, `commentUpdate` block, comment fields returned
   - `TestCommentDeleteMutation` -- verify operation name, `$id` variable, `commentDelete` block, `success` field
-- [ ] add `CommentUpdateMutation` to `internal/query/comment.go`:
+- [x] add `CommentUpdateMutation` to `internal/query/comment.go`:
   ```
   mutation CommentUpdate($id: String!, $input: CommentUpdateInput!) {
     commentUpdate(id: $id, input: $input) {
@@ -79,13 +79,13 @@ Write query strings and tests first, then verify they compile.
     }
   }
   ```
-- [ ] add `CommentDeleteMutation` to `internal/query/comment.go`:
+- [x] add `CommentDeleteMutation` to `internal/query/comment.go`:
   ```
   mutation CommentDelete($id: String!) {
     commentDelete(id: $id) { success }
   }
   ```
-- [ ] run `make build` and tests -- must pass before next task
+- [x] run `make build` and tests -- must pass before next task
 
 ### Task 2: Implement `comment update` command
 

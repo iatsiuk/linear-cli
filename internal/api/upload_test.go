@@ -150,6 +150,7 @@ func TestContentTypeFromName(t *testing.T) {
 		{"doc.pdf", "application/pdf"},
 		{"noext", "application/octet-stream"},
 		{"archive.tar.gz", "application/gzip"},
+		{"readme.txt", "text/plain"},
 	}
 	for _, tc := range cases {
 		got := contentTypeFromName(tc.filename)

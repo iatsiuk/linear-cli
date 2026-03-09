@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 const fileUploadMutation = `
@@ -115,6 +116,10 @@ func contentTypeFromName(filename string) string {
 	t := mime.TypeByExtension(ext)
 	if t == "" {
 		return "application/octet-stream"
+	}
+	// strip parameters like "; charset=utf-8" that some platforms (macOS) append
+	if i := strings.IndexByte(t, ';'); i >= 0 {
+		t = strings.TrimSpace(t[:i])
 	}
 	return t
 }

@@ -89,14 +89,14 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 5: Templates
-- [ ] write tests for Template struct deserialization
-- [ ] write tests for query construction
-- [ ] create `internal/cmd/template.go`:
+- [x] write tests for Template struct deserialization
+- [x] write tests for query construction
+- [x] create `internal/cmd/template.go`:
   - `template list`: shows all templates (root `templates` query returns plain list, not connection)
   - `template show <id>`: shows template details with templateData
   - supports `--json`
   - table columns: Name | Type
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 6: Initiatives
 - [ ] write tests for Initiative struct deserialization

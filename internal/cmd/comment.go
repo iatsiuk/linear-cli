@@ -32,6 +32,7 @@ type commentCreateResult struct {
 
 type commentUpdateResult struct {
 	CommentUpdate struct {
+		Success bool           `json:"success"`
 		Comment *model.Comment `json:"comment"`
 	} `json:"commentUpdate"`
 }
@@ -100,6 +101,9 @@ func runCommentUpdate(cmd *cobra.Command, args []string) error {
 	if err := client.Do(ctx, query.CommentUpdateMutation, vars, &result); err != nil {
 		return fmt.Errorf("update comment: %w", err)
 	}
+	if !result.CommentUpdate.Success {
+		return fmt.Errorf("update comment: mutation returned success=false")
+	}
 	if result.CommentUpdate.Comment == nil {
 		return fmt.Errorf("update comment: no comment in response")
 	}
@@ -139,9 +143,12 @@ func runCommentDelete(cmd *cobra.Command, args []string) error {
 	yes, _ := cmd.Flags().GetBool("yes")
 
 	if !yes {
-		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Delete comment %s? [y/N] ", id)
+		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "Delete comment %s? [y/N] ", id)
 		scanner := bufio.NewScanner(cmd.InOrStdin())
 		scanner.Scan()
+		if err := scanner.Err(); err != nil {
+			return fmt.Errorf("read confirmation: %w", err)
+		}
 		answer := strings.TrimSpace(scanner.Text())
 		if !strings.EqualFold(answer, "y") && !strings.EqualFold(answer, "yes") {
 			return fmt.Errorf("aborted")

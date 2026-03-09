@@ -38,6 +38,7 @@ mutation CommentCreate($input: CommentCreateInput!) {
 const CommentUpdateMutation = `
 mutation CommentUpdate($id: String!, $input: CommentUpdateInput!) {
 	commentUpdate(id: $id, input: $input) {
+		success
 		comment {` + commentFields + `}
 	}
 }

@@ -197,6 +197,8 @@ func runAttachmentDownload(cmd *cobra.Command, args []string) error {
 
 	n, err := io.Copy(f, resp.Body)
 	if err != nil {
+		_ = f.Close()
+		_ = os.Remove(dest)
 		return fmt.Errorf("write file: %w", err)
 	}
 

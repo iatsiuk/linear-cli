@@ -89,10 +89,11 @@ func (c *Client) Upload(ctx context.Context, filePath string) (string, error) {
 		return "", fmt.Errorf("create PUT request: %w", err)
 	}
 	req.ContentLength = int64(size)
-	req.Header.Set("Content-Type", contentType)
 	for _, h := range uf.Headers {
 		req.Header.Set(h.Key, h.Value)
 	}
+	// set Content-Type after API headers so local detection always wins
+	req.Header.Set("Content-Type", contentType)
 
 	// use a client without timeout for the upload PUT - file uploads can take longer than API calls
 	uploadClient := &http.Client{}

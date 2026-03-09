@@ -327,6 +327,7 @@ func commentUpdateResponse(comment map[string]any) map[string]any {
 	return map[string]any{
 		"data": map[string]any{
 			"commentUpdate": map[string]any{
+				"success": true,
 				"comment": comment,
 			},
 		},

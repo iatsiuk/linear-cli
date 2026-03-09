@@ -26,6 +26,7 @@ query AttachmentList($issueId: String!) {
 const AttachmentCreateMutation = `
 mutation AttachmentCreate($input: AttachmentCreateInput!) {
 	attachmentCreate(input: $input) {
+		success
 		attachment {` + attachmentFields + `
 			issue { id identifier title }
 		}

@@ -43,6 +43,7 @@ func attachmentCreateResponse(attachment map[string]any) map[string]any {
 	return map[string]any{
 		"data": map[string]any{
 			"attachmentCreate": map[string]any{
+				"success":    true,
 				"attachment": attachment,
 			},
 		},

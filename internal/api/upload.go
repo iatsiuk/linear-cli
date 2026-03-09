@@ -88,7 +88,9 @@ func (c *Client) Upload(ctx context.Context, filePath string) (string, error) {
 		req.Header.Set(h.Key, h.Value)
 	}
 
-	resp, err := c.httpClient.Do(req)
+	// use a client without timeout for the upload PUT - file uploads can take longer than API calls
+	uploadClient := &http.Client{}
+	resp, err := uploadClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("upload file: %w", err)
 	}

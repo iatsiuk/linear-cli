@@ -23,6 +23,7 @@ type attachmentListResult struct {
 
 type attachmentCreateResult struct {
 	AttachmentCreate struct {
+		Success    bool              `json:"success"`
 		Attachment *model.Attachment `json:"attachment"`
 	} `json:"attachmentCreate"`
 }
@@ -163,8 +164,8 @@ func runAttachmentCreate(cmd *cobra.Command, args []string) error {
 	if err := client.Do(ctx, query.AttachmentCreateMutation, vars, &result); err != nil {
 		return fmt.Errorf("create attachment: %w", err)
 	}
-	if result.AttachmentCreate.Attachment == nil {
-		return fmt.Errorf("create attachment: no attachment in response")
+	if !result.AttachmentCreate.Success || result.AttachmentCreate.Attachment == nil {
+		return fmt.Errorf("create attachment: mutation returned success=false")
 	}
 
 	a := result.AttachmentCreate.Attachment

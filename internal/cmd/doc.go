@@ -65,6 +65,7 @@ func runDocList(cmd *cobra.Command, _ []string) error {
 		return err
 	}
 
+	ctx := context.Background()
 	f := cmd.Flags()
 	limit, _ := f.GetInt("limit")
 	includeArchived, _ := f.GetBool("include-archived")
@@ -76,7 +77,7 @@ func runDocList(cmd *cobra.Command, _ []string) error {
 	}
 
 	if projectID != "" {
-		resolvedID, err := api.ResolveProjectID(context.Background(), client, projectID)
+		resolvedID, err := api.ResolveProjectID(ctx, client, projectID)
 		if err != nil {
 			return err
 		}
@@ -88,7 +89,7 @@ func runDocList(cmd *cobra.Command, _ []string) error {
 	}
 
 	var result docListResult
-	if err := client.Do(context.Background(), query.DocumentListQuery, vars, &result); err != nil {
+	if err := client.Do(ctx, query.DocumentListQuery, vars, &result); err != nil {
 		return fmt.Errorf("list documents: %w", err)
 	}
 

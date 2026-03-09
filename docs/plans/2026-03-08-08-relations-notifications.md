@@ -96,14 +96,14 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 6: Verify acceptance criteria
-- [ ] verify `linear issue relation list ENG-123` shows issue relations
-- [ ] verify `linear issue relation create ENG-123 --related ENG-456 --type blocks` works
-- [ ] verify `linear issue branch` auto-detects current git branch
-- [ ] verify `linear issue branch feature/eng-123-fix` finds issue
-- [ ] verify `linear notification list --unread` shows unread notifications
-- [ ] verify `linear notification read --all` marks all as read
-- [ ] run `make test` - full suite must pass
-- [ ] run `make build` - lint + build must pass
+- [x] verify `linear issue relation list ENG-123` shows issue relations
+- [x] verify `linear issue relation create ENG-123 --related ENG-456 --type blocks` works
+- [x] verify `linear issue branch` auto-detects current git branch
+- [x] verify `linear issue branch feature/eng-123-fix` finds issue
+- [x] verify `linear notification list --unread` shows unread notifications
+- [x] verify `linear notification read --all` marks all as read
+- [x] run `make test` - full suite must pass
+- [x] run `make build` - lint + build must pass
 
 ## Technical Details
 

@@ -13,6 +13,10 @@ import (
 	"github.com/iatsiuk/linear-cli/internal/query"
 )
 
+type attachmentShowResult struct {
+	Attachment *model.Attachment `json:"attachment"`
+}
+
 type attachmentListResult struct {
 	Issue *struct {
 		Attachments struct {
@@ -53,9 +57,68 @@ func newAttachmentCommand() *cobra.Command {
 		},
 	}
 	cmd.AddCommand(newAttachmentListCommand())
+	cmd.AddCommand(newAttachmentShowCommand())
 	cmd.AddCommand(newAttachmentCreateCommand())
 	cmd.AddCommand(newAttachmentDeleteCommand())
 	return cmd
+}
+
+func newAttachmentShowCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "show <id>",
+		Short: "Show attachment metadata",
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("attachment id is required")
+			}
+			return nil
+		},
+		RunE: runAttachmentShow,
+	}
+}
+
+func runAttachmentShow(cmd *cobra.Command, args []string) error {
+	client, err := newClientFromConfig()
+	if err != nil {
+		return err
+	}
+
+	vars := map[string]any{"id": args[0]}
+	var result attachmentShowResult
+	if err := client.Do(context.Background(), query.AttachmentShowQuery, vars, &result); err != nil {
+		return fmt.Errorf("show attachment: %w", err)
+	}
+	if result.Attachment == nil {
+		return fmt.Errorf("attachment %q not found", args[0])
+	}
+
+	a := result.Attachment
+	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")
+	if jsonMode {
+		return output.NewFormatter(true).Format(cmd.OutOrStdout(), a)
+	}
+
+	w := cmd.OutOrStdout()
+	writeLine := func(label, value string) error {
+		_, e := fmt.Fprintf(w, "%-10s %s\n", label+":", value)
+		return e
+	}
+
+	if err := writeLine("Title", a.Title); err != nil {
+		return err
+	}
+	if err := writeLine("URL", a.URL); err != nil {
+		return err
+	}
+	if a.Creator != nil {
+		if err := writeLine("Creator", a.Creator.DisplayName); err != nil {
+			return err
+		}
+	}
+	if err := writeLine("Created", a.CreatedAt); err != nil {
+		return err
+	}
+	return writeLine("Updated", a.UpdatedAt)
 }
 
 func newAttachmentListCommand() *cobra.Command {

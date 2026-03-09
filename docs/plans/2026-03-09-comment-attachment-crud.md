@@ -142,11 +142,11 @@ Query to fetch a single attachment by ID (needed for `show` and `download`).
 
 Display attachment metadata (title, URL, creator, dates).
 
-- [ ] write tests in `internal/cmd/attachment_test.go`:
+- [x] write tests in `internal/cmd/attachment_test.go`:
   - `TestAttachmentShow_Success` -- mock server returns attachment; verify table output (Title, URL, Creator, Created, Updated)
   - `TestAttachmentShow_JSON` -- verify `--json` outputs valid JSON with all fields
   - `TestAttachmentShow_NotFound` -- verify error message when attachment not found
-- [ ] implement `newAttachmentShowCommand()` in `internal/cmd/attachment.go`:
+- [x] implement `newAttachmentShowCommand()` in `internal/cmd/attachment.go`:
   - accepts attachment UUID as positional arg
   - display format (like `doc show` or `issue show`):
     ```
@@ -157,8 +157,8 @@ Display attachment metadata (title, URL, creator, dates).
     Updated:   2026-03-09T12:28:16.572Z
     ```
   - with `--json` outputs full attachment JSON
-- [ ] register: `cmd.AddCommand(newAttachmentShowCommand())`
-- [ ] run `make build` and tests -- must pass before next task
+- [x] register: `cmd.AddCommand(newAttachmentShowCommand())`
+- [x] run `make build` and tests -- must pass before next task
 
 ### Task 6: Implement `attachment download` command
 

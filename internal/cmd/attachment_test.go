@@ -406,6 +406,95 @@ func TestAttachmentDeleteCommand_MissingID(t *testing.T) {
 	}
 }
 
+func attachmentShowResponse(attachment map[string]any) map[string]any {
+	return map[string]any{
+		"data": map[string]any{
+			"attachment": attachment,
+		},
+	}
+}
+
+// TestAttachmentShow_Success verifies table output for attachment show.
+func TestAttachmentShow_Success(t *testing.T) {
+	att := makeAttachment("att-show-1", "Screenshot link", "https://cdn.linear.app/screenshot.png")
+	att["creator"] = map[string]any{"id": "u1", "displayName": "aleksei.i", "email": "aleksei@example.com"}
+
+	server, _ := newQueuedServer(t, []map[string]any{
+		attachmentShowResponse(att),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "show", "att-show-1"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	result := out.String()
+	for _, want := range []string{"Screenshot link", "https://cdn.linear.app/screenshot.png", "aleksei.i", "2026-01-01", "2026-01-02"} {
+		if !strings.Contains(result, want) {
+			t.Errorf("output should contain %q, got:\n%s", want, result)
+		}
+	}
+}
+
+// TestAttachmentShow_JSON verifies JSON output for attachment show.
+func TestAttachmentShow_JSON(t *testing.T) {
+	att := makeAttachment("att-show-2", "PR Link", "https://github.com/org/repo/pull/1")
+
+	server, _ := newQueuedServer(t, []map[string]any{
+		attachmentShowResponse(att),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"--json", "attachment", "show", "att-show-2"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var decoded map[string]any
+	if err := json.Unmarshal(out.Bytes(), &decoded); err != nil {
+		t.Fatalf("output is not valid JSON: %v\noutput: %s", err, out.String())
+	}
+	if decoded["id"] != "att-show-2" {
+		t.Errorf("expected id att-show-2, got %v", decoded["id"])
+	}
+	if decoded["title"] != "PR Link" {
+		t.Errorf("expected title PR Link, got %v", decoded["title"])
+	}
+}
+
+// TestAttachmentShow_NotFound verifies error when attachment is not found.
+func TestAttachmentShow_NotFound(t *testing.T) {
+	server, _ := newQueuedServer(t, []map[string]any{
+		{"data": map[string]any{"attachment": nil}},
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "show", "nonexistent-id"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when attachment not found")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("error should mention not found, got: %v", err)
+	}
+}
+
 // newUploadServer creates a PUT server and a queued GraphQL server whose
 // fileUpload response points to the PUT server. Returns both servers and
 // a flag indicating whether a PUT was received.

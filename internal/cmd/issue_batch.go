@@ -102,15 +102,6 @@ func runIssueBatchUpdate(cmd *cobra.Command, args []string) error {
 		input["assigneeId"] = assigneeID
 	}
 
-	if f.Changed("state") {
-		stateName, _ := f.GetString("state")
-		stateID, err := api.ResolveStateID(ctx, client, stateName, "")
-		if err != nil {
-			return err
-		}
-		input["stateId"] = stateID
-	}
-
 	if f.Changed("priority") {
 		priority, _ := f.GetInt("priority")
 		if priority < 0 || priority > 4 {
@@ -175,12 +166,13 @@ func runIssueBatchUpdate(cmd *cobra.Command, args []string) error {
 		input["cycleId"] = cycle
 	}
 
-	if len(input) == 0 {
+	if len(input) == 0 && !f.Changed("state") {
 		return fmt.Errorf("no fields to update: specify at least one flag")
 	}
 
-	// resolve each identifier to UUID via issue query
+	// resolve each identifier to UUID via issue query; also collect team IDs for state resolution
 	ids := make([]string, len(identifiers))
+	teamIDs := make([]string, len(identifiers))
 	for i, ident := range identifiers {
 		var getResult issueGetResult
 		if err := client.Do(ctx, query.IssueGetQuery, map[string]any{"id": ident}, &getResult); err != nil {
@@ -190,6 +182,23 @@ func runIssueBatchUpdate(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("issue %q not found", ident)
 		}
 		ids[i] = getResult.Issue.ID
+		teamIDs[i] = getResult.Issue.Team.ID
+	}
+
+	// resolve state within the team context of the batch issues
+	if f.Changed("state") {
+		stateName, _ := f.GetString("state")
+		teamID := teamIDs[0]
+		for _, tid := range teamIDs[1:] {
+			if tid != teamID {
+				return fmt.Errorf("--state cannot be used when issues span multiple teams")
+			}
+		}
+		stateID, err := api.ResolveStateID(ctx, client, stateName, teamID)
+		if err != nil {
+			return err
+		}
+		input["stateId"] = stateID
 	}
 
 	vars := map[string]any{"ids": ids, "input": input}

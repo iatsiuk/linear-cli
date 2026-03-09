@@ -111,14 +111,14 @@ Current code only tries `name` then `email`. Users may pass `displayName` value.
 Current code passes empty teamID to `ResolveStateID` (line 107 in `issue_batch.go`).
 This resolves the first matching state workspace-wide, which may belong to a different team.
 
-- [ ] write tests in `internal/cmd/issue_batch_test.go`:
+- [x] write tests in `internal/cmd/issue_batch_test.go`:
   - `TestBatchUpdate_StateResolvesWithTeam` -- verify state resolution query includes team filter
   - `TestBatchUpdate_StateAcrossTeams` -- verify error when issues span multiple teams with --state
-- [ ] fix `runIssueBatchUpdate` in `internal/cmd/issue_batch.go`:
+- [x] fix `runIssueBatchUpdate` in `internal/cmd/issue_batch.go`:
   - when `--state` is used: fetch team from the first issue in the batch
   - pass teamID to `api.ResolveStateID(ctx, client, stateName, teamID)`
   - if issues span multiple teams, resolve state per team or return clear error
-- [ ] run `make build` and tests -- must pass before next task
+- [x] run `make build` and tests -- must pass before next task
 
 ### Task 5: Fix attachment download authentication
 

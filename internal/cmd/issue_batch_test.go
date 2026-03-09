@@ -300,6 +300,82 @@ func TestIssueBatchUpdate_ValidationTooManyItems(t *testing.T) {
 	}
 }
 
+func TestBatchUpdate_StateResolvesWithTeam(t *testing.T) {
+	issue1 := makeIssue("ENG-1", "Issue one", "Todo", "High", "")
+	issue1["id"] = "uuid-eng-1"
+	issue1["team"] = map[string]any{"id": "team-abc", "name": "Engineering", "key": "ENG"}
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		issueGetResponse(issue1),
+		stateResolveResponse("state-uuid-done"),
+		issueBatchUpdateResponse([]map[string]any{issue1}),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "batch", "update", "ENG-1", "--state", "Done"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) != 3 {
+		t.Fatalf("expected 3 requests (get + state resolve + batch), got %d", len(*bodies))
+	}
+
+	// second request is state resolution -- verify teamID is set
+	stateVars := (*bodies)[1]
+	if stateVars["teamID"] != "team-abc" {
+		t.Errorf("state resolve teamID = %v, want team-abc", stateVars["teamID"])
+	}
+	if stateVars["name"] != "Done" {
+		t.Errorf("state resolve name = %v, want Done", stateVars["name"])
+	}
+
+	// batch mutation should use resolved stateID
+	batchVars := (*bodies)[2]
+	input, ok := batchVars["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("input not set in batch vars: %v", batchVars)
+	}
+	if input["stateId"] != "state-uuid-done" {
+		t.Errorf("input.stateId = %v, want state-uuid-done", input["stateId"])
+	}
+}
+
+func TestBatchUpdate_StateAcrossTeams(t *testing.T) {
+	issue1 := makeIssue("ENG-1", "Issue one", "Todo", "High", "")
+	issue1["id"] = "uuid-eng-1"
+	issue1["team"] = map[string]any{"id": "team-abc", "name": "Engineering", "key": "ENG"}
+
+	issue2 := makeIssue("OPS-1", "Issue two", "Todo", "Low", "")
+	issue2["id"] = "uuid-ops-1"
+	issue2["team"] = map[string]any{"id": "team-xyz", "name": "Operations", "key": "OPS"}
+
+	server, _ := newQueuedServer(t, []map[string]any{
+		issueGetResponse(issue1),
+		issueGetResponse(issue2),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "batch", "update", "ENG-1", "OPS-1", "--state", "Done"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when issues span multiple teams with --state")
+	}
+	if !strings.Contains(err.Error(), "multiple teams") {
+		t.Errorf("error should mention multiple teams, got: %v", err)
+	}
+}
+
 func TestIssueBatchUpdate_ValidationLabelConflict(t *testing.T) {
 	// label conflict check happens before identifier resolution, so no API calls are made
 	server, _ := newQueuedServer(t, nil)

@@ -183,7 +183,7 @@ func runAttachmentDownload(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("download attachment: %w", err)
 	}
-	defer func() { _, _ = io.Copy(io.Discard, resp.Body); _ = resp.Body.Close() }()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return fmt.Errorf("download attachment: unexpected status %d", resp.StatusCode)
@@ -194,19 +194,26 @@ func runAttachmentDownload(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	f, err := os.Create(dest)
+	dir := path.Dir(dest)
+	tmp, err := os.CreateTemp(dir, ".dl-*")
 	if err != nil {
-		return fmt.Errorf("create file: %w", err)
+		return fmt.Errorf("create temp file: %w", err)
 	}
+	tmpName := tmp.Name()
 
-	n, copyErr := io.Copy(f, resp.Body)
-	closeErr := f.Close()
+	n, copyErr := io.Copy(tmp, resp.Body)
+	closeErr := tmp.Close()
 	if copyErr != nil {
-		_ = os.Remove(dest)
+		_ = os.Remove(tmpName)
 		return fmt.Errorf("write file: %w", copyErr)
 	}
 	if closeErr != nil {
-		return fmt.Errorf("close file: %w", closeErr)
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("close temp file: %w", closeErr)
+	}
+	if err := os.Rename(tmpName, dest); err != nil {
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("rename file: %w", err)
 	}
 
 	_, err = fmt.Fprintf(cmd.OutOrStdout(), "Downloaded: %s (%d bytes)\n", dest, n)

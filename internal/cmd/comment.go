@@ -25,15 +25,15 @@ type commentListResult struct {
 
 type commentCreateResult struct {
 	CommentCreate struct {
-		Success bool          `json:"success"`
-		Comment model.Comment `json:"comment"`
+		Success bool           `json:"success"`
+		Comment *model.Comment `json:"comment"`
 	} `json:"commentCreate"`
 }
 
 type commentUpdateResult struct {
 	CommentUpdate struct {
-		Success bool          `json:"success"`
-		Comment model.Comment `json:"comment"`
+		Success bool           `json:"success"`
+		Comment *model.Comment `json:"comment"`
 	} `json:"commentUpdate"`
 }
 
@@ -104,10 +104,13 @@ func runCommentUpdate(cmd *cobra.Command, args []string) error {
 	if !result.CommentUpdate.Success {
 		return fmt.Errorf("update comment: mutation returned success=false")
 	}
+	if result.CommentUpdate.Comment == nil {
+		return fmt.Errorf("update comment: no comment in response")
+	}
 
 	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")
 	if jsonMode {
-		return output.NewFormatter(true).Format(cmd.OutOrStdout(), &result.CommentUpdate.Comment)
+		return output.NewFormatter(true).Format(cmd.OutOrStdout(), result.CommentUpdate.Comment)
 	}
 	_, err = fmt.Fprintf(cmd.OutOrStdout(), "Comment %s updated.\n", id)
 	return err
@@ -279,8 +282,11 @@ func runCommentCreate(cmd *cobra.Command, args []string) error {
 	if !result.CommentCreate.Success {
 		return fmt.Errorf("create comment: mutation returned success=false")
 	}
+	if result.CommentCreate.Comment == nil {
+		return fmt.Errorf("create comment: no comment in response")
+	}
 
-	c := &result.CommentCreate.Comment
+	c := result.CommentCreate.Comment
 	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")
 	if jsonMode {
 		return output.NewFormatter(true).Format(cmd.OutOrStdout(), c)

@@ -238,6 +238,9 @@ func runTeamMemberRemove(cmd *cobra.Command, args []string) error {
 			break
 		}
 		end := listResult.Team.Memberships.PageInfo.EndCursor
+		if end == "" {
+			break
+		}
 		cursor = &end
 	}
 	if membershipID == "" {

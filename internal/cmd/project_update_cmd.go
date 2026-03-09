@@ -138,6 +138,11 @@ func runProjectUpdateCheckinCreate(cmd *cobra.Command, args []string) error {
 	}
 	if f.Changed("health") {
 		health, _ := f.GetString("health")
+		switch health {
+		case "onTrack", "atRisk", "offTrack":
+		default:
+			return fmt.Errorf("invalid health %q: must be onTrack, atRisk, or offTrack", health)
+		}
 		input["health"] = health
 	}
 

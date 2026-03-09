@@ -13,7 +13,7 @@ import (
 )
 
 type projectUpdateCheckinListResult struct {
-	Project struct {
+	Project *struct {
 		ProjectUpdates model.ProjectUpdateConnection `json:"projectUpdates"`
 	} `json:"project"`
 }
@@ -73,6 +73,9 @@ func runProjectUpdateCheckinList(cmd *cobra.Command, args []string) error {
 	var result projectUpdateCheckinListResult
 	if err := client.Do(ctx, query.ProjectUpdateListQuery, vars, &result); err != nil {
 		return fmt.Errorf("list project updates: %w", err)
+	}
+	if result.Project == nil {
+		return fmt.Errorf("project not found: %s", projectID)
 	}
 
 	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")

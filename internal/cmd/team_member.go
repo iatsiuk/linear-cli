@@ -15,7 +15,7 @@ import (
 )
 
 type teamMemberListResult struct {
-	Team struct {
+	Team *struct {
 		Memberships model.TeamMembershipConnection `json:"memberships"`
 	} `json:"team"`
 }
@@ -88,6 +88,9 @@ func runTeamMemberList(cmd *cobra.Command, args []string) error {
 	var result teamMemberListResult
 	if err := client.Do(ctx, query.TeamMemberListQuery, vars, &result); err != nil {
 		return fmt.Errorf("list team members: %w", err)
+	}
+	if result.Team == nil {
+		return fmt.Errorf("team not found: %s", teamID)
 	}
 
 	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")
@@ -227,6 +230,9 @@ func runTeamMemberRemove(cmd *cobra.Command, args []string) error {
 		var listResult teamMemberListResult
 		if err := client.Do(ctx, query.TeamMemberListQuery, vars, &listResult); err != nil {
 			return fmt.Errorf("list team members: %w", err)
+		}
+		if listResult.Team == nil {
+			return fmt.Errorf("team not found: %s", args[0])
 		}
 		for _, m := range listResult.Team.Memberships.Nodes {
 			if m.User.ID == userID {

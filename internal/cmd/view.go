@@ -143,5 +143,10 @@ func runViewShow(cmd *cobra.Command, args []string) error {
 			return err
 		}
 	}
+	if len(v.FilterData) > 0 && string(v.FilterData) != "null" {
+		if err := writeLine("Filters", string(v.FilterData)); err != nil {
+			return err
+		}
+	}
 	return nil
 }

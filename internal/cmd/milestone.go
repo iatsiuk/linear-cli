@@ -15,7 +15,7 @@ import (
 )
 
 type milestoneListResult struct {
-	Project struct {
+	Project *struct {
 		ProjectMilestones model.ProjectMilestoneConnection `json:"projectMilestones"`
 	} `json:"project"`
 }
@@ -97,6 +97,9 @@ func runMilestoneList(cmd *cobra.Command, args []string) error {
 	var result milestoneListResult
 	if err := client.Do(ctx, query.MilestoneListQuery, vars, &result); err != nil {
 		return fmt.Errorf("list milestones: %w", err)
+	}
+	if result.Project == nil {
+		return fmt.Errorf("project not found: %s", projectID)
 	}
 
 	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")

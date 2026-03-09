@@ -6,9 +6,9 @@ type TeamMembership struct {
 	Owner     bool    `json:"owner"`
 	SortOrder float64 `json:"sortOrder"`
 	User      User    `json:"user"`
-	Team      Team    `json:"team"`
-	CreatedAt string  `json:"createdAt"`
-	UpdatedAt string  `json:"updatedAt"`
+	Team      *Team   `json:"team,omitempty"`
+	CreatedAt string  `json:"createdAt,omitempty"`
+	UpdatedAt string  `json:"updatedAt,omitempty"`
 }
 
 // TeamMembershipConnection wraps a paginated list of TeamMembership nodes.

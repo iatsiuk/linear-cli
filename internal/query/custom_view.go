@@ -17,9 +17,11 @@ query CustomViewList($first: Int) {
 }
 `
 
-// CustomViewShowQuery fetches a single custom view by ID.
+// CustomViewShowQuery fetches a single custom view by ID including filter data.
 const CustomViewShowQuery = `
 query CustomViewShow($id: String!) {
-	customView(id: $id) {` + customViewFields + `}
+	customView(id: $id) {` + customViewFields + `
+		filterData
+	}
 }
 `

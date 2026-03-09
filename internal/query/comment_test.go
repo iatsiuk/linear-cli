@@ -71,6 +71,7 @@ func TestCommentUpdateMutation(t *testing.T) {
 		{"id var", "$id: String!"},
 		{"input var", "$input: CommentUpdateInput!"},
 		{"commentUpdate call", "commentUpdate(id: $id, input: $input)"},
+		{"success field", "success"},
 		{"comment block", "comment {"},
 		{"body field", "body"},
 		{"user block", "user {"},

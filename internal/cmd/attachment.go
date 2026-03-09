@@ -402,6 +402,6 @@ func runAttachmentDelete(cmd *cobra.Command, args []string) error {
 	if !result.AttachmentDelete.Success {
 		return fmt.Errorf("delete attachment: mutation returned success=false")
 	}
-	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Attachment %s deleted.\n", attID)
-	return nil
+	_, err = fmt.Fprintf(cmd.OutOrStdout(), "Attachment %s deleted.\n", attID)
+	return err
 }

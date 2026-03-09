@@ -64,19 +64,19 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 3: Project Milestones
-- [ ] write tests for ProjectMilestone struct deserialization
-- [ ] write tests for query/mutation construction
-- [ ] create `internal/model/milestone.go`:
+- [x] write tests for ProjectMilestone struct deserialization
+- [x] write tests for query/mutation construction
+- [x] create `internal/model/milestone.go`:
   - ProjectMilestone struct: ID, Name, Description, TargetDate, SortOrder
-- [ ] create `internal/query/milestone.go`:
+- [x] create `internal/query/milestone.go`:
   - MilestoneListQuery, MilestoneCreateMutation, MilestoneUpdateMutation, MilestoneDeleteMutation
-- [ ] create `internal/cmd/milestone.go`:
+- [x] create `internal/cmd/milestone.go`:
   - `project milestone list <project-id>`: shows milestones
   - `project milestone create <project-id>`: flags `--name` (required), `--description`, `--target-date`
   - `project milestone update <id>`: flags `--name`, `--description`, `--target-date`
   - `project milestone delete <id>`: `--yes` to skip confirmation
   - table columns: Name | Target Date | Description
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 4: Team Membership
 - [ ] write tests for TeamMembership struct deserialization

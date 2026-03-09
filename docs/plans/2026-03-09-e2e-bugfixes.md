@@ -125,14 +125,14 @@ This resolves the first matching state workspace-wide, which may belong to a dif
 `uploads.linear.app` requires `Authorization: <API_KEY>` header (no Bearer prefix).
 Reference: https://developers.linear.app/docs/oauth/file-storage-authentication
 
-- [ ] write tests in `internal/cmd/attachment_test.go`:
+- [x] write tests in `internal/cmd/attachment_test.go`:
   - `TestAttachmentDownload_AuthHeader` -- verify download request includes Authorization header
   - `TestAttachmentDownload_AuthHeaderNoBearerPrefix` -- verify header value has no Bearer prefix
-- [ ] update `runAttachmentDownload` in `internal/cmd/attachment.go`:
+- [x] update `runAttachmentDownload` in `internal/cmd/attachment.go`:
   - load API key from config (already available via `newClientFromConfig()`)
   - add `req.Header.Set("Authorization", apiKey)` to download request
   - refactor to expose API key from client or pass it through
-- [ ] run `make build` and tests -- must pass before next task
+- [x] run `make build` and tests -- must pass before next task
 
 ### Task 6: Improve doc create error handling
 

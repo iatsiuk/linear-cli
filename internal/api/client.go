@@ -30,6 +30,11 @@ func WithEndpoint(endpoint string) Option {
 	}
 }
 
+// APIKey returns the API key used to authenticate requests.
+func (c *Client) APIKey() string {
+	return c.apiKey
+}
+
 // NewClient creates a new API client authenticated with apiKey.
 func NewClient(apiKey string, opts ...Option) *Client {
 	c := &Client{

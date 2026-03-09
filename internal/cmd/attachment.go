@@ -179,6 +179,7 @@ func runAttachmentDownload(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("build download request: %w", err)
 	}
+	req.Header.Set("Authorization", client.APIKey())
 	resp, err := dlClient.Do(req) //nolint:gosec // URL comes from Linear API response
 	if err != nil {
 		return fmt.Errorf("download attachment: %w", err)

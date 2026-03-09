@@ -674,6 +674,102 @@ func TestAttachmentCreateCommand_NeitherURLNorFile(t *testing.T) {
 	}
 }
 
+// newDownloadTestServersCapture creates a file server that captures request headers.
+// Returns GraphQL server, file server, and a pointer to the captured Authorization header value.
+func newDownloadTestServersCapture(t *testing.T, attID, filename string, fileContent []byte) (*httptest.Server, *httptest.Server, *string) {
+	t.Helper()
+
+	var capturedAuth string
+	fileServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedAuth = r.Header.Get("Authorization")
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write(fileContent)
+	}))
+	t.Cleanup(fileServer.Close)
+
+	fileURL := fileServer.URL + "/files/" + filename
+	att := makeAttachment(attID, "Test Attachment", fileURL)
+	gqlServer, _ := newQueuedServer(t, []map[string]any{
+		attachmentShowResponse(att),
+	})
+
+	return gqlServer, fileServer, &capturedAuth
+}
+
+// TestAttachmentDownload_AuthHeader verifies download request includes Authorization header.
+func TestAttachmentDownload_AuthHeader(t *testing.T) {
+	const attID = "dl-auth-1"
+	content := []byte("secure content")
+
+	gqlServer, _, capturedAuth := newDownloadTestServersCapture(t, attID, "secret.pdf", content)
+	setupIssueTest(t, gqlServer)
+
+	dir := t.TempDir()
+	orig, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("chdir: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(orig) })
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "download", attID})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if *capturedAuth == "" {
+		t.Error("download request should include Authorization header, got empty")
+	}
+}
+
+// TestAttachmentDownload_AuthHeaderNoBearerPrefix verifies Authorization header has no Bearer prefix.
+func TestAttachmentDownload_AuthHeaderNoBearerPrefix(t *testing.T) {
+	const attID = "dl-auth-2"
+	content := []byte("secure content")
+
+	gqlServer, _, capturedAuth := newDownloadTestServersCapture(t, attID, "secret2.pdf", content)
+	setupIssueTest(t, gqlServer)
+
+	dir := t.TempDir()
+	orig, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("chdir: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(orig) })
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "download", attID})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	auth := *capturedAuth
+	if auth == "" {
+		t.Fatal("download request should include Authorization header, got empty")
+	}
+	if strings.HasPrefix(strings.ToLower(auth), "bearer ") {
+		t.Errorf("Authorization header should not have Bearer prefix, got: %s", auth)
+	}
+	// verify it's the API key value directly
+	if auth != "lin_api_testkey" {
+		t.Errorf("Authorization header should be API key, got: %s", auth)
+	}
+}
+
 // newDownloadTestServers creates a GraphQL server and a file server for download tests.
 // The GraphQL server returns an attachment whose URL points to the file server.
 func newDownloadTestServers(t *testing.T, attID, filename string, fileContent []byte, fileStatus int) (*httptest.Server, *httptest.Server) {

@@ -35,6 +35,7 @@ func NewRootCommand(version string) *cobra.Command {
 	root.AddCommand(newUserCommand())
 	root.AddCommand(newSearchCommand())
 	root.AddCommand(newTemplateCommand())
+	root.AddCommand(newInitiativeCommand())
 	root.AddCommand(newCompletionCommand())
 
 	return root

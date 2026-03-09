@@ -99,16 +99,16 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 6: Initiatives
-- [ ] write tests for Initiative struct deserialization
-- [ ] write tests for query/mutation construction
-- [ ] create `internal/cmd/initiative.go`:
+- [x] write tests for Initiative struct deserialization
+- [x] write tests for query/mutation construction
+- [x] create `internal/cmd/initiative.go`:
   - `initiative list`: flags `--limit`, `--json`
   - `initiative show <id>`: full initiative details
   - `initiative create`: flags `--name` (required), `--description`
   - `initiative update <id>`: flags `--name`, `--description`
   - `initiative delete <id>`: `--yes` to skip confirmation
   - table columns: Name | Status | Description
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 7: Extended search (projects, documents)
 - [ ] write tests for searchProjects query

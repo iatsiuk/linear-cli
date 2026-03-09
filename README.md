@@ -421,7 +421,7 @@ linear label list [flags]
 
 Flags:
 ```
-  --team string   filter by team key (e.g. ENG); omit to list workspace labels
+  --team string   filter by team key (e.g. ENG); omit to list all labels
   --json          output as JSON array
 ```
 

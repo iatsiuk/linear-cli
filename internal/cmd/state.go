@@ -27,6 +27,7 @@ var stateTypeOrder = []string{"triage", "backlog", "unstarted", "started", "comp
 // StateRow is a display row for the state list table.
 type StateRow struct {
 	Name  string `json:"name"`
+	Type  string `json:"type"`
 	Color string `json:"color"`
 }
 
@@ -125,6 +126,7 @@ func runStateList(cmd *cobra.Command, _ []string) error {
 		for i, s := range group {
 			rows[i] = StateRow{
 				Name:  s.Name,
+				Type:  s.Type,
 				Color: s.Color,
 			}
 		}

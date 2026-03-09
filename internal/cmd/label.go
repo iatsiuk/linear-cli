@@ -201,7 +201,7 @@ func newLabelUpdateCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "update <id>",
 		Short: "Update an issue label",
-		Args: func(cmd *cobra.Command, args []string) error {
+		Args: func(_ *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf("label id is required")
 			}

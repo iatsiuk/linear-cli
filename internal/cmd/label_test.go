@@ -472,9 +472,7 @@ func TestLabelUpdateCommand_MultipleFlags(t *testing.T) {
 
 // TestLabelUpdateCommand_NoFlags verifies error when no flags are provided.
 func TestLabelUpdateCommand_NoFlags(t *testing.T) {
-	server, _ := newQueuedServer(t, []map[string]any{
-		labelResolveResponse(labelUUID),
-	})
+	server, _ := newQueuedServer(t, nil)
 	setupIssueTest(t, server)
 
 	var out bytes.Buffer

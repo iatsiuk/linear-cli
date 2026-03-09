@@ -715,3 +715,81 @@ func TestIssueListCommand_OrderByFlag(t *testing.T) {
 		t.Errorf("variables.orderBy = %v, want createdAt", gotVars["orderBy"])
 	}
 }
+
+func TestIssueListCommand_InvalidLimit(t *testing.T) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeJSONResponse(w, issueListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	for _, limit := range []string{"0", "-1"} {
+		t.Run("limit="+limit, func(t *testing.T) {
+			var out bytes.Buffer
+			root := cmd.NewRootCommand("test")
+			root.SetOut(&out)
+			root.SetErr(&out)
+			root.SetArgs([]string{"issue", "list", "--limit", limit})
+
+			err := root.Execute()
+			if err == nil {
+				t.Fatalf("expected error for --limit %s", limit)
+			}
+		})
+	}
+}
+
+func TestIssueListCommand_OrWithBaseAndAdvancedFilters(t *testing.T) {
+	var gotVars map[string]any
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		gotVars = body.Variables
+		writeJSONResponse(w, issueListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "list", "--team", "ENG", "--no-assignee", "--or"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	filter, ok := gotVars["filter"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables.filter not set, got: %v", gotVars["filter"])
+	}
+	orList, ok := filter["or"].([]any)
+	if !ok {
+		t.Fatalf("filter.or not found or wrong type: %v", filter)
+	}
+	if len(orList) != 2 {
+		t.Errorf("filter.or len = %d, want 2", len(orList))
+	}
+	// verify top level has no team or assignee keys (all moved into or)
+	if _, ok := filter["team"]; ok {
+		t.Error("filter.team should not exist at top level when --or is set")
+	}
+}
+
+func TestIssueListCommand_OrSkipsMutualExclusion(t *testing.T) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeJSONResponse(w, issueListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "list", "--assignee", "alice", "--no-assignee", "--or"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("--assignee + --no-assignee + --or should not return error, got: %v", err)
+	}
+}

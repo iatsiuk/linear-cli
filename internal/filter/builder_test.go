@@ -322,6 +322,77 @@ func TestBuildFromFlags_UpdatedDates(t *testing.T) {
 	}
 }
 
+// TestBuildFromFlags_MyAndNoAssigneeOrMode verifies --my --no-assignee --or produces valid OR filter.
+func TestBuildFromFlags_MyAndNoAssigneeOrMode(t *testing.T) {
+	t.Parallel()
+	f := newFlagSet()
+	must(t, f.Set("my", "true"))
+	must(t, f.Set("no-assignee", "true"))
+	must(t, f.Set("or", "true"))
+
+	got, err := BuildFromFlags(f)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	orList, ok := got["or"].([]map[string]any)
+	if !ok {
+		t.Fatalf("or: not found or wrong type: %v", got)
+	}
+	if len(orList) != 2 {
+		t.Errorf("or: len = %d, want 2", len(orList))
+	}
+}
+
+// TestBuildFromFlags_MyAndNoAssigneeMutualExclusion verifies --my --no-assignee without --or is an error.
+func TestBuildFromFlags_MyAndNoAssigneeMutualExclusion(t *testing.T) {
+	t.Parallel()
+	f := newFlagSet()
+	must(t, f.Set("my", "true"))
+	must(t, f.Set("no-assignee", "true"))
+
+	_, err := BuildFromFlags(f)
+	if err == nil {
+		t.Fatal("expected error for --my + --no-assignee without --or")
+	}
+}
+
+// TestBuildFromFlags_PriorityOutOfRange verifies --priority-gte/--priority-lte > 4 returns error.
+func TestBuildFromFlags_PriorityOutOfRange(t *testing.T) {
+	t.Parallel()
+	tests := []struct{ flag, val string }{
+		{"priority-gte", "5"},
+		{"priority-gte", "9"},
+		{"priority-lte", "5"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.flag+"="+tt.val, func(t *testing.T) {
+			t.Parallel()
+			f := newFlagSet()
+			must(t, f.Set(tt.flag, tt.val))
+			_, err := BuildFromFlags(f)
+			if err == nil {
+				t.Fatalf("expected error for --%s %s", tt.flag, tt.val)
+			}
+		})
+	}
+}
+
+// TestBuildFromFlags_PriorityBoundary verifies priority 0 and 4 are accepted.
+func TestBuildFromFlags_PriorityBoundary(t *testing.T) {
+	t.Parallel()
+	for _, val := range []string{"0", "4"} {
+		t.Run("priority-gte="+val, func(t *testing.T) {
+			t.Parallel()
+			f := newFlagSet()
+			must(t, f.Set("priority-gte", val))
+			_, err := BuildFromFlags(f)
+			if err != nil {
+				t.Fatalf("unexpected error for priority-gte=%s: %v", val, err)
+			}
+		})
+	}
+}
+
 func must(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {

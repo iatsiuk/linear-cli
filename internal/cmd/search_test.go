@@ -188,3 +188,23 @@ func TestSearchCommand_RequiresQuery(t *testing.T) {
 		t.Fatal("expected error when no query provided")
 	}
 }
+
+func TestSearchCommand_InvalidLimit(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	for _, limit := range []string{"0", "-1"} {
+		t.Run("limit="+limit, func(t *testing.T) {
+			var out bytes.Buffer
+			root := cmd.NewRootCommand("test")
+			root.SetOut(&out)
+			root.SetErr(&out)
+			root.SetArgs([]string{"search", "test", "--limit", limit})
+
+			err := root.Execute()
+			if err == nil {
+				t.Fatalf("expected error for --limit %s", limit)
+			}
+		})
+	}
+}

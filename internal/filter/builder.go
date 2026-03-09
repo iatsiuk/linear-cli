@@ -97,9 +97,10 @@ func BuildFromFlags(f *pflag.FlagSet) (map[string]any, error) {
 		}
 	}
 
+	useOr, _ := f.GetBool("or")
 	my, _ := f.GetBool("my")
 	noAssignee, _ := f.GetBool("no-assignee")
-	if my && noAssignee {
+	if my && noAssignee && !useOr {
 		return nil, fmt.Errorf("--my and --no-assignee are mutually exclusive")
 	}
 	if noAssignee {
@@ -125,6 +126,9 @@ func BuildFromFlags(f *pflag.FlagSet) (map[string]any, error) {
 	}
 	for _, pf := range intFlags {
 		if v, _ := f.GetInt(pf.flag); v >= 0 {
+			if v > 4 {
+				return nil, fmt.Errorf("--%s: priority must be between 0 and 4", pf.flag)
+			}
 			conds = append(conds, condition{pf.field, map[string]any{pf.op: float64(v)}})
 		}
 	}
@@ -133,7 +137,6 @@ func BuildFromFlags(f *pflag.FlagSet) (map[string]any, error) {
 		return nil, nil
 	}
 
-	useOr, _ := f.GetBool("or")
 	if useOr {
 		orList := make([]map[string]any, len(conds))
 		for i, c := range conds {

@@ -47,6 +47,9 @@ func runSearch(cmd *cobra.Command, args []string) error {
 
 	f := cmd.Flags()
 	limit, _ := f.GetInt("limit")
+	if limit <= 0 {
+		return fmt.Errorf("--limit must be greater than 0")
+	}
 	teamKey, _ := f.GetString("team")
 
 	vars := map[string]any{

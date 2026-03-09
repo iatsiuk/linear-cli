@@ -80,6 +80,9 @@ func runIssueList(cmd *cobra.Command, _ []string) error {
 	stateName, _ := f.GetString("state")
 	priority, _ := f.GetInt("priority")
 
+	if limit <= 0 {
+		return fmt.Errorf("--limit must be greater than 0")
+	}
 	vars := map[string]any{"first": limit}
 	if includeArchived {
 		vars["includeArchived"] = true
@@ -88,16 +91,19 @@ func runIssueList(cmd *cobra.Command, _ []string) error {
 		vars["orderBy"] = orderBy
 	}
 
+	useOr, _ := f.GetBool("or")
 	issueFilter := map[string]any{}
 	if teamKey != "" {
 		issueFilter["team"] = map[string]any{"key": map[string]any{"eq": teamKey}}
 	}
 	if assignee != "" {
-		if my, _ := f.GetBool("my"); my {
-			return fmt.Errorf("--assignee and --my are mutually exclusive")
-		}
-		if noAssignee, _ := f.GetBool("no-assignee"); noAssignee {
-			return fmt.Errorf("--assignee and --no-assignee are mutually exclusive")
+		if !useOr {
+			if my, _ := f.GetBool("my"); my {
+				return fmt.Errorf("--assignee and --my are mutually exclusive")
+			}
+			if noAssignee, _ := f.GetBool("no-assignee"); noAssignee {
+				return fmt.Errorf("--assignee and --no-assignee are mutually exclusive")
+			}
 		}
 		issueFilter["assignee"] = map[string]any{"displayName": map[string]any{"eq": assignee}}
 	}
@@ -105,11 +111,13 @@ func runIssueList(cmd *cobra.Command, _ []string) error {
 		issueFilter["state"] = map[string]any{"name": map[string]any{"eq": stateName}}
 	}
 	if priority >= 0 {
-		if gte, _ := f.GetInt("priority-gte"); gte >= 0 {
-			return fmt.Errorf("--priority and --priority-gte are mutually exclusive")
-		}
-		if lte, _ := f.GetInt("priority-lte"); lte >= 0 {
-			return fmt.Errorf("--priority and --priority-lte are mutually exclusive")
+		if !useOr {
+			if gte, _ := f.GetInt("priority-gte"); gte >= 0 {
+				return fmt.Errorf("--priority and --priority-gte are mutually exclusive")
+			}
+			if lte, _ := f.GetInt("priority-lte"); lte >= 0 {
+				return fmt.Errorf("--priority and --priority-lte are mutually exclusive")
+			}
 		}
 		issueFilter["priority"] = map[string]any{"eq": float64(priority)}
 	}
@@ -118,21 +126,35 @@ func runIssueList(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("build filter: %w", err)
 	}
-	for k, v := range advancedFilter {
-		if existing, ok := issueFilter[k].(map[string]any); ok {
-			if srcMap, ok2 := v.(map[string]any); ok2 {
-				for sk, sv := range srcMap {
-					existing[sk] = sv
-				}
-				issueFilter[k] = existing
-				continue
-			}
-		}
-		issueFilter[k] = v
-	}
 
-	if len(issueFilter) > 0 {
-		vars["filter"] = issueFilter
+	if useOr {
+		// collect all conditions (base + advanced) into a single OR list
+		var orList []map[string]any
+		for k, v := range issueFilter {
+			orList = append(orList, map[string]any{k: v})
+		}
+		if adOr, ok := advancedFilter["or"].([]map[string]any); ok {
+			orList = append(orList, adOr...)
+		}
+		if len(orList) > 0 {
+			vars["filter"] = map[string]any{"or": orList}
+		}
+	} else {
+		for k, v := range advancedFilter {
+			if existing, ok := issueFilter[k].(map[string]any); ok {
+				if srcMap, ok2 := v.(map[string]any); ok2 {
+					for sk, sv := range srcMap {
+						existing[sk] = sv
+					}
+					issueFilter[k] = existing
+					continue
+				}
+			}
+			issueFilter[k] = v
+		}
+		if len(issueFilter) > 0 {
+			vars["filter"] = issueFilter
+		}
 	}
 
 	var result issueListResult

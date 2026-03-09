@@ -323,6 +323,146 @@ func TestCommentCreateCommand_SuccessFalse(t *testing.T) {
 	}
 }
 
+func commentUpdateResponse(comment map[string]any) map[string]any {
+	return map[string]any{
+		"data": map[string]any{
+			"commentUpdate": map[string]any{
+				"comment": comment,
+			},
+		},
+	}
+}
+
+// TestCommentUpdate_Success verifies that update outputs confirmation.
+func TestCommentUpdate_Success(t *testing.T) {
+	comment := makeComment("comment-uuid-1", "Updated body", "Alice", nil)
+
+	server, _ := newQueuedServer(t, []map[string]any{
+		commentUpdateResponse(comment),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "update", "comment-uuid-1", "--body", "Updated body"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	result := out.String()
+	if !strings.Contains(result, "comment-uuid-1") {
+		t.Errorf("output should contain comment ID, got: %s", result)
+	}
+	if !strings.Contains(result, "updated") {
+		t.Errorf("output should contain 'updated', got: %s", result)
+	}
+}
+
+// TestCommentUpdate_JSON verifies JSON output for comment update.
+func TestCommentUpdate_JSON(t *testing.T) {
+	comment := makeComment("comment-uuid-2", "New body", "Bob", nil)
+
+	server, _ := newQueuedServer(t, []map[string]any{
+		commentUpdateResponse(comment),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"--json", "comment", "update", "comment-uuid-2", "--body", "New body"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var decoded map[string]any
+	if err := json.Unmarshal(out.Bytes(), &decoded); err != nil {
+		t.Fatalf("output is not valid JSON: %v\noutput: %s", err, out.String())
+	}
+	if decoded["body"] != "New body" {
+		t.Errorf("expected body 'New body', got %v", decoded["body"])
+	}
+}
+
+// TestCommentUpdate_MissingBody verifies error when --body not provided.
+func TestCommentUpdate_MissingBody(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "update", "comment-uuid-1"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when --body is missing")
+	}
+	if !strings.Contains(err.Error(), "body") {
+		t.Errorf("error should mention body, got: %v", err)
+	}
+}
+
+// TestCommentUpdate_NotFound verifies error when API returns error.
+func TestCommentUpdate_NotFound(t *testing.T) {
+	server, _ := newQueuedServer(t, []map[string]any{
+		{"errors": []map[string]any{{"message": "Comment not found"}}},
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "update", "nonexistent-id", "--body", "text"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when comment not found")
+	}
+}
+
+// TestCommentUpdate_VerifyInput verifies that id and input.body are sent correctly.
+func TestCommentUpdate_VerifyInput(t *testing.T) {
+	comment := makeComment("target-id", "New text", "Carol", nil)
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		commentUpdateResponse(comment),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "update", "target-id", "--body", "New text"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) < 1 {
+		t.Fatalf("expected 1 request, got %d", len(*bodies))
+	}
+	req := (*bodies)[0]
+	if req["id"] != "target-id" {
+		t.Errorf("id = %v, want target-id", req["id"])
+	}
+	input, ok := req["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("input not set: %v", req)
+	}
+	if input["body"] != "New text" {
+		t.Errorf("input.body = %v, want 'New text'", input["body"])
+	}
+}
+
 // TestCommentCreateCommand_JSONOutput verifies JSON output for comment create.
 func TestCommentCreateCommand_JSONOutput(t *testing.T) {
 	comment := makeComment("json-comment-id", "A comment", "Carol", nil)

@@ -91,19 +91,19 @@ Write query strings and tests first, then verify they compile.
 
 TDD: write cmd tests first, then implement the command.
 
-- [ ] write tests in `internal/cmd/comment_test.go`:
+- [x] write tests in `internal/cmd/comment_test.go`:
   - `TestCommentUpdate_Success` -- mock server returns updated comment; verify output shows updated body
   - `TestCommentUpdate_JSON` -- verify `--json` outputs valid JSON with updated comment
   - `TestCommentUpdate_MissingBody` -- verify error when `--body` not provided
   - `TestCommentUpdate_NotFound` -- verify error message when API returns error
   - `TestCommentUpdate_VerifyInput` -- capture request body, verify `id` and `input.body` sent correctly
-- [ ] implement `newCommentUpdateCmd()` in `internal/cmd/comment.go`:
+- [x] implement `newCommentUpdateCmd()` in `internal/cmd/comment.go`:
   - accepts comment UUID as positional arg
   - `--body` flag (required) -- new comment text
   - calls `CommentUpdateMutation` with `map[string]any{"body": body}`
   - output: `Comment <id> updated.`; with `--json` outputs full comment JSON
-- [ ] register in comment command tree: `cmd.AddCommand(newCommentUpdateCmd())`
-- [ ] run `make build` and tests -- must pass before next task
+- [x] register in comment command tree: `cmd.AddCommand(newCommentUpdateCmd())`
+- [x] run `make build` and tests -- must pass before next task
 
 ### Task 3: Implement `comment delete` command
 

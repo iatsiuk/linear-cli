@@ -28,6 +28,12 @@ type commentCreateResult struct {
 	} `json:"commentCreate"`
 }
 
+type commentUpdateResult struct {
+	CommentUpdate struct {
+		Comment *model.Comment `json:"comment"`
+	} `json:"commentUpdate"`
+}
+
 // CommentRow is a display row for the comment list table.
 type CommentRow struct {
 	Author string `json:"author"`
@@ -45,7 +51,56 @@ func newCommentCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newCommentListCommand())
 	cmd.AddCommand(newCommentCreateCommand())
+	cmd.AddCommand(newCommentUpdateCmd())
 	return cmd
+}
+
+func newCommentUpdateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update <comment-id>",
+		Short: "Update a comment",
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("comment ID is required")
+			}
+			return nil
+		},
+		RunE: runCommentUpdate,
+	}
+	f := cmd.Flags()
+	f.String("body", "", "new comment body in markdown (required)")
+	_ = cmd.MarkFlagRequired("body")
+	return cmd
+}
+
+func runCommentUpdate(cmd *cobra.Command, args []string) error {
+	client, err := newClientFromConfig()
+	if err != nil {
+		return err
+	}
+	ctx := context.Background()
+
+	id := args[0]
+	body, _ := cmd.Flags().GetString("body")
+
+	vars := map[string]any{
+		"id":    id,
+		"input": map[string]any{"body": body},
+	}
+	var result commentUpdateResult
+	if err := client.Do(ctx, query.CommentUpdateMutation, vars, &result); err != nil {
+		return fmt.Errorf("update comment: %w", err)
+	}
+	if result.CommentUpdate.Comment == nil {
+		return fmt.Errorf("update comment: no comment in response")
+	}
+
+	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")
+	if jsonMode {
+		return output.NewFormatter(true).Format(cmd.OutOrStdout(), result.CommentUpdate.Comment)
+	}
+	_, err = fmt.Fprintf(cmd.OutOrStdout(), "Comment %s updated.\n", id)
+	return err
 }
 
 func newCommentListCommand() *cobra.Command {

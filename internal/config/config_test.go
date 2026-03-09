@@ -3,8 +3,23 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 )
+
+func TestConfigPath_DefaultDir(t *testing.T) {
+	t.Setenv("LINEAR_CONFIG_DIR", "")
+	path, err := configPath()
+	if err != nil {
+		t.Fatalf("configPath() error = %v", err)
+	}
+	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
+		if !strings.HasSuffix(path, ".config/linear-cli/config.yaml") {
+			t.Errorf("path = %q, want suffix .config/linear-cli/config.yaml", path)
+		}
+	}
+}
 
 func TestLoad_MissingFileCreatesDefault(t *testing.T) {
 	dir := t.TempDir()

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"gopkg.in/yaml.v3"
 )
@@ -27,6 +28,13 @@ type Config struct {
 func configPath() (string, error) {
 	if dir := os.Getenv(envConfigDir); dir != "" {
 		return filepath.Join(dir, configFileName), nil
+	}
+	if runtime.GOOS == "linux" || runtime.GOOS == "darwin" {
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("home dir: %w", err)
+		}
+		return filepath.Join(home, ".config", configDirName, configFileName), nil
 	}
 	base, err := os.UserConfigDir()
 	if err != nil {

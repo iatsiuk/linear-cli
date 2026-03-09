@@ -61,11 +61,11 @@ Fall back to `os.UserConfigDir()` + `linear-cli` on other OSes (Windows, etc.).
 
 - [x] write test in `internal/config/config_test.go`:
   - `TestConfigPath_DefaultDir` -- verify that on linux/darwin the path ends with `.config/linear-cli/config.yaml`
-- [ ] update `configPath()` in `internal/config/config.go`:
+- [x] update `configPath()` in `internal/config/config.go`:
   - check `runtime.GOOS` for "linux" or "darwin"
   - if match: use `os.UserHomeDir()` + `.config/linear-cli`
   - otherwise: use `os.UserConfigDir()` + `linear-cli`
-- [ ] run `make build` and tests -- must pass before next task
+- [x] run `make build` and tests -- must pass before next task
 
 ### Task 2: Add parent and project fields to Issue model and query
 

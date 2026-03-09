@@ -406,6 +406,95 @@ func TestAttachmentDeleteCommand_MissingID(t *testing.T) {
 	}
 }
 
+func attachmentShowResponse(attachment map[string]any) map[string]any {
+	return map[string]any{
+		"data": map[string]any{
+			"attachment": attachment,
+		},
+	}
+}
+
+// TestAttachmentShow_Success verifies table output for attachment show.
+func TestAttachmentShow_Success(t *testing.T) {
+	att := makeAttachment("att-show-1", "Screenshot link", "https://cdn.linear.app/screenshot.png")
+	att["creator"] = map[string]any{"id": "u1", "displayName": "aleksei.i", "email": "aleksei@example.com"}
+
+	server, _ := newQueuedServer(t, []map[string]any{
+		attachmentShowResponse(att),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "show", "att-show-1"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	result := out.String()
+	for _, want := range []string{"Screenshot link", "https://cdn.linear.app/screenshot.png", "aleksei.i", "2026-01-01", "2026-01-02"} {
+		if !strings.Contains(result, want) {
+			t.Errorf("output should contain %q, got:\n%s", want, result)
+		}
+	}
+}
+
+// TestAttachmentShow_JSON verifies JSON output for attachment show.
+func TestAttachmentShow_JSON(t *testing.T) {
+	att := makeAttachment("att-show-2", "PR Link", "https://github.com/org/repo/pull/1")
+
+	server, _ := newQueuedServer(t, []map[string]any{
+		attachmentShowResponse(att),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"--json", "attachment", "show", "att-show-2"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var decoded map[string]any
+	if err := json.Unmarshal(out.Bytes(), &decoded); err != nil {
+		t.Fatalf("output is not valid JSON: %v\noutput: %s", err, out.String())
+	}
+	if decoded["id"] != "att-show-2" {
+		t.Errorf("expected id att-show-2, got %v", decoded["id"])
+	}
+	if decoded["title"] != "PR Link" {
+		t.Errorf("expected title PR Link, got %v", decoded["title"])
+	}
+}
+
+// TestAttachmentShow_NotFound verifies error when attachment is not found.
+func TestAttachmentShow_NotFound(t *testing.T) {
+	server, _ := newQueuedServer(t, []map[string]any{
+		{"data": map[string]any{"attachment": nil}},
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "show", "nonexistent-id"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when attachment not found")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("error should mention not found, got: %v", err)
+	}
+}
+
 // newUploadServer creates a PUT server and a queued GraphQL server whose
 // fileUpload response points to the PUT server. Returns both servers and
 // a flag indicating whether a PUT was received.
@@ -444,16 +533,15 @@ func newUploadServer(t *testing.T, assetURL string, putStatus int, extraResponse
 		}
 		_ = json.NewDecoder(r.Body).Decode(&body)
 		mu.Lock()
+		defer mu.Unlock()
 		*bodies = append(*bodies, body.Variables)
 		if idx >= len(allResponses) {
 			t.Errorf("unexpected request %d", idx+1)
-			mu.Unlock()
 			http.Error(w, "too many requests", 500)
 			return
 		}
 		resp := allResponses[idx]
 		idx++
-		mu.Unlock()
 		writeJSONResponse(w, resp)
 	}))
 	t.Cleanup(gqlServer.Close)
@@ -583,5 +671,198 @@ func TestAttachmentCreateCommand_NeitherURLNorFile(t *testing.T) {
 	err := root.Execute()
 	if err == nil {
 		t.Fatal("expected error when neither --url nor --file is provided")
+	}
+}
+
+// newDownloadTestServers creates a GraphQL server and a file server for download tests.
+// The GraphQL server returns an attachment whose URL points to the file server.
+func newDownloadTestServers(t *testing.T, attID, filename string, fileContent []byte, fileStatus int) (*httptest.Server, *httptest.Server) {
+	t.Helper()
+
+	fileServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(fileStatus)
+		if fileStatus >= 200 && fileStatus < 300 {
+			_, _ = w.Write(fileContent)
+		}
+	}))
+	t.Cleanup(fileServer.Close)
+
+	fileURL := fileServer.URL + "/files/" + filename
+
+	att := makeAttachment(attID, "Test Attachment", fileURL)
+	gqlServer, _ := newQueuedServer(t, []map[string]any{
+		attachmentShowResponse(att),
+	})
+
+	return gqlServer, fileServer
+}
+
+// TestAttachmentDownload_Success verifies file is saved to current directory with filename from URL.
+func TestAttachmentDownload_Success(t *testing.T) {
+	const attID = "dl-att-1"
+	content := []byte("hello file content")
+
+	gqlServer, _ := newDownloadTestServers(t, attID, "report.pdf", content, http.StatusOK)
+	setupIssueTest(t, gqlServer)
+
+	dir := t.TempDir()
+	// run from the temp dir so the default filename lands there
+	orig, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("chdir: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(orig) })
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "download", attID})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	result := out.String()
+	if !strings.Contains(result, "report.pdf") {
+		t.Errorf("output should mention filename, got: %s", result)
+	}
+
+	saved, err := os.ReadFile(filepath.Join(dir, "report.pdf"))
+	if err != nil {
+		t.Fatalf("saved file not found: %v", err)
+	}
+	if string(saved) != string(content) {
+		t.Errorf("file content mismatch: got %q, want %q", saved, content)
+	}
+}
+
+// TestAttachmentDownload_CustomOutput verifies --output flag saves to specified path.
+func TestAttachmentDownload_CustomOutput(t *testing.T) {
+	const attID = "dl-att-2"
+	content := []byte("custom output content")
+
+	gqlServer, _ := newDownloadTestServers(t, attID, "original.png", content, http.StatusOK)
+	setupIssueTest(t, gqlServer)
+
+	dir := t.TempDir()
+	outPath := filepath.Join(dir, "custom-name.png")
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "download", attID, "--output", outPath})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	saved, err := os.ReadFile(outPath)
+	if err != nil {
+		t.Fatalf("saved file not found: %v", err)
+	}
+	if string(saved) != string(content) {
+		t.Errorf("file content mismatch: got %q, want %q", saved, content)
+	}
+}
+
+// TestAttachmentDownload_StdoutDash verifies --output - writes to stdout.
+func TestAttachmentDownload_StdoutDash(t *testing.T) {
+	const attID = "dl-att-3"
+	content := []byte("stdout content here")
+
+	gqlServer, _ := newDownloadTestServers(t, attID, "file.txt", content, http.StatusOK)
+	setupIssueTest(t, gqlServer)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "download", attID, "--output", "-"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if out.String() != string(content) {
+		t.Errorf("stdout content mismatch: got %q, want %q", out.String(), content)
+	}
+}
+
+// TestAttachmentDownload_NotFound verifies error when attachment not found.
+func TestAttachmentDownload_NotFound(t *testing.T) {
+	server, _ := newQueuedServer(t, []map[string]any{
+		{"data": map[string]any{"attachment": nil}},
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "download", "nonexistent-id"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when attachment not found")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("error should mention not found, got: %v", err)
+	}
+}
+
+// TestAttachmentDownload_HTTPError verifies error when file URL returns non-2xx.
+func TestAttachmentDownload_HTTPError(t *testing.T) {
+	const attID = "dl-att-4"
+
+	gqlServer, _ := newDownloadTestServers(t, attID, "file.bin", nil, http.StatusForbidden)
+	setupIssueTest(t, gqlServer)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "download", attID, "--output", "-"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when file URL returns 403")
+	}
+}
+
+// TestAttachmentDownload_FilenameFromURL verifies default filename is derived from URL path.
+func TestAttachmentDownload_FilenameFromURL(t *testing.T) {
+	const attID = "dl-att-5"
+	content := []byte("data")
+
+	gqlServer, _ := newDownloadTestServers(t, attID, "myimage.jpg", content, http.StatusOK)
+	setupIssueTest(t, gqlServer)
+
+	dir := t.TempDir()
+	orig, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("getwd: %v", err)
+	}
+	if err := os.Chdir(dir); err != nil {
+		t.Fatalf("chdir: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chdir(orig) })
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"attachment", "download", attID})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if _, statErr := os.Stat(filepath.Join(dir, "myimage.jpg")); statErr != nil {
+		t.Errorf("expected file myimage.jpg to be saved: %v", statErr)
 	}
 }

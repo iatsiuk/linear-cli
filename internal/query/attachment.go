@@ -35,6 +35,13 @@ mutation AttachmentCreate($input: AttachmentCreateInput!) {
 }
 `
 
+// AttachmentShowQuery fetches a single attachment by ID.
+const AttachmentShowQuery = `
+query AttachmentShow($id: String!) {
+	attachment(id: $id) {` + attachmentFields + `}
+}
+`
+
 // AttachmentDeleteMutation deletes an attachment by ID.
 const AttachmentDeleteMutation = `
 mutation AttachmentDelete($id: String!) {

@@ -54,6 +54,29 @@ func TestAttachmentCreateMutation(t *testing.T) {
 	}
 }
 
+func TestAttachmentShowQuery(t *testing.T) {
+	t.Parallel()
+	checks := []struct {
+		name    string
+		contain string
+	}{
+		{"operation name", "AttachmentShow"},
+		{"id var", "$id: String!"},
+		{"attachment call", "attachment(id: $id)"},
+		{"url field", "url"},
+		{"title field", "title"},
+		{"creator field", "creator {"},
+	}
+	for _, c := range checks {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			if !strings.Contains(AttachmentShowQuery, c.contain) {
+				t.Errorf("AttachmentShowQuery missing %q", c.contain)
+			}
+		})
+	}
+}
+
 func TestAttachmentDeleteMutation(t *testing.T) {
 	t.Parallel()
 	checks := []struct {

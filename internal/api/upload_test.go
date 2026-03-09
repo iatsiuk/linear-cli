@@ -139,6 +139,53 @@ func TestUpload_MutationFailure(t *testing.T) {
 	}
 }
 
+func TestUpload_ContentTypeHeader(t *testing.T) {
+	t.Parallel()
+
+	// simulate Linear API: no Content-Type in returned headers array
+	var capturedContentType string
+	putServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedContentType = r.Header.Get("Content-Type")
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(putServer.Close)
+
+	uploadUrl := putServer.URL + "/upload"
+	gqlServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		resp := map[string]any{
+			"data": map[string]any{
+				"fileUpload": map[string]any{
+					"success": true,
+					"uploadFile": map[string]any{
+						"assetUrl":  "https://cdn.linear.app/test.png",
+						"uploadUrl": uploadUrl,
+						"headers":   []map[string]any{}, // no Content-Type from API
+					},
+				},
+			},
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(resp)
+	}))
+	t.Cleanup(gqlServer.Close)
+
+	c := NewClient("lin_api_testkey", WithEndpoint(gqlServer.URL))
+
+	dir := t.TempDir()
+	filePath := filepath.Join(dir, "screenshot.png")
+	if err := os.WriteFile(filePath, []byte("fake png"), 0o600); err != nil {
+		t.Fatalf("write temp file: %v", err)
+	}
+
+	if _, err := c.Upload(context.Background(), filePath); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if capturedContentType != "image/png" {
+		t.Errorf("PUT Content-Type = %q, want %q", capturedContentType, "image/png")
+	}
+}
+
 func TestContentTypeFromName(t *testing.T) {
 	t.Parallel()
 

@@ -2,9 +2,15 @@ package cmd
 
 import (
 	"bufio"
-	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"os"
+	"path"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -12,6 +18,10 @@ import (
 	"github.com/iatsiuk/linear-cli/internal/output"
 	"github.com/iatsiuk/linear-cli/internal/query"
 )
+
+type attachmentShowResult struct {
+	Attachment *model.Attachment `json:"attachment"`
+}
 
 type attachmentListResult struct {
 	Issue *struct {
@@ -53,9 +63,174 @@ func newAttachmentCommand() *cobra.Command {
 		},
 	}
 	cmd.AddCommand(newAttachmentListCommand())
+	cmd.AddCommand(newAttachmentShowCommand())
 	cmd.AddCommand(newAttachmentCreateCommand())
 	cmd.AddCommand(newAttachmentDeleteCommand())
+	cmd.AddCommand(newAttachmentDownloadCommand())
 	return cmd
+}
+
+func newAttachmentShowCommand() *cobra.Command {
+	return &cobra.Command{
+		Use:   "show <id>",
+		Short: "Show attachment metadata",
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("attachment id is required")
+			}
+			return nil
+		},
+		RunE: runAttachmentShow,
+	}
+}
+
+func runAttachmentShow(cmd *cobra.Command, args []string) error {
+	client, err := newClientFromConfig()
+	if err != nil {
+		return err
+	}
+
+	vars := map[string]any{"id": args[0]}
+	var result attachmentShowResult
+	if err := client.Do(cmd.Context(), query.AttachmentShowQuery, vars, &result); err != nil {
+		return fmt.Errorf("show attachment: %w", err)
+	}
+	if result.Attachment == nil {
+		return fmt.Errorf("attachment %q not found", args[0])
+	}
+
+	a := result.Attachment
+	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")
+	if jsonMode {
+		return output.NewFormatter(true).Format(cmd.OutOrStdout(), a)
+	}
+
+	w := cmd.OutOrStdout()
+	writeLine := func(label, value string) error {
+		_, e := fmt.Fprintf(w, "%-10s %s\n", label+":", value)
+		return e
+	}
+
+	if err := writeLine("Title", a.Title); err != nil {
+		return err
+	}
+	if err := writeLine("URL", a.URL); err != nil {
+		return err
+	}
+	if a.Creator != nil {
+		if err := writeLine("Creator", a.Creator.DisplayName); err != nil {
+			return err
+		}
+	}
+	if err := writeLine("Created", a.CreatedAt); err != nil {
+		return err
+	}
+	return writeLine("Updated", a.UpdatedAt)
+}
+
+func newAttachmentDownloadCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "download <id>",
+		Short: "Download an attachment file",
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("attachment id is required")
+			}
+			return nil
+		},
+		RunE: runAttachmentDownload,
+	}
+	cmd.Flags().StringP("output", "o", "", "destination path ('-' for stdout)")
+	return cmd
+}
+
+func runAttachmentDownload(cmd *cobra.Command, args []string) error {
+	client, err := newClientFromConfig()
+	if err != nil {
+		return err
+	}
+
+	attID := args[0]
+	vars := map[string]any{"id": attID}
+	var result attachmentShowResult
+	if err := client.Do(cmd.Context(), query.AttachmentShowQuery, vars, &result); err != nil {
+		return fmt.Errorf("show attachment: %w", err)
+	}
+	if result.Attachment == nil {
+		return fmt.Errorf("attachment %q not found", attID)
+	}
+
+	fileURL := result.Attachment.URL
+	outputFlag, _ := cmd.Flags().GetString("output")
+
+	// determine destination: stdout, explicit path, or filename from URL
+	toStdout := outputFlag == "-"
+	dest := outputFlag
+	if !toStdout && dest == "" {
+		dest = filenameFromURL(fileURL)
+		if dest == "" {
+			dest = filepath.Base("attachment-" + attID)
+		}
+	}
+
+	// download file
+	dlClient := &http.Client{Timeout: 5 * time.Minute}
+	req, err := http.NewRequestWithContext(cmd.Context(), http.MethodGet, fileURL, nil)
+	if err != nil {
+		return fmt.Errorf("build download request: %w", err)
+	}
+	resp, err := dlClient.Do(req) //nolint:gosec // URL comes from Linear API response
+	if err != nil {
+		return fmt.Errorf("download attachment: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return fmt.Errorf("download attachment: unexpected status %d", resp.StatusCode)
+	}
+
+	if toStdout {
+		_, err = io.Copy(cmd.OutOrStdout(), resp.Body)
+		return err
+	}
+
+	dir := filepath.Dir(dest)
+	tmp, err := os.CreateTemp(dir, ".dl-*")
+	if err != nil {
+		return fmt.Errorf("create temp file: %w", err)
+	}
+	tmpName := tmp.Name()
+
+	n, copyErr := io.Copy(tmp, resp.Body)
+	closeErr := tmp.Close()
+	if copyErr != nil {
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("write file: %w", copyErr)
+	}
+	if closeErr != nil {
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("close temp file: %w", closeErr)
+	}
+	if err := os.Rename(tmpName, dest); err != nil {
+		_ = os.Remove(tmpName)
+		return fmt.Errorf("rename file: %w", err)
+	}
+
+	_, err = fmt.Fprintf(cmd.OutOrStdout(), "Downloaded: %s (%d bytes)\n", dest, n)
+	return err
+}
+
+// filenameFromURL returns the last non-empty path segment of rawURL, or "".
+func filenameFromURL(rawURL string) string {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return ""
+	}
+	base := path.Base(u.Path)
+	if base == "." || base == "/" {
+		return ""
+	}
+	return base
 }
 
 func newAttachmentListCommand() *cobra.Command {
@@ -79,7 +254,7 @@ func runAttachmentList(cmd *cobra.Command, args []string) error {
 	}
 
 	identifier := args[0]
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	vars := map[string]any{"issueId": identifier}
 	var listResult attachmentListResult
@@ -135,7 +310,7 @@ func runAttachmentCreate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	identifier := args[0]
 	f := cmd.Flags()
@@ -208,7 +383,7 @@ func runAttachmentDelete(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	attID := args[0]
 	yes, _ := cmd.Flags().GetBool("yes")
@@ -233,6 +408,6 @@ func runAttachmentDelete(cmd *cobra.Command, args []string) error {
 	if !result.AttachmentDelete.Success {
 		return fmt.Errorf("delete attachment: mutation returned success=false")
 	}
-	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Attachment %s deleted.\n", attID)
-	return nil
+	_, err = fmt.Fprintf(cmd.OutOrStdout(), "Attachment %s deleted.\n", attID)
+	return err
 }

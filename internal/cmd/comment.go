@@ -1,8 +1,10 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -28,6 +30,19 @@ type commentCreateResult struct {
 	} `json:"commentCreate"`
 }
 
+type commentUpdateResult struct {
+	CommentUpdate struct {
+		Success bool           `json:"success"`
+		Comment *model.Comment `json:"comment"`
+	} `json:"commentUpdate"`
+}
+
+type commentDeleteResult struct {
+	CommentDelete struct {
+		Success bool `json:"success"`
+	} `json:"commentDelete"`
+}
+
 // CommentRow is a display row for the comment list table.
 type CommentRow struct {
 	Author string `json:"author"`
@@ -45,7 +60,110 @@ func newCommentCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newCommentListCommand())
 	cmd.AddCommand(newCommentCreateCommand())
+	cmd.AddCommand(newCommentUpdateCmd())
+	cmd.AddCommand(newCommentDeleteCmd())
 	return cmd
+}
+
+func newCommentUpdateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update <comment-id>",
+		Short: "Update a comment",
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("comment ID is required")
+			}
+			return nil
+		},
+		RunE: runCommentUpdate,
+	}
+	f := cmd.Flags()
+	f.String("body", "", "new comment body in markdown (required)")
+	_ = cmd.MarkFlagRequired("body")
+	return cmd
+}
+
+func runCommentUpdate(cmd *cobra.Command, args []string) error {
+	client, err := newClientFromConfig()
+	if err != nil {
+		return err
+	}
+	ctx := cmd.Context()
+
+	id := args[0]
+	body, _ := cmd.Flags().GetString("body")
+
+	vars := map[string]any{
+		"id":    id,
+		"input": map[string]any{"body": body},
+	}
+	var result commentUpdateResult
+	if err := client.Do(ctx, query.CommentUpdateMutation, vars, &result); err != nil {
+		return fmt.Errorf("update comment: %w", err)
+	}
+	if !result.CommentUpdate.Success {
+		return fmt.Errorf("update comment: mutation returned success=false")
+	}
+	if result.CommentUpdate.Comment == nil {
+		return fmt.Errorf("update comment: no comment in response")
+	}
+
+	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")
+	if jsonMode {
+		return output.NewFormatter(true).Format(cmd.OutOrStdout(), result.CommentUpdate.Comment)
+	}
+	_, err = fmt.Fprintf(cmd.OutOrStdout(), "Comment %s updated.\n", id)
+	return err
+}
+
+func newCommentDeleteCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "delete <comment-id>",
+		Short: "Delete a comment",
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("comment ID is required")
+			}
+			return nil
+		},
+		RunE: runCommentDelete,
+	}
+	cmd.Flags().Bool("yes", false, "skip confirmation prompt")
+	return cmd
+}
+
+func runCommentDelete(cmd *cobra.Command, args []string) error {
+	client, err := newClientFromConfig()
+	if err != nil {
+		return err
+	}
+	ctx := cmd.Context()
+
+	id := args[0]
+	yes, _ := cmd.Flags().GetBool("yes")
+
+	if !yes {
+		_, _ = fmt.Fprintf(cmd.ErrOrStderr(), "Delete comment %s? [y/N] ", id)
+		scanner := bufio.NewScanner(cmd.InOrStdin())
+		scanner.Scan()
+		if err := scanner.Err(); err != nil {
+			return fmt.Errorf("read confirmation: %w", err)
+		}
+		answer := strings.TrimSpace(scanner.Text())
+		if !strings.EqualFold(answer, "y") && !strings.EqualFold(answer, "yes") {
+			return fmt.Errorf("aborted")
+		}
+	}
+
+	var result commentDeleteResult
+	if err := client.Do(ctx, query.CommentDeleteMutation, map[string]any{"id": id}, &result); err != nil {
+		return fmt.Errorf("delete comment: %w", err)
+	}
+	if !result.CommentDelete.Success {
+		return fmt.Errorf("delete comment: mutation returned success=false")
+	}
+	_, err = fmt.Fprintf(cmd.OutOrStdout(), "Comment %s deleted.\n", id)
+	return err
 }
 
 func newCommentListCommand() *cobra.Command {
@@ -69,7 +187,7 @@ func runCommentList(cmd *cobra.Command, args []string) error {
 	}
 
 	identifier := args[0]
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	comments, err := api.PaginateAll(ctx, func(ctx context.Context, after *string, first int) (api.Connection[model.Comment], error) {
 		vars := map[string]any{"issueId": identifier, "first": first}
@@ -140,7 +258,7 @@ func runCommentCreate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	ctx := context.Background()
+	ctx := cmd.Context()
 
 	identifier := args[0]
 

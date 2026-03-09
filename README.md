@@ -973,6 +973,39 @@ linear comment create ENG-42 --body "Looks good, merging soon."
 linear comment create ENG-42 --body "Agreed." --parent abc123
 ```
 
+### Update comment
+
+```
+linear comment update <comment-id> --body <text> [flags]
+```
+
+Flags:
+```
+  --body string   new comment body in markdown (required)
+  --json          output updated comment as JSON
+```
+
+Example:
+```
+linear comment update abc123 --body "Revised: looks good, merging next sprint."
+```
+
+### Delete comment
+
+```
+linear comment delete <comment-id> [flags]
+```
+
+Flags:
+```
+  --yes   skip confirmation prompt
+```
+
+Example:
+```
+linear comment delete abc123 --yes
+```
+
 ## User Commands
 
 Manage Linear users with the `user` subcommand.
@@ -1337,6 +1370,46 @@ Output columns: Title | URL | Created
 Example:
 ```
 linear attachment list ENG-42
+```
+
+### Show attachment
+
+```
+linear attachment show <id> [flags]
+```
+
+Flags:
+```
+  --json   output as JSON object
+```
+
+Output fields: Title, URL, Creator, Created, Updated.
+
+Example:
+```
+linear attachment show abc123
+```
+
+### Download attachment
+
+```
+linear attachment download <id> [flags]
+```
+
+Fetches attachment metadata via GraphQL, then HTTP GETs the file URL. Linear CDN URLs are pre-signed; no auth header is required for the download.
+
+Flags:
+```
+  -o, --output string   destination path ('-' for stdout); default: filename derived from URL
+```
+
+Output on success: `Downloaded: <filename> (<N> bytes)` (suppressed when writing to stdout).
+
+Examples:
+```
+linear attachment download abc123
+linear attachment download abc123 -o /tmp/screenshot.png
+linear attachment download abc123 -o - | less
 ```
 
 ### Create attachment

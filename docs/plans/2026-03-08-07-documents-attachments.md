@@ -85,15 +85,15 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 5: `linear attachment list/create/delete` commands
-- [ ] write tests for attachment list: fetches for issue, table output
-- [ ] write tests for attachment create: sends mutation with url + issueId
-- [ ] write tests for attachment delete: sends delete mutation
-- [ ] create `internal/cmd/attachment.go`:
+- [x] write tests for attachment list: fetches for issue, table output
+- [x] write tests for attachment create: sends mutation with url + issueId
+- [x] write tests for attachment delete: sends delete mutation
+- [x] create `internal/cmd/attachment.go`:
   - `attachment list <issue-identifier>`: flags `--json`
   - `attachment create <issue-identifier>`: flags `--url` (required), `--title`
   - `attachment delete <id>`: `--yes` to skip confirmation
   - table columns: Title | URL | Created
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 6: File upload support
 - [ ] write tests for two-step upload: fileUpload mutation, PUT to uploadUrl

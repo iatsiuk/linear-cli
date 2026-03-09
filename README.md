@@ -407,6 +407,27 @@ linear notification archive abc123
 linear notification archive --all
 ```
 
+## Organization Command
+
+Show organization info for the authenticated workspace.
+
+```
+linear org [flags]
+```
+
+Flags:
+```
+  --json   output as JSON object
+```
+
+Output fields: Name, URL key, Logo URL (if set).
+
+Examples:
+```
+linear org
+linear org --json
+```
+
 ## Me Command
 
 Show the currently authenticated user.
@@ -468,6 +489,59 @@ Output fields: Name, Key, Cycles, Estimation, Description, Created, Updated.
 Example:
 ```
 linear team show ENG
+```
+
+### Team member commands
+
+Manage team membership with the `team member` subcommand.
+
+#### List team members
+
+```
+linear team member list <team-key> [flags]
+```
+
+Flags:
+```
+  --limit int   maximum number of members to return (default 50)
+  --json        output as JSON array
+```
+
+Output columns: Name | Email | Role
+
+Example:
+```
+linear team member list ENG
+```
+
+#### Add team member
+
+```
+linear team member add <team-key> <user>
+```
+
+The user argument accepts a display name, email, or UUID.
+
+Example:
+```
+linear team member add ENG "Jane Smith"
+linear team member add ENG jane@example.com
+```
+
+#### Remove team member
+
+```
+linear team member remove <team-key> <user> [flags]
+```
+
+Flags:
+```
+  --yes   skip confirmation prompt
+```
+
+Example:
+```
+linear team member remove ENG jane@example.com --yes
 ```
 
 ## Project Commands
@@ -565,6 +639,143 @@ Flags:
 Example:
 ```
 linear project delete abc123 --yes
+```
+
+### Project status check-ins
+
+Manage project status check-ins (ProjectUpdate entities) with the `project update` subcommand.
+
+Note: `project update` here refers to status check-in records, not modifying project fields (use `project update <id> --name ...` for that).
+
+#### List check-ins
+
+```
+linear project update list <project-id> [flags]
+```
+
+Accepts a project UUID or name.
+
+Flags:
+```
+  --limit int   maximum number of check-ins to return (default 25)
+  --json        output as JSON array
+```
+
+Output columns: Health | Author | Date | Body (truncated)
+
+Example:
+```
+linear project update list abc123
+```
+
+#### Create check-in
+
+```
+linear project update create <project-id> [flags]
+```
+
+Flags:
+```
+  --body string     check-in body text (required)
+  --health string   project health (onTrack|atRisk|offTrack)
+  --json            output created check-in as JSON
+```
+
+Example:
+```
+linear project update create abc123 --body "All milestones on track." --health onTrack
+```
+
+#### Archive check-in
+
+```
+linear project update archive <id>
+```
+
+Archives the check-in by its UUID. Archiving replaces the deprecated delete operation.
+
+Example:
+```
+linear project update archive checkin-uuid-here
+```
+
+### Project milestones
+
+Manage project milestones with the `project milestone` subcommand.
+
+#### List milestones
+
+```
+linear project milestone list <project-id> [flags]
+```
+
+Flags:
+```
+  --limit int   maximum number of milestones to return (default 50)
+  --json        output as JSON array
+```
+
+Output columns: Name | Status | Target Date | Description
+
+Example:
+```
+linear project milestone list abc123
+```
+
+#### Create milestone
+
+```
+linear project milestone create <project-id> [flags]
+```
+
+Flags:
+```
+  --name string          milestone name (required)
+  --description string   milestone description
+  --target-date string   target date (YYYY-MM-DD)
+  --json                 output created milestone as JSON
+```
+
+Example:
+```
+linear project milestone create abc123 --name "Beta release" --target-date 2026-06-01
+```
+
+#### Update milestone
+
+```
+linear project milestone update <id> [flags]
+```
+
+Only flags explicitly provided are sent to the API - omitted flags leave fields unchanged.
+
+Flags:
+```
+  --name string          milestone name
+  --description string   milestone description
+  --target-date string   target date (YYYY-MM-DD)
+  --json                 output updated milestone as JSON
+```
+
+Example:
+```
+linear project milestone update milestone-uuid --target-date 2026-07-01
+```
+
+#### Delete milestone
+
+```
+linear project milestone delete <id> [flags]
+```
+
+Flags:
+```
+  --yes   skip confirmation prompt
+```
+
+Example:
+```
+linear project milestone delete milestone-uuid --yes
 ```
 
 ## Cycle Commands
@@ -790,9 +1001,185 @@ Example:
 linear user show abc123de-f456-7890-abcd-ef1234567890
 ```
 
+## Template Commands
+
+View issue and project templates with the `template` subcommand.
+
+### List templates
+
+```
+linear template list [flags]
+```
+
+Flags:
+```
+  --json   output as JSON array
+```
+
+Output columns: Name | Type
+
+Example:
+```
+linear template list
+```
+
+### Show template
+
+```
+linear template show <id> [flags]
+```
+
+Flags:
+```
+  --json   output as JSON object
+```
+
+Output fields: Name, Type, Description, TemplateData (raw JSON).
+
+Example:
+```
+linear template show abc123
+```
+
+## Initiative Commands
+
+Manage Linear initiatives (replaces deprecated Roadmaps) with the `initiative` subcommand.
+
+### List initiatives
+
+```
+linear initiative list [flags]
+```
+
+Flags:
+```
+  --limit int   maximum number of initiatives to return (default 50)
+  --json        output as JSON array
+```
+
+Output columns: Name | Status | Description
+
+Example:
+```
+linear initiative list
+linear initiative list --limit 10 --json
+```
+
+### Show initiative
+
+```
+linear initiative show <id> [flags]
+```
+
+Flags:
+```
+  --json   output as JSON object
+```
+
+Output fields: Name, Status, Description.
+
+Example:
+```
+linear initiative show abc123
+```
+
+### Create initiative
+
+```
+linear initiative create [flags]
+```
+
+Flags:
+```
+  --name string          initiative name (required)
+  --description string   initiative description
+  --json                 output created initiative as JSON
+```
+
+Example:
+```
+linear initiative create --name "2026 Platform Migration" --description "Migrate all services to new platform"
+```
+
+### Update initiative
+
+```
+linear initiative update <id> [flags]
+```
+
+Only flags explicitly provided are sent to the API - omitted flags leave fields unchanged.
+
+Flags:
+```
+  --name string          initiative name
+  --description string   initiative description
+  --json                 output updated initiative as JSON
+```
+
+Example:
+```
+linear initiative update abc123 --name "2026 Platform Migration (revised)"
+```
+
+### Delete initiative
+
+```
+linear initiative delete <id> [flags]
+```
+
+Flags:
+```
+  --yes   skip confirmation prompt
+```
+
+Example:
+```
+linear initiative delete abc123 --yes
+```
+
+## Custom View Commands
+
+Manage saved custom views with the `view` subcommand.
+
+### List custom views
+
+```
+linear view list [flags]
+```
+
+Flags:
+```
+  --json   output as JSON array
+```
+
+Output columns: Name | Type | Shared
+
+Example:
+```
+linear view list
+```
+
+### Show custom view
+
+```
+linear view show <id> [flags]
+```
+
+Flags:
+```
+  --json   output as JSON object
+```
+
+Output fields: Name, Type, Shared, Description.
+
+Example:
+```
+linear view show abc123
+```
+
 ## Search Command
 
-Full-text search across all issues.
+Full-text search across issues, projects, or documents.
 
 ```
 linear search <query> [flags]
@@ -802,16 +1189,21 @@ Flags:
 ```
   --team string   boost results for a specific team (team key, e.g. ENG)
   --limit int     maximum number of results to return (default 25)
+  --type string   search type: issue, project, or document (default "issue")
   --json          output as JSON array
 ```
 
-Output columns: ID | Title | Status | Team
+Output columns (issue): ID | Title | Status | Team
+Output columns (project): ID | Name | Status | Description
+Output columns (document): ID | Title | Project
 
 Examples:
 ```
 linear search "login bug"
 linear search "payment timeout" --team ENG
 linear search "auth" --limit 10 --json
+linear search "platform" --type project
+linear search "architecture" --type document
 ```
 
 ## Document Commands

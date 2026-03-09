@@ -143,8 +143,8 @@
 - [x] run `make build` - lint + build must pass
 
 ### Task 10: [Final] Update documentation
-- [ ] update README.md with all new commands
-- [ ] document all available commands and flags
+- [x] update README.md with all new commands
+- [x] document all available commands and flags
 
 ## Technical Details
 

@@ -696,40 +696,7 @@ func newDownloadTestServersCapture(t *testing.T, attID, filename string, fileCon
 	return gqlServer, fileServer, &capturedAuth
 }
 
-// TestAttachmentDownload_AuthHeader verifies download request includes Authorization header.
-func TestAttachmentDownload_AuthHeader(t *testing.T) {
-	const attID = "dl-auth-1"
-	content := []byte("secure content")
-
-	gqlServer, _, capturedAuth := newDownloadTestServersCapture(t, attID, "secret.pdf", content)
-	setupIssueTest(t, gqlServer)
-
-	dir := t.TempDir()
-	orig, err := os.Getwd()
-	if err != nil {
-		t.Fatalf("getwd: %v", err)
-	}
-	if err := os.Chdir(dir); err != nil {
-		t.Fatalf("chdir: %v", err)
-	}
-	t.Cleanup(func() { _ = os.Chdir(orig) })
-
-	var out bytes.Buffer
-	root := cmd.NewRootCommand("test")
-	root.SetOut(&out)
-	root.SetErr(&out)
-	root.SetArgs([]string{"attachment", "download", attID})
-
-	if err := root.Execute(); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	if *capturedAuth == "" {
-		t.Error("download request should include Authorization header, got empty")
-	}
-}
-
-// TestAttachmentDownload_AuthHeaderNoBearerPrefix verifies Authorization header has no Bearer prefix.
+// TestAttachmentDownload_AuthHeaderNoBearerPrefix verifies Authorization header is set to the API key with no Bearer prefix.
 func TestAttachmentDownload_AuthHeaderNoBearerPrefix(t *testing.T) {
 	const attID = "dl-auth-2"
 	content := []byte("secure content")

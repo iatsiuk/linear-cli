@@ -153,7 +153,7 @@ linear issue list --updated-after 2w --or --no-project --no-cycle
 linear issue show <identifier> [flags]
 ```
 
-Displays all fields for an issue: identifier, title, status, priority, team, assignee, due date, estimate, labels, URL, created/updated timestamps, and description.
+Displays all fields for an issue: identifier, title, status, priority, team, assignee, due date, estimate, labels, URL, created/updated timestamps, description, parent issue (if set), and project (if set).
 
 Flags:
 ```
@@ -247,7 +247,7 @@ Flags:
 
 At least one change flag is required. `--label` cannot be combined with `--add-label` or `--remove-label`.
 
-Note: `--state` resolves the state name workspace-wide. If multiple teams have states with the same name, the first match is used.
+Note: `--state` resolves the state name within the team of the issues being updated. All issues in the batch must belong to the same team when `--state` is used.
 
 Examples:
 ```
@@ -1396,7 +1396,7 @@ linear attachment show abc123
 linear attachment download <id> [flags]
 ```
 
-Fetches attachment metadata via GraphQL, then HTTP GETs the file URL. Linear CDN URLs are pre-signed; no auth header is required for the download.
+Fetches attachment metadata via GraphQL, then HTTP GETs the file URL. The download request is authenticated with the configured API key.
 
 Flags:
 ```

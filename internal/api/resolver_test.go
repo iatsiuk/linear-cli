@@ -192,6 +192,7 @@ func TestResolveUserID_ByDisplayName(t *testing.T) {
 	t.Parallel()
 	// name lookup returns empty; displayName lookup returns match
 	calls := 0
+	var secondReqVars map[string]any
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		calls++
@@ -200,6 +201,12 @@ func TestResolveUserID_ByDisplayName(t *testing.T) {
 			// name lookup - no match
 			resp = map[string]any{"data": map[string]any{"users": map[string]any{"nodes": []any{}}}}
 		} else {
+			// capture variables from the displayName lookup request
+			var body struct {
+				Variables map[string]any `json:"variables"`
+			}
+			_ = json.NewDecoder(r.Body).Decode(&body)
+			secondReqVars = body.Variables
 			// displayName lookup - match
 			resp = map[string]any{"data": map[string]any{"users": map[string]any{
 				"nodes": []map[string]any{{"id": "user-uuid-1234-5678-90ab-cdef01234567"}},
@@ -221,6 +228,9 @@ func TestResolveUserID_ByDisplayName(t *testing.T) {
 	}
 	if calls != 2 {
 		t.Errorf("expected 2 API calls (name then displayName), got %d", calls)
+	}
+	if _, ok := secondReqVars["displayName"]; !ok {
+		t.Errorf("second request should use displayName variable, got vars: %v", secondReqVars)
 	}
 }
 
@@ -262,19 +272,24 @@ func TestResolveUserID_ByEmail(t *testing.T) {
 
 func TestResolveUserID_NotFound(t *testing.T) {
 	t.Parallel()
-	srv := makeServer(t, map[string]any{
-		"data": map[string]any{
-			"users": map[string]any{
-				"nodes": []map[string]any{},
-			},
-		},
-	})
+	calls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		calls++
+		resp := map[string]any{"data": map[string]any{"users": map[string]any{"nodes": []any{}}}}
+		if err := json.NewEncoder(w).Encode(resp); err != nil {
+			t.Errorf("encode response: %v", err)
+		}
+	}))
 	defer srv.Close()
 
 	c := NewClient("key", WithEndpoint(srv.URL))
 	_, err := ResolveUserID(context.Background(), c, "nobody@example.com")
 	if err == nil {
 		t.Fatal("expected error, got nil")
+	}
+	if calls != 3 {
+		t.Errorf("expected 3 API calls (name, displayName, email), got %d", calls)
 	}
 }
 

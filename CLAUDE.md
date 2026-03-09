@@ -118,7 +118,7 @@ All documentation, comments, and text must be in English.
 Use functions in `internal/api/resolver.go` to convert human-readable names to UUIDs:
 - `ResolveTeamID` - team key (e.g. "ENG") or UUID
 - `ResolveLabelID` - label name or UUID; accepts optional teamID to restrict search
-- `ResolveUserID` - display name or email or UUID; tries name first, then email
+- `ResolveUserID` - display name or email or UUID; tries name, then displayName, then email
 - `ResolveStateID` - workflow state name or UUID; accepts optional teamID
 - `ResolveProjectID` - project name or UUID
 - `ResolveViewerID` - returns authenticated user ID (used for "me" assignee)

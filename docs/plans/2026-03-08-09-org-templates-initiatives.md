@@ -43,11 +43,11 @@
 ## Implementation Steps
 
 ### Task 1: `linear org` command
-- [ ] write tests for org command: calls organization query, displays info
-- [ ] create `internal/cmd/org.go`:
+- [x] write tests for org command: calls organization query, displays info
+- [x] create `internal/cmd/org.go`:
   - `org`: displays organization name, urlKey, logoUrl
   - supports `--json`
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 2: Project Updates (status check-ins)
 - [ ] write tests for ProjectUpdate struct deserialization

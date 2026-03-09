@@ -91,3 +91,10 @@ query SearchIssues($term: String!, $first: Int, $teamId: String) {
 	}
 }
 `
+
+// IssueBranchQuery looks up an issue by VCS branch name.
+const IssueBranchQuery = `
+query IssueBranch($branchName: String!) {
+	issueVcsBranchSearch(branchName: $branchName) {` + issueFields + `}
+}
+`

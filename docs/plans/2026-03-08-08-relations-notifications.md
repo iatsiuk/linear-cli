@@ -63,15 +63,15 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 3: `linear issue branch` command
-- [ ] write tests for branch lookup: sends issueVcsBranchSearch, returns issue
-- [ ] create `internal/cmd/issue_branch.go`:
+- [x] write tests for branch lookup: sends issueVcsBranchSearch, returns issue
+- [x] create `internal/cmd/issue_branch.go`:
   - `issue branch <branch-name>`: looks up issue by git branch name
   - `issue branch` (no args): uses current git branch from `git rev-parse --abbrev-ref HEAD`
   - displays issue details (same as `issue show`)
   - supports `--json`
-- [ ] write tests for auto-detect current git branch
-- [ ] write tests for no issue found (error handling)
-- [ ] run `make test` - must pass before next task
+- [x] write tests for auto-detect current git branch
+- [x] write tests for no issue found (error handling)
+- [x] run `make test` - must pass before next task
 
 ### Task 4: Notification model and queries
 - [ ] write tests for Notification struct deserialization

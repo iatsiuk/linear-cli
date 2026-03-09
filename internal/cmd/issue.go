@@ -30,6 +30,7 @@ func newIssueCommand() *cobra.Command {
 	cmd.AddCommand(newIssueDeleteCommand())
 	cmd.AddCommand(newIssueBatchCommand())
 	cmd.AddCommand(newRelationCommand())
+	cmd.AddCommand(newIssueBranchCommand())
 	return cmd
 }
 

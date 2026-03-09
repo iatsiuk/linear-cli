@@ -203,6 +203,34 @@ func TestLabelListCommand_NoFilter(t *testing.T) {
 	}
 }
 
+// TestLabelListCommand_IncludeArchived verifies that --include-archived sets the variable.
+func TestLabelListCommand_IncludeArchived(t *testing.T) {
+	var gotVars map[string]any
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		gotVars = body.Variables
+		writeJSONResponse(w, labelListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"label", "list", "--include-archived"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if gotVars["includeArchived"] != true {
+		t.Errorf("includeArchived should be true, got: %v", gotVars["includeArchived"])
+	}
+}
+
 // TestLabelCreateCommand_Basic verifies that create sends required fields.
 func TestLabelCreateCommand_Basic(t *testing.T) {
 	l := makeLabel("l-new", "Urgent", "#FF6600", false, "")

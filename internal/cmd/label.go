@@ -63,6 +63,7 @@ func newLabelListCommand() *cobra.Command {
 		RunE:  runLabelList,
 	}
 	cmd.Flags().String("team", "", "filter by team key")
+	cmd.Flags().Bool("include-archived", false, "include archived labels")
 	return cmd
 }
 
@@ -73,6 +74,7 @@ func runLabelList(cmd *cobra.Command, _ []string) error {
 	}
 
 	teamKey, _ := cmd.Flags().GetString("team")
+	includeArchived, _ := cmd.Flags().GetBool("include-archived")
 
 	ctx := context.Background()
 	labels, err := api.PaginateAll(ctx, func(ctx context.Context, after *string, first int) (api.Connection[model.IssueLabel], error) {
@@ -86,6 +88,9 @@ func runLabelList(cmd *cobra.Command, _ []string) error {
 					"key": map[string]any{"eq": teamKey},
 				},
 			}
+		}
+		if includeArchived {
+			vars["includeArchived"] = true
 		}
 		var result labelListResult
 		if err := client.Do(ctx, query.LabelListQuery, vars, &result); err != nil {

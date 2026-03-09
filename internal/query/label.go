@@ -14,8 +14,8 @@ const labelFields = `
 
 // LabelListQuery fetches issue labels with optional filter.
 const LabelListQuery = `
-query LabelList($first: Int, $after: String, $filter: IssueLabelFilter) {
-	issueLabels(first: $first, after: $after, filter: $filter) {
+query LabelList($first: Int, $after: String, $filter: IssueLabelFilter, $includeArchived: Boolean) {
+	issueLabels(first: $first, after: $after, filter: $filter, includeArchived: $includeArchived) {
 		nodes {` + labelFields + `}
 		pageInfo { hasNextPage endCursor }
 	}

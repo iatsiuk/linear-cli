@@ -111,15 +111,15 @@
 - [x] run `make test` - must pass before next task
 
 ### Task 7: Extended search (projects, documents)
-- [ ] write tests for searchProjects query
-- [ ] write tests for searchDocuments query
-- [ ] extend `internal/cmd/search.go`:
+- [x] write tests for searchProjects query
+- [x] write tests for searchDocuments query
+- [x] extend `internal/cmd/search.go`:
   - `search <query>`: default searches issues (existing)
   - `search <query> --type project`: searches projects via `searchProjects(term)`
   - `search <query> --type document`: searches documents via `searchDocuments(term)`
   - `search <query> --type issue`: explicit issue search (default)
   - `IssueSearchResult`, `ProjectSearchResult`, `DocumentSearchResult` implement respective entity fields
-- [ ] run `make test` - must pass before next task
+- [x] run `make test` - must pass before next task
 
 ### Task 8: Custom Views
 - [ ] write tests for CustomView struct deserialization

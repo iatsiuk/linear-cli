@@ -19,6 +19,26 @@ func searchResponse(issues []map[string]any) map[string]any {
 	}
 }
 
+func projectSearchResponse(projects []map[string]any) map[string]any {
+	return map[string]any{
+		"data": map[string]any{
+			"searchProjects": map[string]any{
+				"nodes": projects,
+			},
+		},
+	}
+}
+
+func documentSearchResponse(docs []map[string]any) map[string]any {
+	return map[string]any{
+		"data": map[string]any{
+			"searchDocuments": map[string]any{
+				"nodes": docs,
+			},
+		},
+	}
+}
+
 func TestSearchCommand_TableOutput(t *testing.T) {
 	issues := []map[string]any{
 		makeIssue("ENG-1", "Fix the login bug", "In Progress", "Urgent", "Alice"),
@@ -206,5 +226,229 @@ func TestSearchCommand_InvalidLimit(t *testing.T) {
 				t.Fatalf("expected error for --limit %s", limit)
 			}
 		})
+	}
+}
+
+func TestSearchCommand_TypeProject_TableOutput(t *testing.T) {
+	projects := []map[string]any{
+		makeProject("proj-1", "API Redesign", "started", "onTrack", 0.5, "2026-06-01"),
+		makeProject("proj-2", "Mobile App", "planned", "", 0, ""),
+	}
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		projectSearchResponse(projects),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"search", "API", "--type", "project"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) != 1 {
+		t.Fatalf("expected 1 request, got %d", len(*bodies))
+	}
+	if (*bodies)[0]["term"] != "API" {
+		t.Errorf("term = %v, want API", (*bodies)[0]["term"])
+	}
+
+	result := out.String()
+	if !strings.Contains(result, "API Redesign") {
+		t.Errorf("output should contain project name, got: %s", result)
+	}
+	if !strings.Contains(result, "Mobile App") {
+		t.Errorf("output should contain second project name, got: %s", result)
+	}
+}
+
+func TestSearchCommand_TypeProject_JSONOutput(t *testing.T) {
+	projects := []map[string]any{
+		makeProject("proj-1", "API Redesign", "started", "onTrack", 0.5, "2026-06-01"),
+	}
+
+	server, _ := newQueuedServer(t, []map[string]any{
+		projectSearchResponse(projects),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"--json", "search", "API", "--type", "project"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var decoded []map[string]any
+	if err := json.Unmarshal(out.Bytes(), &decoded); err != nil {
+		t.Fatalf("output is not valid JSON: %v\noutput: %s", err, out.String())
+	}
+	if len(decoded) != 1 {
+		t.Errorf("expected 1 project in JSON, got %d", len(decoded))
+	}
+	if decoded[0]["name"] != "API Redesign" {
+		t.Errorf("name = %v, want API Redesign", decoded[0]["name"])
+	}
+}
+
+func TestSearchCommand_TypeProject_Empty(t *testing.T) {
+	server, _ := newQueuedServer(t, []map[string]any{
+		projectSearchResponse([]map[string]any{}),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"search", "noresults", "--type", "project"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error on empty results: %v", err)
+	}
+}
+
+func TestSearchCommand_TypeDocument_TableOutput(t *testing.T) {
+	docs := []map[string]any{
+		makeDoc("doc-1", "Architecture Overview", "", "Backend API", "Alice"),
+		makeDoc("doc-2", "Onboarding Guide", "", "", ""),
+	}
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		documentSearchResponse(docs),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"search", "arch", "--type", "document"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) != 1 {
+		t.Fatalf("expected 1 request, got %d", len(*bodies))
+	}
+	if (*bodies)[0]["term"] != "arch" {
+		t.Errorf("term = %v, want arch", (*bodies)[0]["term"])
+	}
+
+	result := out.String()
+	if !strings.Contains(result, "Architecture Overview") {
+		t.Errorf("output should contain doc title, got: %s", result)
+	}
+	if !strings.Contains(result, "Onboarding Guide") {
+		t.Errorf("output should contain second doc title, got: %s", result)
+	}
+	if !strings.Contains(result, "Backend API") {
+		t.Errorf("output should contain project name, got: %s", result)
+	}
+}
+
+func TestSearchCommand_TypeDocument_JSONOutput(t *testing.T) {
+	docs := []map[string]any{
+		makeDoc("doc-1", "Architecture Overview", "content here", "Backend API", "Alice"),
+	}
+
+	server, _ := newQueuedServer(t, []map[string]any{
+		documentSearchResponse(docs),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"--json", "search", "arch", "--type", "document"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var decoded []map[string]any
+	if err := json.Unmarshal(out.Bytes(), &decoded); err != nil {
+		t.Fatalf("output is not valid JSON: %v\noutput: %s", err, out.String())
+	}
+	if len(decoded) != 1 {
+		t.Errorf("expected 1 document in JSON, got %d", len(decoded))
+	}
+	if decoded[0]["title"] != "Architecture Overview" {
+		t.Errorf("title = %v, want 'Architecture Overview'", decoded[0]["title"])
+	}
+}
+
+func TestSearchCommand_TypeDocument_Empty(t *testing.T) {
+	server, _ := newQueuedServer(t, []map[string]any{
+		documentSearchResponse([]map[string]any{}),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"search", "noresults", "--type", "document"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error on empty results: %v", err)
+	}
+}
+
+func TestSearchCommand_TypeIssueExplicit(t *testing.T) {
+	issues := []map[string]any{
+		makeIssue("ENG-1", "Fix login bug", "In Progress", "Urgent", "Alice"),
+	}
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		searchResponse(issues),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"search", "login", "--type", "issue"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if (*bodies)[0]["term"] != "login" {
+		t.Errorf("term = %v, want login", (*bodies)[0]["term"])
+	}
+
+	result := out.String()
+	if !strings.Contains(result, "ENG-1") {
+		t.Errorf("output should contain ENG-1, got: %s", result)
+	}
+}
+
+func TestSearchCommand_InvalidType(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"search", "query", "--type", "invalid"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error for invalid --type")
+	}
+	if !strings.Contains(err.Error(), "--type must be one of") {
+		t.Errorf("error should mention valid types, got: %v", err)
 	}
 }

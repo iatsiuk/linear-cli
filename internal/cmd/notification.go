@@ -29,12 +29,7 @@ type notificationArchiveResult struct {
 	} `json:"notificationArchive"`
 }
 
-type notificationBatchResult struct {
-	Success bool `json:"success"`
-}
-
-// NotificationRow is a display row for the notification list table.
-type NotificationRow struct {
+type notificationRow struct {
 	ID      string `json:"id"`
 	Type    string `json:"type"`
 	Created string `json:"created"`
@@ -85,7 +80,7 @@ func runNotificationList(cmd *cobra.Command, _ []string) error {
 
 	notifications := result.Notifications.Nodes
 	if unreadOnly {
-		filtered := notifications[:0]
+		var filtered []model.Notification
 		for _, n := range notifications {
 			if n.ReadAt == nil {
 				filtered = append(filtered, n)
@@ -99,13 +94,13 @@ func runNotificationList(cmd *cobra.Command, _ []string) error {
 		return output.NewFormatter(true).Format(cmd.OutOrStdout(), notifications)
 	}
 
-	rows := make([]NotificationRow, len(notifications))
+	rows := make([]notificationRow, len(notifications))
 	for i, n := range notifications {
 		readStr := ""
 		if n.ReadAt != nil {
 			readStr = *n.ReadAt
 		}
-		rows[i] = NotificationRow{
+		rows[i] = notificationRow{
 			ID:      n.ID,
 			Type:    n.Type,
 			Created: n.CreatedAt,
@@ -140,7 +135,9 @@ func runNotificationRead(cmd *cobra.Command, args []string) error {
 
 	if allFlag {
 		type markReadAllResult struct {
-			NotificationMarkReadAll notificationBatchResult `json:"notificationMarkReadAll"`
+			NotificationMarkReadAll struct {
+				Success bool `json:"success"`
+			} `json:"notificationMarkReadAll"`
 		}
 		vars := map[string]any{
 			"input":  map[string]any{},
@@ -200,7 +197,9 @@ func runNotificationArchive(cmd *cobra.Command, args []string) error {
 
 	if allFlag {
 		type archiveAllResult struct {
-			NotificationArchiveAll notificationBatchResult `json:"notificationArchiveAll"`
+			NotificationArchiveAll struct {
+				Success bool `json:"success"`
+			} `json:"notificationArchiveAll"`
 		}
 		vars := map[string]any{"input": map[string]any{}}
 		var result archiveAllResult

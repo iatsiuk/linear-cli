@@ -96,3 +96,24 @@ func TestNotificationArchiveAllMutation(t *testing.T) {
 		})
 	}
 }
+
+func TestNotificationArchiveMutation(t *testing.T) {
+	t.Parallel()
+	checks := []struct {
+		name    string
+		contain string
+	}{
+		{"operation name", "NotificationArchive"},
+		{"id var", "$id: String!"},
+		{"notificationArchive call", "notificationArchive(id: $id)"},
+		{"success field", "success"},
+	}
+	for _, c := range checks {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+			if !strings.Contains(NotificationArchiveMutation, c.contain) {
+				t.Errorf("NotificationArchiveMutation missing %q", c.contain)
+			}
+		})
+	}
+}

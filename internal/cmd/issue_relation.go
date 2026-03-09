@@ -34,8 +34,7 @@ type relationDeleteResult struct {
 	} `json:"issueRelationDelete"`
 }
 
-// RelationRow is a display row for the relation list table.
-type RelationRow struct {
+type relationRow struct {
 	Type         string `json:"type"`
 	Direction    string `json:"direction"`
 	RelatedIssue string `json:"related_issue"`
@@ -104,7 +103,7 @@ func runRelationList(cmd *cobra.Command, args []string) error {
 		return output.NewFormatter(true).Format(cmd.OutOrStdout(), entries)
 	}
 
-	rows := make([]RelationRow, len(entries))
+	rows := make([]relationRow, len(entries))
 	for i, e := range entries {
 		var relIdentifier, relTitle string
 		if e.Direction == "outgoing" {
@@ -114,7 +113,7 @@ func runRelationList(cmd *cobra.Command, args []string) error {
 			relIdentifier = e.Issue.Identifier
 			relTitle = e.Issue.Title
 		}
-		rows[i] = RelationRow{
+		rows[i] = relationRow{
 			Type:         e.Type,
 			Direction:    e.Direction,
 			RelatedIssue: relIdentifier,
@@ -212,6 +211,9 @@ func runRelationDelete(cmd *cobra.Command, args []string) error {
 		_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Are you sure you want to delete relation %s? [y/N] ", relationID)
 		scanner := bufio.NewScanner(cmd.InOrStdin())
 		scanner.Scan()
+		if err := scanner.Err(); err != nil {
+			return fmt.Errorf("read confirmation: %w", err)
+		}
 		answer := strings.TrimSpace(scanner.Text())
 		if !strings.EqualFold(answer, "y") && !strings.EqualFold(answer, "yes") {
 			return fmt.Errorf("aborted")

@@ -295,8 +295,8 @@ func TestNotificationReadCommand_MissingID(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error when no id provided")
 	}
-	if !strings.Contains(err.Error(), "required") && !strings.Contains(err.Error(), "id") && !strings.Contains(err.Error(), "--all") {
-		t.Errorf("error should mention id or --all, got: %v", err)
+	if !strings.Contains(err.Error(), "notification id is required") {
+		t.Errorf("error should mention notification id is required, got: %v", err)
 	}
 }
 
@@ -332,7 +332,7 @@ func TestNotificationArchiveCommand_Single(t *testing.T) {
 
 // TestNotificationArchiveCommand_All verifies --all flag sends archiveAll mutation.
 func TestNotificationArchiveCommand_All(t *testing.T) {
-	server, _ := newQueuedServer(t, []map[string]any{
+	server, bodies := newQueuedServer(t, []map[string]any{
 		notificationArchiveAllResponse(),
 	})
 	setupIssueTest(t, server)
@@ -351,6 +351,13 @@ func TestNotificationArchiveCommand_All(t *testing.T) {
 	if !strings.Contains(result, "All notifications archived") {
 		t.Errorf("output should confirm all archived, got: %s", result)
 	}
+
+	if len(*bodies) < 1 {
+		t.Fatalf("expected 1 request, got %d", len(*bodies))
+	}
+	if _, hasInput := (*bodies)[0]["input"]; !hasInput {
+		t.Errorf("request should contain input, got: %v", (*bodies)[0])
+	}
 }
 
 // TestNotificationArchiveCommand_MissingID verifies error when no id and no --all.
@@ -367,5 +374,8 @@ func TestNotificationArchiveCommand_MissingID(t *testing.T) {
 	err := root.Execute()
 	if err == nil {
 		t.Fatal("expected error when no id provided")
+	}
+	if !strings.Contains(err.Error(), "notification id is required") {
+		t.Errorf("error should mention notification id is required, got: %v", err)
 	}
 }

@@ -150,6 +150,9 @@ func TestRelationListCommand_MissingIdentifier(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error when identifier is missing")
 	}
+	if !strings.Contains(err.Error(), "issue identifier is required") {
+		t.Errorf("error should mention issue identifier is required, got: %v", err)
+	}
 }
 
 // TestRelationListCommand_IssueIdSentInVars verifies correct variable is sent.

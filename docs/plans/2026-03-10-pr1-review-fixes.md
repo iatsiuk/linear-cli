@@ -116,13 +116,13 @@ TDD: verify the existing PR display code is tested.
 - [x] run `make build` -- must pass
 
 ### Task 6: Verify acceptance criteria
-- [ ] verify all 9 previously undisplayed fields now appear in `issue show`
-- [ ] verify `issueListFields` is compact (no detail-only fields)
-- [ ] verify `issueDetailFields` contains all fields
-- [ ] verify all field types match `docs/schema.graphql` (final check)
-- [ ] run full test suite: `go test -race ./...`
-- [ ] run `make build` (includes linter)
-- [ ] verify test coverage for changed files
+- [x] verify all 9 previously undisplayed fields now appear in `issue show`
+- [x] verify `issueListFields` is compact (no detail-only fields)
+- [x] verify `issueDetailFields` contains all fields
+- [x] verify all field types match `docs/schema.graphql` (final check)
+- [x] run full test suite: `go test -race ./...`
+- [x] run `make build` (includes linter)
+- [x] verify test coverage for changed files
 
 ### Task 7: [Final] Update documentation
 - [ ] update `README.md:156` -- add all new displayed fields to the `issue show` description

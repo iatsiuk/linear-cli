@@ -60,7 +60,7 @@ func printIssueDetail(cmd *cobra.Command, issue *model.Issue) error {
 	w := cmd.OutOrStdout()
 
 	writeLine := func(label, value string) error {
-		_, err := fmt.Fprintf(w, "%-14s %s\n", label+":", value)
+		_, err := fmt.Fprintf(w, "%-15s %s\n", label+":", value)
 		return err
 	}
 
@@ -151,16 +151,12 @@ func printIssueDetail(cmd *cobra.Command, issue *model.Issue) error {
 		}
 	}
 
-	if issue.Number != 0 {
-		if err := writeLine("Number", fmt.Sprintf("%.0f", issue.Number)); err != nil {
-			return err
-		}
+	if err := writeLine("Number", fmt.Sprintf("%.0f", issue.Number)); err != nil {
+		return err
 	}
 
-	if issue.CustomerTicketCount != 0 {
-		if err := writeLine("Tickets", fmt.Sprintf("%d", issue.CustomerTicketCount)); err != nil {
-			return err
-		}
+	if err := writeLine("Tickets", fmt.Sprintf("%d", issue.CustomerTicketCount)); err != nil {
+		return err
 	}
 
 	if issue.Trashed != nil && *issue.Trashed {

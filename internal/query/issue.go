@@ -70,7 +70,7 @@ const IssueCreateMutation = `
 mutation IssueCreate($input: IssueCreateInput!) {
 	issueCreate(input: $input) {
 		success
-		issue {` + issueDetailFields + `}
+		issue {` + issueListFields + `}
 	}
 }
 `
@@ -80,7 +80,7 @@ const IssueUpdateMutation = `
 mutation IssueUpdate($id: String!, $input: IssueUpdateInput!) {
 	issueUpdate(id: $id, input: $input) {
 		success
-		issue {` + issueDetailFields + `}
+		issue {` + issueListFields + `}
 	}
 }
 `

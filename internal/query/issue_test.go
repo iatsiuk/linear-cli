@@ -176,6 +176,7 @@ func TestIssueFieldsPresence(t *testing.T) {
 		"IssueGetQuery":       IssueGetQuery,
 		"IssueCreateMutation": IssueCreateMutation,
 		"IssueUpdateMutation": IssueUpdateMutation,
+		"IssueBranchQuery":    IssueBranchQuery,
 	}
 	for qName, q := range allQueries {
 		for _, f := range commonFields {
@@ -193,9 +194,8 @@ func TestIssueFieldsPresence(t *testing.T) {
 		"addedToCycleAt", "addedToProjectAt", "addedToTeamAt",
 	}
 	detailQueries := map[string]string{
-		"IssueGetQuery":       IssueGetQuery,
-		"IssueCreateMutation": IssueCreateMutation,
-		"IssueUpdateMutation": IssueUpdateMutation,
+		"IssueGetQuery":    IssueGetQuery,
+		"IssueBranchQuery": IssueBranchQuery,
 	}
 	for qName, q := range detailQueries {
 		for _, f := range detailFields {

@@ -45,6 +45,16 @@ func makeDetailedIssue() map[string]any {
 		"addedToTeamAt":       "2026-01-09T00:00:00Z",
 		"branchName":          "feature/eng-42-implement-feature-x",
 		"trashed":             true,
+		"slaType":             "standard",
+		"slaBreachesAt":       "2026-03-15T00:00:00Z",
+		"slaStartedAt":        "2026-01-10T00:00:00Z",
+		"triagedAt":           "2026-01-12T00:00:00Z",
+		"startedAt":           "2026-01-11T00:00:00Z",
+		"completedAt":         "2026-02-23T00:00:00Z",
+		"canceledAt":          "2026-02-24T00:00:00Z",
+		"archivedAt":          "2026-02-20T00:00:00Z",
+		"autoArchivedAt":      "2026-02-21T00:00:00Z",
+		"autoClosedAt":        "2026-02-22T00:00:00Z",
 		"creator": map[string]any{
 			"id":          "user-2",
 			"displayName": "Bob",
@@ -113,6 +123,16 @@ func TestIssueShowCommand_NewFields(t *testing.T) {
 		{"creator", "Bob"},
 		{"branchName", "feature/eng-42-implement-feature-x"},
 		{"trashed", "yes"},
+		{"slaType", "SLA Type"},
+		{"slaBreachesAt", "SLA Breach"},
+		{"slaStartedAt", "SLA Started"},
+		{"triagedAt", "Triaged"},
+		{"startedAt", "2026-01-11T00:00:00Z"},
+		{"completedAt", "Completed"},
+		{"canceledAt", "Canceled"},
+		{"archivedAt", "2026-02-20T00:00:00Z"},
+		{"autoArchivedAt", "AutoArchived"},
+		{"autoClosedAt", "AutoClosed"},
 	}
 	for _, c := range checks {
 		if !strings.Contains(result, c.want) {

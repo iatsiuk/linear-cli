@@ -150,16 +150,16 @@ func TestIssueArchiveMutation(t *testing.T) {
 func TestIssueFieldsContainsParent(t *testing.T) {
 	t.Parallel()
 	want := "parent { id identifier title }"
-	if !strings.Contains(issueFields, want) {
-		t.Errorf("issueFields missing %q", want)
+	if !strings.Contains(issueListFields, want) {
+		t.Errorf("issueListFields missing %q", want)
 	}
 }
 
 func TestIssueFieldsContainsProject(t *testing.T) {
 	t.Parallel()
 	want := "project { id name }"
-	if !strings.Contains(issueFields, want) {
-		t.Errorf("issueFields missing %q", want)
+	if !strings.Contains(issueListFields, want) {
+		t.Errorf("issueListFields missing %q", want)
 	}
 }
 
@@ -182,6 +182,77 @@ func TestIssueFieldsPresence(t *testing.T) {
 			if !strings.Contains(q, f) {
 				t.Errorf("%s missing field %q", qName, f)
 			}
+		}
+	}
+}
+
+func TestIssueListFieldsCompact(t *testing.T) {
+	t.Parallel()
+	// list fields must contain core fields
+	wantPresent := []string{
+		"id", "identifier", "title", "description",
+		"priority", "priorityLabel", "estimate", "dueDate",
+		"url", "createdAt", "updatedAt",
+		"state { id name color type }",
+		"assignee { id displayName email }",
+		"team { id name key }",
+		"labels { nodes { id name color } }",
+		"parent { id identifier title }",
+		"project { id name }",
+	}
+	for _, f := range wantPresent {
+		if !strings.Contains(issueListFields, f) {
+			t.Errorf("issueListFields missing %q", f)
+		}
+	}
+	// detail-only fields must NOT appear in list fields
+	wantAbsent := []string{
+		"number", "branchName", "trashed", "customerTicketCount",
+		"archivedAt", "autoArchivedAt", "autoClosedAt", "canceledAt",
+		"completedAt", "startedAt", "startedTriageAt", "triagedAt",
+		"snoozedUntilAt", "addedToCycleAt", "addedToProjectAt", "addedToTeamAt",
+		"slaBreachesAt", "slaHighRiskAt", "slaMediumRiskAt", "slaStartedAt", "slaType",
+		"creator {", "cycle {",
+	}
+	for _, f := range wantAbsent {
+		if strings.Contains(issueListFields, f) {
+			t.Errorf("issueListFields should not contain %q (detail-only field)", f)
+		}
+	}
+}
+
+func TestIssueDetailFieldsContainsAll(t *testing.T) {
+	t.Parallel()
+	// detail fields must contain all list fields
+	listFields := []string{
+		"id", "identifier", "title", "description",
+		"priority", "priorityLabel", "estimate", "dueDate",
+		"url", "createdAt", "updatedAt",
+		"state { id name color type }",
+		"assignee { id displayName email }",
+		"team { id name key }",
+		"labels { nodes { id name color } }",
+		"parent { id identifier title }",
+		"project { id name }",
+	}
+	for _, f := range listFields {
+		if !strings.Contains(issueDetailFields, f) {
+			t.Errorf("issueDetailFields missing list field %q", f)
+		}
+	}
+	// detail fields must also contain detail-only fields
+	detailOnly := []string{
+		"number", "branchName", "trashed", "customerTicketCount",
+		"archivedAt", "autoArchivedAt", "autoClosedAt", "canceledAt",
+		"completedAt", "startedAt", "startedTriageAt", "triagedAt",
+		"snoozedUntilAt", "addedToCycleAt", "addedToProjectAt", "addedToTeamAt",
+		"slaBreachesAt", "slaHighRiskAt", "slaMediumRiskAt", "slaStartedAt", "slaType",
+		"creator { id displayName email }",
+		"cycle { id name number }",
+	}
+	for _, f := range detailOnly {
+		if !strings.Contains(issueDetailFields, f) {
+			t.Errorf("issueDetailFields missing detail field %q", f)
 		}
 	}
 }

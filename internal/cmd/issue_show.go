@@ -157,7 +157,10 @@ func printIssueDetail(cmd *cobra.Command, issue *model.Issue) error {
 		}
 	}
 
-	for _, f := range []struct{ label string; value *string }{
+	for _, f := range []struct {
+		label string
+		value *string
+	}{
 		{"Started", issue.StartedAt},
 		{"Completed", issue.CompletedAt},
 		{"Canceled", issue.CanceledAt},

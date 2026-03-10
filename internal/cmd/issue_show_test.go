@@ -189,6 +189,8 @@ func TestIssueShowCommand_NoCycleCreatorBranchTrashed(t *testing.T) {
 		{"creator", "Creator:"},
 		{"branch", "Branch:"},
 		{"trashed", "Trashed:"},
+		{"number", "Number:"},
+		{"tickets", "Tickets:"},
 	}
 	for _, c := range absent {
 		if strings.Contains(result, c.want) {

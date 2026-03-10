@@ -151,12 +151,16 @@ func printIssueDetail(cmd *cobra.Command, issue *model.Issue) error {
 		}
 	}
 
-	if err := writeLine("Number", fmt.Sprintf("%.0f", issue.Number)); err != nil {
-		return err
+	if issue.Number != 0 {
+		if err := writeLine("Number", fmt.Sprintf("%.0f", issue.Number)); err != nil {
+			return err
+		}
 	}
 
-	if err := writeLine("Tickets", fmt.Sprintf("%d", issue.CustomerTicketCount)); err != nil {
-		return err
+	if issue.CustomerTicketCount != 0 {
+		if err := writeLine("Tickets", fmt.Sprintf("%d", issue.CustomerTicketCount)); err != nil {
+			return err
+		}
 	}
 
 	if issue.Trashed != nil && *issue.Trashed {

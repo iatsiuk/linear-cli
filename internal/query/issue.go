@@ -4,21 +4,44 @@ package query
 const issueFields = `
 	id
 	identifier
+	number
 	title
 	description
+	branchName
 	priority
 	priorityLabel
 	estimate
 	dueDate
 	url
+	trashed
+	customerTicketCount
 	createdAt
 	updatedAt
+	archivedAt
+	autoArchivedAt
+	autoClosedAt
+	canceledAt
+	completedAt
+	startedAt
+	startedTriageAt
+	triagedAt
+	snoozedUntilAt
+	addedToCycleAt
+	addedToProjectAt
+	addedToTeamAt
+	slaBreachesAt
+	slaHighRiskAt
+	slaMediumRiskAt
+	slaStartedAt
+	slaType
 	state { id name color type }
 	assignee { id displayName email }
+	creator { id displayName email }
 	team { id name key }
 	labels { nodes { id name color } }
 	parent { id identifier title }
 	project { id name }
+	cycle { id name number }
 `
 
 // IssueListQuery fetches issues with optional pagination and filter.

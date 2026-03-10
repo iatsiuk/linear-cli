@@ -90,12 +90,12 @@ Fields to add to display: `slaHighRiskAt`, `slaMediumRiskAt`, `startedTriageAt`,
 
 TDD: write tests to verify JSON -> Go struct mapping for all new fields.
 
-- [ ] verify ALL new field types against `docs/schema.graphql` before writing tests
-- [ ] in `internal/model/issue_test.go`: add `TestIssueDeserialization_NewFields` -- JSON with all new fields (CycleRef with/without name, Creator, BranchName, Trashed true, Number, CustomerTicketCount, all timestamps, all SLA fields)
-- [ ] in `internal/model/issue_test.go`: add `TestIssueNullableFields_NewFields` -- JSON without optional fields, verify nil pointers for: Creator, Cycle, Trashed, all timestamp pointers, SLA pointers
-- [ ] in `internal/model/issue_test.go`: add `TestCycleRefDeserialization` -- test CycleRef with name, without name (nil), verify Number as float64
-- [ ] run tests -- must pass (these test existing PR code)
-- [ ] run `make build` -- must pass
+- [x] verify ALL new field types against `docs/schema.graphql` before writing tests
+- [x] in `internal/model/issue_test.go`: add `TestIssueDeserialization_NewFields` -- JSON with all new fields (CycleRef with/without name, Creator, BranchName, Trashed true, Number, CustomerTicketCount, all timestamps, all SLA fields)
+- [x] in `internal/model/issue_test.go`: add `TestIssueNullableFields_NewFields` -- JSON without optional fields, verify nil pointers for: Creator, Cycle, Trashed, all timestamp pointers, SLA pointers
+- [x] in `internal/model/issue_test.go`: add `TestCycleRefDeserialization` -- test CycleRef with name, without name (nil), verify Number as float64
+- [x] run tests -- must pass (these test existing PR code)
+- [x] run `make build` -- must pass
 
 ### Task 4: Add query field presence tests for new fields
 

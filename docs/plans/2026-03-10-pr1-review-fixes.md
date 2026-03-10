@@ -109,11 +109,11 @@ TDD: write tests to verify JSON -> Go struct mapping for all new fields.
 
 TDD: verify the existing PR display code is tested.
 
-- [ ] in `internal/cmd/issue_show_test.go`: extend `makeDetailedIssue()` with cycle (id, name, number), creator (id, displayName, email), branchName, trashed=true
-- [ ] add assertions for: cycle format "#N Name", creator name, branch name, "Trashed: yes"
-- [ ] add test case for issue WITHOUT cycle/creator/branch/trashed -- verify they don't appear in output
-- [ ] run tests -- must pass
-- [ ] run `make build` -- must pass
+- [x] in `internal/cmd/issue_show_test.go`: extend `makeDetailedIssue()` with cycle (id, name, number), creator (id, displayName, email), branchName, trashed=true
+- [x] add assertions for: cycle format "#N Name", creator name, branch name, "Trashed: yes"
+- [x] add test case for issue WITHOUT cycle/creator/branch/trashed -- verify they don't appear in output
+- [x] run tests -- must pass
+- [x] run `make build` -- must pass
 
 ### Task 6: Verify acceptance criteria
 - [ ] verify all 9 previously undisplayed fields now appear in `issue show`

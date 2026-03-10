@@ -74,17 +74,17 @@ Fields to add to display: `slaHighRiskAt`, `slaMediumRiskAt`, `startedTriageAt`,
 `snoozedUntilAt`, `addedToCycleAt`, `addedToProjectAt`, `addedToTeamAt`,
 `number`, `customerTicketCount`.
 
-- [ ] verify field types against `docs/schema.graphql`:
+- [x] verify field types against `docs/schema.graphql`:
   - `number: Float!` -> display as integer
   - `customerTicketCount: Int!` -> display as integer
   - all 7 timestamps: `DateTime` (nullable) -> display if non-nil
-- [ ] in `internal/cmd/issue_show_test.go`: extend `makeDetailedIssue()` to include all 9 fields in mock response
-- [ ] in `internal/cmd/issue_show_test.go`: add test assertions for new fields in output (e.g. "SLA High Risk", "Triage Started", "Number", "Tickets")
-- [ ] run tests -- expect failures (display code missing)
-- [ ] in `internal/cmd/issue_show.go`: add `number` and `customerTicketCount` display (non-zero check)
-- [ ] in `internal/cmd/issue_show.go`: add 7 missing timestamps to the display loop
-- [ ] run tests -- must pass
-- [ ] run `make build` -- must pass
+- [x] in `internal/cmd/issue_show_test.go`: extend `makeDetailedIssue()` to include all 9 fields in mock response
+- [x] in `internal/cmd/issue_show_test.go`: add test assertions for new fields in output (e.g. "SLA High Risk", "Triage Started", "Number", "Tickets")
+- [x] run tests -- expect failures (display code missing)
+- [x] in `internal/cmd/issue_show.go`: add `number` and `customerTicketCount` display (non-zero check)
+- [x] in `internal/cmd/issue_show.go`: add 7 missing timestamps to the display loop
+- [x] run tests -- must pass
+- [x] run `make build` -- must pass
 
 ### Task 3: Add deserialization tests for all new Issue fields
 

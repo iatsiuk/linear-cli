@@ -23,17 +23,48 @@ func makeDetailedIssue() map[string]any {
 	estimate := 3.0
 	dueDate := "2026-04-01"
 	return map[string]any{
-		"id":            "id-ENG-42",
-		"identifier":    "ENG-42",
-		"title":         "Implement feature X",
-		"description":   desc,
-		"priority":      2.0,
-		"priorityLabel": "Medium",
-		"estimate":      estimate,
-		"dueDate":       dueDate,
-		"url":           "https://linear.app/issue/ENG-42",
-		"createdAt":     "2026-01-10T00:00:00Z",
-		"updatedAt":     "2026-02-15T00:00:00Z",
+		"id":                  "id-ENG-42",
+		"identifier":          "ENG-42",
+		"number":              42.0,
+		"title":               "Implement feature X",
+		"description":         desc,
+		"priority":            2.0,
+		"priorityLabel":       "Medium",
+		"estimate":            estimate,
+		"dueDate":             dueDate,
+		"url":                 "https://linear.app/issue/ENG-42",
+		"createdAt":           "2026-01-10T00:00:00Z",
+		"updatedAt":           "2026-02-15T00:00:00Z",
+		"customerTicketCount": 5.0,
+		"slaHighRiskAt":       "2026-03-01T00:00:00Z",
+		"slaMediumRiskAt":     "2026-03-05T00:00:00Z",
+		"startedTriageAt":     "2026-01-11T00:00:00Z",
+		"snoozedUntilAt":      "2026-02-01T00:00:00Z",
+		"addedToCycleAt":      "2026-01-12T00:00:00Z",
+		"addedToProjectAt":    "2026-01-13T00:00:00Z",
+		"addedToTeamAt":       "2026-01-09T00:00:00Z",
+		"branchName":          "feature/eng-42-implement-feature-x",
+		"trashed":             true,
+		"slaType":             "standard",
+		"slaBreachesAt":       "2026-03-15T00:00:00Z",
+		"slaStartedAt":        "2026-01-10T00:00:00Z",
+		"triagedAt":           "2026-01-12T00:00:00Z",
+		"startedAt":           "2026-01-11T00:00:00Z",
+		"completedAt":         "2026-02-23T00:00:00Z",
+		"canceledAt":          "2026-02-24T00:00:00Z",
+		"archivedAt":          "2026-02-20T00:00:00Z",
+		"autoArchivedAt":      "2026-02-21T00:00:00Z",
+		"autoClosedAt":        "2026-02-22T00:00:00Z",
+		"creator": map[string]any{
+			"id":          "user-2",
+			"displayName": "Bob",
+			"email":       "bob@example.com",
+		},
+		"cycle": map[string]any{
+			"id":     "cycle-1",
+			"name":   "Sprint 5",
+			"number": 5.0,
+		},
 		"state": map[string]any{
 			"id":    "state-2",
 			"name":  "In Progress",
@@ -54,6 +85,117 @@ func makeDetailedIssue() map[string]any {
 				map[string]any{"id": "label-1", "name": "bug", "color": "#FF0000"},
 			},
 		},
+	}
+}
+
+func TestIssueShowCommand_NewFields(t *testing.T) {
+	issue := makeDetailedIssue()
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeJSONResponse(w, issueGetResponse(issue))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "show", "ENG-42"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	result := out.String()
+	checks := []struct {
+		label string
+		want  string
+	}{
+		{"number", "Number"},
+		{"customerTicketCount", "Tickets"},
+		{"slaHighRiskAt", "SLA High Risk"},
+		{"slaMediumRiskAt", "SLA Med Risk"},
+		{"startedTriageAt", "Triage Start"},
+		{"snoozedUntilAt", "Snoozed Until"},
+		{"addedToCycleAt", "Added to Cycle"},
+		{"addedToProjectAt", "Added to Proj"},
+		{"addedToTeamAt", "Added to Team"},
+		{"cycle", "#5 Sprint 5"},
+		{"creator", "Bob"},
+		{"branchName", "feature/eng-42-implement-feature-x"},
+		{"trashed", "yes"},
+		{"slaType", "SLA Type"},
+		{"slaBreachesAt", "SLA Breach"},
+		{"slaStartedAt", "SLA Started"},
+		{"triagedAt", "Triaged"},
+		{"startedAt", "2026-01-11T00:00:00Z"},
+		{"completedAt", "Completed"},
+		{"canceledAt", "Canceled"},
+		{"archivedAt", "2026-02-20T00:00:00Z"},
+		{"autoArchivedAt", "AutoArchived"},
+		{"autoClosedAt", "AutoClosed"},
+	}
+	for _, c := range checks {
+		if !strings.Contains(result, c.want) {
+			t.Errorf("output should contain %s (%q), got:\n%s", c.label, c.want, result)
+		}
+	}
+}
+
+func TestIssueShowCommand_NoCycleCreatorBranchTrashed(t *testing.T) {
+	// issue without cycle, creator, branchName, trashed
+	issue := map[string]any{
+		"id":            "id-ENG-2",
+		"identifier":    "ENG-2",
+		"title":         "Minimal issue",
+		"priority":      0.0,
+		"priorityLabel": "No priority",
+		"url":           "https://linear.app/issue/ENG-2",
+		"createdAt":     "2026-01-01T00:00:00Z",
+		"updatedAt":     "2026-01-01T00:00:00Z",
+		"state": map[string]any{
+			"id":    "state-1",
+			"name":  "Todo",
+			"color": "#000000",
+			"type":  "unstarted",
+		},
+		"team": map[string]any{
+			"id":   "team-1",
+			"name": "Engineering",
+		},
+		"labels": map[string]any{"nodes": []any{}},
+	}
+
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeJSONResponse(w, issueGetResponse(issue))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "show", "ENG-2"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	result := out.String()
+	absent := []struct {
+		label string
+		want  string
+	}{
+		{"cycle", "Cycle:"},
+		{"creator", "Creator:"},
+		{"branch", "Branch:"},
+		{"trashed", "Trashed:"},
+		{"number", "Number:"},
+		{"tickets", "Tickets:"},
+	}
+	for _, c := range absent {
+		if strings.Contains(result, c.want) {
+			t.Errorf("output should NOT contain %s (%q), got:\n%s", c.label, c.want, result)
+		}
 	}
 }
 

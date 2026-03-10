@@ -1,7 +1,7 @@
 package query
 
-// issueFields is the common field selection for Issue.
-const issueFields = `
+// issueListFields is the compact field selection used for issue listings.
+const issueListFields = `
 	id
 	identifier
 	title
@@ -21,11 +21,38 @@ const issueFields = `
 	project { id name }
 `
 
+// issueDetailFields is the full field selection used for single-issue detail views.
+const issueDetailFields = issueListFields + `
+	number
+	branchName
+	trashed
+	customerTicketCount
+	archivedAt
+	autoArchivedAt
+	autoClosedAt
+	canceledAt
+	completedAt
+	startedAt
+	startedTriageAt
+	triagedAt
+	snoozedUntilAt
+	addedToCycleAt
+	addedToProjectAt
+	addedToTeamAt
+	slaBreachesAt
+	slaHighRiskAt
+	slaMediumRiskAt
+	slaStartedAt
+	slaType
+	creator { id displayName email }
+	cycle { id name number }
+`
+
 // IssueListQuery fetches issues with optional pagination and filter.
 const IssueListQuery = `
 query IssueList($first: Int, $after: String, $filter: IssueFilter, $includeArchived: Boolean, $orderBy: PaginationOrderBy) {
 	issues(first: $first, after: $after, filter: $filter, includeArchived: $includeArchived, orderBy: $orderBy) {
-		nodes {` + issueFields + `}
+		nodes {` + issueListFields + `}
 		pageInfo { hasNextPage endCursor }
 	}
 }
@@ -34,7 +61,7 @@ query IssueList($first: Int, $after: String, $filter: IssueFilter, $includeArchi
 // IssueGetQuery fetches a single issue by ID.
 const IssueGetQuery = `
 query IssueGet($id: String!) {
-	issue(id: $id) {` + issueFields + `}
+	issue(id: $id) {` + issueDetailFields + `}
 }
 `
 
@@ -43,7 +70,7 @@ const IssueCreateMutation = `
 mutation IssueCreate($input: IssueCreateInput!) {
 	issueCreate(input: $input) {
 		success
-		issue {` + issueFields + `}
+		issue {` + issueListFields + `}
 	}
 }
 `
@@ -53,7 +80,7 @@ const IssueUpdateMutation = `
 mutation IssueUpdate($id: String!, $input: IssueUpdateInput!) {
 	issueUpdate(id: $id, input: $input) {
 		success
-		issue {` + issueFields + `}
+		issue {` + issueListFields + `}
 	}
 }
 `
@@ -80,7 +107,7 @@ mutation IssueArchive($id: String!) {
 const IssueBatchUpdateMutation = `
 mutation IssueBatchUpdate($ids: [UUID!]!, $input: IssueUpdateInput!) {
 	issueBatchUpdate(ids: $ids, input: $input) {
-		issues {` + issueFields + `}
+		issues {` + issueListFields + `}
 	}
 }
 `
@@ -89,7 +116,7 @@ mutation IssueBatchUpdate($ids: [UUID!]!, $input: IssueUpdateInput!) {
 const IssueSearchQuery = `
 query SearchIssues($term: String!, $first: Int, $teamId: String) {
 	searchIssues(term: $term, first: $first, teamId: $teamId) {
-		nodes {` + issueFields + `}
+		nodes {` + issueListFields + `}
 	}
 }
 `
@@ -97,6 +124,6 @@ query SearchIssues($term: String!, $first: Int, $teamId: String) {
 // IssueBranchQuery looks up an issue by VCS branch name.
 const IssueBranchQuery = `
 query IssueBranch($branchName: String!) {
-	issueVcsBranchSearch(branchName: $branchName) {` + issueFields + `}
+	issueVcsBranchSearch(branchName: $branchName) {` + issueDetailFields + `}
 }
 `

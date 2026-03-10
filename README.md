@@ -153,7 +153,7 @@ linear issue list --updated-after 2w --or --no-project --no-cycle
 linear issue show <identifier> [flags]
 ```
 
-Displays all fields for an issue: identifier, title, status, priority, team, assignee, due date, estimate, labels, URL, created/updated timestamps, description, parent issue (if set), and project (if set).
+Displays all fields for an issue: identifier, number, title, status, priority, team, assignee, due date, estimate, labels, URL, created/updated timestamps, description, parent issue (if set), project (if set), cycle (if set), creator (if set), branch name, customer ticket count, and all lifecycle timestamps (started, completed, canceled, archived, triage started, snoozed until, added to cycle/project/team). SLA fields (type, breach time, high/medium risk thresholds, started at) are shown when present. Trashed status is shown when true.
 
 Flags:
 ```

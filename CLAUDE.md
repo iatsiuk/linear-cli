@@ -136,6 +136,15 @@ Flags added: `--created-after`, `--created-before`, `--updated-after`, `--update
 `--due-after`, `--due-before`, `--completed-after`, `--completed-before`, `--no-assignee`,
 `--no-project`, `--no-cycle`, `--priority-gte`, `--priority-lte`, `--my`, `--or`.
 
+### GraphQL Field Sets
+
+Issue query field constants in `internal/query/issue.go` are split into two variants:
+- `issueListFields` - compact set for listings and mutations that display a row (IssueListQuery, IssueSearchQuery, IssueBatchUpdateMutation, IssueCreateMutation, IssueUpdateMutation)
+- `issueDetailFields` - full set for single-issue detail views (IssueGetQuery, IssueBranchQuery); defined as `issueListFields + "..."`
+
+When adding new issue fields: add to `issueDetailFields` only unless the field is needed in list output.
+Queries/mutations that call `printIssueRow` use `issueListFields`; those that call `printIssueDetail` use `issueDetailFields`.
+
 ### Partial Update Mutations
 
 Use `map[string]any` for mutation input variables when partial updates are needed.

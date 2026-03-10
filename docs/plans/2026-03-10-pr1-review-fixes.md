@@ -125,8 +125,8 @@ TDD: verify the existing PR display code is tested.
 - [x] verify test coverage for changed files
 
 ### Task 7: [Final] Update documentation
-- [ ] update `README.md:156` -- add all new displayed fields to the `issue show` description
-- [ ] run `make build` -- must pass
+- [x] update `README.md:156` -- add all new displayed fields to the `issue show` description
+- [x] run `make build` -- must pass
 
 ## Technical Details
 

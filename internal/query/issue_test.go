@@ -166,23 +166,59 @@ func TestIssueFieldsContainsProject(t *testing.T) {
 func TestIssueFieldsPresence(t *testing.T) {
 	t.Parallel()
 	// all queries must include the common issue fields
-	fields := []string{
+	commonFields := []string{
 		"id", "identifier", "title", "description",
 		"priority", "priorityLabel", "estimate", "dueDate",
 		"url", "createdAt", "updatedAt",
 	}
-	queries := map[string]string{
+	allQueries := map[string]string{
 		"IssueListQuery":      IssueListQuery,
 		"IssueGetQuery":       IssueGetQuery,
 		"IssueCreateMutation": IssueCreateMutation,
 		"IssueUpdateMutation": IssueUpdateMutation,
 	}
-	for qName, q := range queries {
-		for _, f := range fields {
+	for qName, q := range allQueries {
+		for _, f := range commonFields {
 			if !strings.Contains(q, f) {
 				t.Errorf("%s missing field %q", qName, f)
 			}
 		}
+	}
+	// detail queries must also include all new detail-only fields
+	detailFields := []string{
+		"number", "branchName", "trashed", "customerTicketCount",
+		"archivedAt", "canceledAt", "completedAt", "startedAt",
+		"slaType", "slaBreachesAt", "slaHighRiskAt", "slaMediumRiskAt",
+		"slaStartedAt", "startedTriageAt", "snoozedUntilAt",
+		"addedToCycleAt", "addedToProjectAt", "addedToTeamAt",
+	}
+	detailQueries := map[string]string{
+		"IssueGetQuery":       IssueGetQuery,
+		"IssueCreateMutation": IssueCreateMutation,
+		"IssueUpdateMutation": IssueUpdateMutation,
+	}
+	for qName, q := range detailQueries {
+		for _, f := range detailFields {
+			if !strings.Contains(q, f) {
+				t.Errorf("%s missing detail field %q", qName, f)
+			}
+		}
+	}
+}
+
+func TestIssueDetailFieldsContainsCycle(t *testing.T) {
+	t.Parallel()
+	want := "cycle { id name number }"
+	if !strings.Contains(issueDetailFields, want) {
+		t.Errorf("issueDetailFields missing %q", want)
+	}
+}
+
+func TestIssueDetailFieldsContainsCreator(t *testing.T) {
+	t.Parallel()
+	want := "creator { id displayName email }"
+	if !strings.Contains(issueDetailFields, want) {
+		t.Errorf("issueDetailFields missing %q", want)
 	}
 }
 

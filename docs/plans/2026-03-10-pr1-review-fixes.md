@@ -99,11 +99,11 @@ TDD: write tests to verify JSON -> Go struct mapping for all new fields.
 
 ### Task 4: Add query field presence tests for new fields
 
-- [ ] in `internal/query/issue_test.go`: add `TestIssueDetailFieldsContainsCycle` -- assert `issueDetailFields` contains `cycle { id name number }`
-- [ ] in `internal/query/issue_test.go`: add `TestIssueDetailFieldsContainsCreator` -- assert `issueDetailFields` contains `creator { id displayName email }`
-- [ ] in `internal/query/issue_test.go`: extend `TestIssueFieldsPresence` to include new fields: number, branchName, trashed, customerTicketCount, archivedAt, canceledAt, completedAt, startedAt, slaType, slaBreachesAt, slaHighRiskAt, slaMediumRiskAt, slaStartedAt, startedTriageAt, snoozedUntilAt, addedToCycleAt, addedToProjectAt, addedToTeamAt
-- [ ] run tests -- must pass
-- [ ] run `make build` -- must pass
+- [x] in `internal/query/issue_test.go`: add `TestIssueDetailFieldsContainsCycle` -- assert `issueDetailFields` contains `cycle { id name number }`
+- [x] in `internal/query/issue_test.go`: add `TestIssueDetailFieldsContainsCreator` -- assert `issueDetailFields` contains `creator { id displayName email }`
+- [x] in `internal/query/issue_test.go`: extend `TestIssueFieldsPresence` to include new fields: number, branchName, trashed, customerTicketCount, archivedAt, canceledAt, completedAt, startedAt, slaType, slaBreachesAt, slaHighRiskAt, slaMediumRiskAt, slaStartedAt, startedTriageAt, snoozedUntilAt, addedToCycleAt, addedToProjectAt, addedToTeamAt
+- [x] run tests -- must pass
+- [x] run `make build` -- must pass
 
 ### Task 5: Add display tests for existing new fields (cycle, creator, branch, trashed)
 

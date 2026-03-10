@@ -180,7 +180,8 @@ func TestIssueFieldsPresence(t *testing.T) {
 	}
 	for qName, q := range allQueries {
 		for _, f := range commonFields {
-			if !strings.Contains(q, f) {
+			// use tab-bounded check to avoid false positives via substrings (e.g. "id" in "identifier")
+			if !strings.Contains(q, "\t"+f+"\n") {
 				t.Errorf("%s missing field %q", qName, f)
 			}
 		}
@@ -199,7 +200,8 @@ func TestIssueFieldsPresence(t *testing.T) {
 	}
 	for qName, q := range detailQueries {
 		for _, f := range detailFields {
-			if !strings.Contains(q, f) {
+			// use tab-bounded check to avoid false positives (e.g. "number" matching cycle's number subfield)
+			if !strings.Contains(q, "\t"+f+"\n") {
 				t.Errorf("%s missing detail field %q", qName, f)
 			}
 		}
@@ -237,7 +239,12 @@ func TestIssueListFieldsCompact(t *testing.T) {
 		"project { id name }",
 	}
 	for _, f := range wantPresent {
-		if !strings.Contains(issueListFields, f) {
+		// use tab-bounded check for bare tokens to avoid substring false positives
+		needle := f
+		if !strings.Contains(f, " ") {
+			needle = "\t" + f + "\n"
+		}
+		if !strings.Contains(issueListFields, needle) {
 			t.Errorf("issueListFields missing %q", f)
 		}
 	}
@@ -272,7 +279,12 @@ func TestIssueDetailFieldsContainsAll(t *testing.T) {
 		"project { id name }",
 	}
 	for _, f := range listFields {
-		if !strings.Contains(issueDetailFields, f) {
+		// use tab-bounded check for bare tokens to avoid substring false positives
+		needle := f
+		if !strings.Contains(f, " ") {
+			needle = "\t" + f + "\n"
+		}
+		if !strings.Contains(issueDetailFields, needle) {
 			t.Errorf("issueDetailFields missing list field %q", f)
 		}
 	}
@@ -287,7 +299,12 @@ func TestIssueDetailFieldsContainsAll(t *testing.T) {
 		"cycle { id name number }",
 	}
 	for _, f := range detailOnly {
-		if !strings.Contains(issueDetailFields, f) {
+		// use tab-bounded check for bare tokens to avoid substring false positives
+		needle := f
+		if !strings.Contains(f, " ") {
+			needle = "\t" + f + "\n"
+		}
+		if !strings.Contains(issueDetailFields, needle) {
 			t.Errorf("issueDetailFields missing detail field %q", f)
 		}
 	}

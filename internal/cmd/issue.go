@@ -63,6 +63,7 @@ func newIssueListCommand() *cobra.Command {
 	f.Int("limit", 50, "maximum number of issues to return")
 	f.Bool("include-archived", false, "include archived issues")
 	f.String("order-by", "updatedAt", "sort order (createdAt|updatedAt)")
+	f.String("label", "", "filter by label name")
 	filter.AddFlags(cmd)
 	return cmd
 }
@@ -81,6 +82,7 @@ func runIssueList(cmd *cobra.Command, _ []string) error {
 	assignee, _ := f.GetString("assignee")
 	stateName, _ := f.GetString("state")
 	priority, _ := f.GetInt("priority")
+	labelName, _ := f.GetString("label")
 
 	if limit <= 0 {
 		return fmt.Errorf("--limit must be greater than 0")
@@ -111,6 +113,9 @@ func runIssueList(cmd *cobra.Command, _ []string) error {
 	}
 	if stateName != "" {
 		issueFilter["state"] = map[string]any{"name": map[string]any{"eq": stateName}}
+	}
+	if labelName != "" {
+		issueFilter["labels"] = map[string]any{"some": map[string]any{"name": map[string]any{"eq": labelName}}}
 	}
 	if priority >= 0 {
 		if !useOr {

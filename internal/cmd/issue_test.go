@@ -793,3 +793,90 @@ func TestIssueListCommand_OrSkipsMutualExclusion(t *testing.T) {
 		t.Fatalf("--assignee + --no-assignee + --or should not return error, got: %v", err)
 	}
 }
+
+func TestIssueListCommand_LabelFilter(t *testing.T) {
+	var gotVars map[string]any
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		gotVars = body.Variables
+		writeJSONResponse(w, issueListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "list", "--label", "bug"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	filter, ok := gotVars["filter"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables.filter not set, got: %v", gotVars["filter"])
+	}
+	labels, ok := filter["labels"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.labels not set, got: %v", filter["labels"])
+	}
+	some, ok := labels["some"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.labels.some not set, got: %v", labels["some"])
+	}
+	name, ok := some["name"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.labels.some.name not set, got: %v", some["name"])
+	}
+	if name["eq"] != "bug" {
+		t.Errorf("filter.labels.some.name.eq = %v, want bug", name["eq"])
+	}
+}
+
+func TestIssueListCommand_LabelFilter_JSON(t *testing.T) {
+	var gotVars map[string]any
+	issues := []map[string]any{
+		makeIssue("ENG-1", "Bug fix", "Done", "High", ""),
+	}
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		gotVars = body.Variables
+		writeJSONResponse(w, issueListResponse(issues))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"--json", "issue", "list", "--label", "bug"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	// verify filter was set
+	filter, ok := gotVars["filter"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables.filter not set")
+	}
+	if _, ok := filter["labels"]; !ok {
+		t.Error("filter.labels not set")
+	}
+
+	// verify JSON output
+	var decoded []map[string]any
+	if err := json.Unmarshal(out.Bytes(), &decoded); err != nil {
+		t.Fatalf("output is not valid JSON: %v\noutput: %s", err, out.String())
+	}
+	if len(decoded) != 1 {
+		t.Errorf("expected 1 issue in JSON output, got %d", len(decoded))
+	}
+}

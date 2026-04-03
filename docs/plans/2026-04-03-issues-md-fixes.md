@@ -44,15 +44,15 @@
 ### Task 1: Add `--label` flag to `issue list`
 
 **Tests first:**
-- [ ] write test `TestIssueListCommand_LabelFilter`: mock server captures GraphQL variables, verify `filter.labels.some.name.eq` is set correctly when `--label "bug"` is passed
-- [ ] write test `TestIssueListCommand_LabelFilter_JSON`: verify JSON output works with label filter
-- [ ] write test for multiple labels if StringSlice is used (or skip if single label for now)
+- [x] write test `TestIssueListCommand_LabelFilter`: mock server captures GraphQL variables, verify `filter.labels.some.name.eq` is set correctly when `--label "bug"` is passed
+- [x] write test `TestIssueListCommand_LabelFilter_JSON`: verify JSON output works with label filter
+- [x] write test for multiple labels if StringSlice is used (or skip if single label for now)
 
 **Implementation:**
-- [ ] add `--label` string flag in `newIssueListCommand()` (`internal/cmd/issue.go`)
-- [ ] in `runIssueList()`: read flag, build filter condition `"labels": {"some": {"name": {"eq": value}}}`
-- [ ] run tests - must pass
-- [ ] run `make build` - must pass
+- [x] add `--label` string flag in `newIssueListCommand()` (`internal/cmd/issue.go`)
+- [x] in `runIssueList()`: read flag, build filter condition `"labels": {"some": {"name": {"eq": value}}}`
+- [x] run tests - must pass
+- [x] run `make build` - must pass
 
 ### Task 2: Add `--project` flag to `issue list`
 

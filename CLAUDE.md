@@ -139,7 +139,7 @@ Flags added: `--created-after`, `--created-before`, `--updated-after`, `--update
 ### GraphQL Field Sets
 
 Issue query field constants in `internal/query/issue.go` are split into two variants:
-- `issueListFields` - compact set for listings and mutations that display a row (IssueListQuery, IssueSearchQuery, IssueBatchUpdateMutation, IssueCreateMutation, IssueUpdateMutation)
+- `issueListFields` - compact set for listings and mutations that display a row (IssueListQuery, IssueSearchQuery, ViewIssuesQuery, ProjectIssuesQuery, IssueBatchUpdateMutation, IssueCreateMutation, IssueUpdateMutation)
 - `issueDetailFields` - full set for single-issue detail views (IssueGetQuery, IssueBranchQuery); defined as `issueListFields + "..."`
 
 When adding new issue fields: add to `issueDetailFields` only unless the field is needed in list output.

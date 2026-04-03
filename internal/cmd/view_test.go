@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/spf13/cobra"
+
 	"github.com/iatsiuk/linear-cli/internal/cmd"
 	"github.com/iatsiuk/linear-cli/internal/model"
 )
@@ -355,6 +357,31 @@ func TestViewIssuesCommand_MissingArg(t *testing.T) {
 	err := root.Execute()
 	if err == nil {
 		t.Fatal("expected error when view id is missing")
+	}
+}
+
+func TestViewShowCommand_UseFieldContainsSlug(t *testing.T) {
+	root := cmd.NewRootCommand("test")
+	var showCmd *cobra.Command
+	for _, sub := range root.Commands() {
+		if sub.Use == "view" {
+			for _, s := range sub.Commands() {
+				if strings.HasPrefix(s.Use, "show") {
+					showCmd = s
+					break
+				}
+			}
+			break
+		}
+	}
+	if showCmd == nil {
+		t.Fatal("view show command not found")
+	}
+	if !strings.Contains(showCmd.Use, "id-or-slug") {
+		t.Errorf("Use = %q, want to contain 'id-or-slug'", showCmd.Use)
+	}
+	if !strings.Contains(strings.ToLower(showCmd.Short), "slug") {
+		t.Errorf("Short = %q, want to mention 'slug'", showCmd.Short)
 	}
 }
 

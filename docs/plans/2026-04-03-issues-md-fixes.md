@@ -83,11 +83,11 @@
 - [x] run `make build` - must pass
 
 ### Task 5: Update `view show` for slug support
-- [ ] write test verifying command `Use` field contains `<id-or-slug>` instead of `<id>`
-- [ ] update `Use` from `"show <id>"` to `"show <id-or-slug>"` in `newViewShowCommand()`
-- [ ] update `Short`/`Long` description to mention slug support: "Accepts UUID or URL slug"
-- [ ] run tests - must pass
-- [ ] run `make build` - must pass
+- [x] write test verifying command `Use` field contains `<id-or-slug>` instead of `<id>`
+- [x] update `Use` from `"show <id>"` to `"show <id-or-slug>"` in `newViewShowCommand()`
+- [x] update `Short`/`Long` description to mention slug support: "Accepts UUID or URL slug"
+- [x] run tests - must pass
+- [x] run `make build` - must pass
 
 ### Task 6: Add `project issues` tests
 - [ ] write test `TestProjectIssuesCommand_TableOutput`: mock server handles ResolveProjectID + project issues query, verify table output

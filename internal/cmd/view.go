@@ -95,8 +95,9 @@ func runViewList(cmd *cobra.Command, _ []string) error {
 
 func newViewShowCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "show <id>",
-		Short: "Show custom view details",
+		Use:   "show <id-or-slug>",
+		Short: "Show custom view details (accepts UUID or URL slug)",
+		Long:  "Show details for a custom view. Accepts a UUID or URL slug.",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf("view id is required")

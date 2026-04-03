@@ -228,6 +228,136 @@ func TestViewShowCommand_MissingID(t *testing.T) {
 	}
 }
 
+func viewIssuesResponse(issues []map[string]any) map[string]any {
+	return map[string]any{
+		"data": map[string]any{
+			"customView": map[string]any{
+				"issues": map[string]any{
+					"nodes":    issues,
+					"pageInfo": map[string]any{"hasNextPage": false, "endCursor": nil},
+				},
+			},
+		},
+	}
+}
+
+func TestViewIssuesCommand_TableOutput(t *testing.T) {
+	issues := []map[string]any{
+		makeIssue("ENG-10", "View issue one", "In Progress", "Medium", "Alice"),
+		makeIssue("ENG-11", "View issue two", "Backlog", "Low", ""),
+	}
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		viewIssuesResponse(issues),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"view", "issues", "cv-1"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) < 1 {
+		t.Fatalf("expected 1 request, got %d", len(*bodies))
+	}
+	if (*bodies)[0]["id"] != "cv-1" {
+		t.Errorf("id = %v, want cv-1", (*bodies)[0]["id"])
+	}
+
+	result := out.String()
+	if !strings.Contains(result, "ENG-10") {
+		t.Errorf("output should contain ENG-10, got: %s", result)
+	}
+	if !strings.Contains(result, "ENG-11") {
+		t.Errorf("output should contain ENG-11, got: %s", result)
+	}
+	if !strings.Contains(result, "View issue one") {
+		t.Errorf("output should contain issue title, got: %s", result)
+	}
+}
+
+func TestViewIssuesCommand_JSONOutput(t *testing.T) {
+	issues := []map[string]any{
+		makeIssue("ENG-12", "JSON view issue", "Todo", "High", "Bob"),
+	}
+
+	server, _ := newQueuedServer(t, []map[string]any{
+		viewIssuesResponse(issues),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"--json", "view", "issues", "cv-2"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var decoded []map[string]any
+	if err := json.Unmarshal(out.Bytes(), &decoded); err != nil {
+		t.Fatalf("output is not valid JSON: %v\noutput: %s", err, out.String())
+	}
+	if len(decoded) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(decoded))
+	}
+	if decoded[0]["identifier"] != "ENG-12" {
+		t.Errorf("identifier = %v, want ENG-12", decoded[0]["identifier"])
+	}
+}
+
+func TestViewIssuesCommand_WithLimit(t *testing.T) {
+	server, bodies := newQueuedServer(t, []map[string]any{
+		viewIssuesResponse([]map[string]any{}),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"view", "issues", "cv-3", "--limit", "5"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) < 1 {
+		t.Fatalf("expected 1 request, got %d", len(*bodies))
+	}
+	first, ok := (*bodies)[0]["first"]
+	if !ok {
+		t.Fatalf("expected 'first' variable in request body")
+	}
+	// JSON numbers are float64 when decoded into any
+	if first.(float64) != 5 {
+		t.Errorf("first = %v, want 5", first)
+	}
+}
+
+func TestViewIssuesCommand_MissingArg(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"view", "issues"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when view id is missing")
+	}
+}
+
 func TestCustomViewDeserialization(t *testing.T) {
 	data := `{"id":"cv-1","name":"Test View","modelName":"Issue","shared":true,"description":"A test view"}`
 

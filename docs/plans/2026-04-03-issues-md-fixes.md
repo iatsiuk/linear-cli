@@ -68,10 +68,10 @@
 - [x] run `make build` - must pass
 
 ### Task 3: Add `view issues` tests
-- [ ] write test `TestViewIssuesCommand_TableOutput`: mock server returns customView with issues connection, verify table output contains issue identifiers
-- [ ] write test `TestViewIssuesCommand_JSONOutput`: verify JSON output with `--json`
-- [ ] write test `TestViewIssuesCommand_WithLimit`: verify `first` variable is passed correctly
-- [ ] write test `TestViewIssuesCommand_MissingArg`: verify error when no ID provided
+- [x] write test `TestViewIssuesCommand_TableOutput`: mock server returns customView with issues connection, verify table output contains issue identifiers
+- [x] write test `TestViewIssuesCommand_JSONOutput`: verify JSON output with `--json`
+- [x] write test `TestViewIssuesCommand_WithLimit`: verify `first` variable is passed correctly
+- [x] write test `TestViewIssuesCommand_MissingArg`: verify error when no ID provided
 
 ### Task 4: Add `view issues` implementation
 - [ ] add `ViewIssuesQuery` in `internal/query/custom_view.go`: `customView(id) { issues(first, orderBy, includeArchived) { nodes { ...issueListFields } pageInfo } }`

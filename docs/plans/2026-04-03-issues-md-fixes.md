@@ -57,15 +57,15 @@
 ### Task 2: Add `--project` flag to `issue list`
 
 **Tests first:**
-- [ ] write test `TestIssueListCommand_ProjectFilter`: mock server handles ResolveProjectID query + issue list query, verify `filter.project.id.eq` is set with resolved UUID
-- [ ] write test `TestIssueListCommand_ProjectFilter_MutualExclusive`: verify error when both `--project` and `--no-project` are used (without `--or`)
+- [x] write test `TestIssueListCommand_ProjectFilter`: mock server handles ResolveProjectID query + issue list query, verify `filter.project.id.eq` is set with resolved UUID
+- [x] write test `TestIssueListCommand_ProjectFilter_MutualExclusive`: verify error when both `--project` and `--no-project` are used (without `--or`)
 
 **Implementation:**
-- [ ] add `--project` string flag in `newIssueListCommand()` (`internal/cmd/issue.go`)
-- [ ] in `runIssueList()`: read flag, resolve via `api.ResolveProjectID()`, build filter `"project": {"id": {"eq": uuid}}`
-- [ ] add mutual exclusivity check with `--no-project` (when not in `--or` mode)
-- [ ] run tests - must pass
-- [ ] run `make build` - must pass
+- [x] add `--project` string flag in `newIssueListCommand()` (`internal/cmd/issue.go`)
+- [x] in `runIssueList()`: read flag, resolve via `api.ResolveProjectID()`, build filter `"project": {"id": {"eq": uuid}}`
+- [x] add mutual exclusivity check with `--no-project` (when not in `--or` mode)
+- [x] run tests - must pass
+- [x] run `make build` - must pass
 
 ### Task 3: Add `view issues` tests
 - [ ] write test `TestViewIssuesCommand_TableOutput`: mock server returns customView with issues connection, verify table output contains issue identifiers

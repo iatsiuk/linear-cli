@@ -64,6 +64,7 @@ func newIssueListCommand() *cobra.Command {
 	f.Bool("include-archived", false, "include archived issues")
 	f.String("order-by", "updatedAt", "sort order (createdAt|updatedAt)")
 	f.String("label", "", "filter by label name")
+	f.String("project", "", "filter by project name or UUID")
 	filter.AddFlags(cmd)
 	return cmd
 }
@@ -83,6 +84,7 @@ func runIssueList(cmd *cobra.Command, _ []string) error {
 	stateName, _ := f.GetString("state")
 	priority, _ := f.GetInt("priority")
 	labelName, _ := f.GetString("label")
+	projectName, _ := f.GetString("project")
 
 	if limit <= 0 {
 		return fmt.Errorf("--limit must be greater than 0")
@@ -116,6 +118,18 @@ func runIssueList(cmd *cobra.Command, _ []string) error {
 	}
 	if labelName != "" {
 		issueFilter["labels"] = map[string]any{"some": map[string]any{"name": map[string]any{"eq": labelName}}}
+	}
+	if projectName != "" {
+		if !useOr {
+			if noProject, _ := f.GetBool("no-project"); noProject {
+				return fmt.Errorf("--project and --no-project are mutually exclusive")
+			}
+		}
+		projectID, err := api.ResolveProjectID(context.Background(), client, projectName)
+		if err != nil {
+			return fmt.Errorf("resolve project: %w", err)
+		}
+		issueFilter["project"] = map[string]any{"id": map[string]any{"eq": projectID}}
 	}
 	if priority >= 0 {
 		if !useOr {

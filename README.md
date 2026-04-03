@@ -102,6 +102,8 @@ Flags:
   --assignee string         filter by assignee display name
   --state string            filter by workflow state name
   --priority int            filter by priority: 0=none, 1=urgent, 2=high, 3=normal, 4=low
+  --label string            filter by label name
+  --project string          filter by project name or UUID
   --limit int               maximum number of issues to return (default 50)
   --include-archived        include archived issues
   --order-by string         sort order: createdAt|updatedAt (default "updatedAt")
@@ -650,6 +652,30 @@ Flags:
 Example:
 ```
 linear project delete abc123 --yes
+```
+
+### List issues in a project
+
+```
+linear project issues <id-or-name> [flags]
+```
+
+Accepts a project UUID or name.
+
+Flags:
+```
+  --limit int            maximum number of issues to return (default 50)
+  --order-by string      sort order: createdAt|updatedAt (default "updatedAt")
+  --include-archived     include archived issues
+  --json                 output as JSON array
+```
+
+Output columns: ID, Title, Status, Priority, Assignee
+
+Example:
+```
+linear project issues "Q2 Launch"
+linear project issues abc123 --limit 100 --json
 ```
 
 ### Project status check-ins
@@ -1206,8 +1232,10 @@ linear view list
 ### Show custom view
 
 ```
-linear view show <id> [flags]
+linear view show <id-or-slug> [flags]
 ```
+
+Accepts a UUID or URL slug (e.g. the last path segment from a Linear view URL).
 
 Flags:
 ```
@@ -1219,6 +1247,29 @@ Output fields: Name, Type, Shared, Description.
 Example:
 ```
 linear view show abc123
+linear view show my-team-bugs
+```
+
+### List issues in a custom view
+
+```
+linear view issues <id> [flags]
+```
+
+Flags:
+```
+  --limit int            maximum number of issues to return (default 50)
+  --order-by string      sort order: createdAt|updatedAt (default "updatedAt")
+  --include-archived     include archived issues
+  --json                 output as JSON array
+```
+
+Output columns: ID, Title, Status, Priority, Assignee
+
+Example:
+```
+linear view issues abc123
+linear view issues abc123 --limit 100 --json
 ```
 
 ## Search Command

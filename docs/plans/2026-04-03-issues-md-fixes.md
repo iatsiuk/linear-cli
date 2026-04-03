@@ -112,8 +112,8 @@
 - [x] run `make build` - final verification
 
 ### Task 9: [Final] Update documentation
-- [ ] update README.md if new flags/commands need to be documented
-- [ ] update issues.md to mark resolved items (or remove file)
+- [x] update README.md if new flags/commands need to be documented
+- [x] update issues.md to mark resolved items (or remove file)
 
 ## Technical Details
 

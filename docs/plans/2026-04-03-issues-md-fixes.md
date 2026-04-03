@@ -104,12 +104,12 @@
 - [x] run `make build` - must pass
 
 ### Task 8: Verify acceptance criteria
-- [ ] verify all 5 issues from issues.md are addressed
-- [ ] verify edge cases: mutual exclusivity, missing args, empty results
-- [ ] run full test suite: `go test -race ./...`
-- [ ] run linter: `golangci-lint run`
-- [ ] verify test coverage meets project standard
-- [ ] run `make build` - final verification
+- [x] verify all 5 issues from issues.md are addressed
+- [x] verify edge cases: mutual exclusivity, missing args, empty results
+- [x] run full test suite: `go test -race ./...`
+- [x] run linter: `golangci-lint run`
+- [x] verify test coverage meets project standard
+- [x] run `make build` - final verification
 
 ### Task 9: [Final] Update documentation
 - [ ] update README.md if new flags/commands need to be documented

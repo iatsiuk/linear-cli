@@ -25,3 +25,15 @@ query CustomViewShow($id: String!) {
 	}
 }
 `
+
+// ViewIssuesQuery fetches issues belonging to a custom view.
+const ViewIssuesQuery = `
+query ViewIssues($id: String!, $first: Int, $orderBy: PaginationOrderBy, $includeArchived: Boolean) {
+	customView(id: $id) {
+		issues(first: $first, orderBy: $orderBy, includeArchived: $includeArchived) {
+			nodes {` + issueListFields + `}
+			pageInfo { hasNextPage endCursor }
+		}
+	}
+}
+`

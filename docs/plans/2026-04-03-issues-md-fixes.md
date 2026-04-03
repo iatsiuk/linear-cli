@@ -74,13 +74,13 @@
 - [x] write test `TestViewIssuesCommand_MissingArg`: verify error when no ID provided
 
 ### Task 4: Add `view issues` implementation
-- [ ] add `ViewIssuesQuery` in `internal/query/custom_view.go`: `customView(id) { issues(first, orderBy, includeArchived) { nodes { ...issueListFields } pageInfo } }`
-- [ ] add response model if needed (or reuse existing issue connection types)
-- [ ] add `newViewIssuesCommand()` in `internal/cmd/view.go` with flags: `--limit`, `--order-by`, `--include-archived`
-- [ ] implement `runViewIssues()`: query API, format output with `IssueRow` / `printIssueRow`
-- [ ] register subcommand in `newViewCommand()`
-- [ ] run tests - must pass
-- [ ] run `make build` - must pass
+- [x] add `ViewIssuesQuery` in `internal/query/custom_view.go`: `customView(id) { issues(first, orderBy, includeArchived) { nodes { ...issueListFields } pageInfo } }`
+- [x] add response model if needed (or reuse existing issue connection types)
+- [x] add `newViewIssuesCommand()` in `internal/cmd/view.go` with flags: `--limit`, `--order-by`, `--include-archived`
+- [x] implement `runViewIssues()`: query API, format output with `IssueRow` / `printIssueRow`
+- [x] register subcommand in `newViewCommand()`
+- [x] run tests - must pass
+- [x] run `make build` - must pass
 
 ### Task 5: Update `view show` for slug support
 - [ ] write test verifying command `Use` field contains `<id-or-slug>` instead of `<id>`

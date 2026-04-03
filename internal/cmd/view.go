@@ -19,6 +19,14 @@ type customViewShowResult struct {
 	CustomView *model.CustomView `json:"customView"`
 }
 
+type customViewIssuesResult struct {
+	CustomView struct {
+		Issues struct {
+			Nodes []model.Issue `json:"nodes"`
+		} `json:"issues"`
+	} `json:"customView"`
+}
+
 // CustomViewRow is a display row for the custom view list table.
 type CustomViewRow struct {
 	Name   string `json:"name"`
@@ -36,6 +44,7 @@ func newViewCommand() *cobra.Command {
 	}
 	cmd.AddCommand(newViewListCommand())
 	cmd.AddCommand(newViewShowCommand())
+	cmd.AddCommand(newViewIssuesCommand())
 	return cmd
 }
 
@@ -149,4 +158,72 @@ func runViewShow(cmd *cobra.Command, args []string) error {
 		}
 	}
 	return nil
+}
+
+func newViewIssuesCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "issues <id>",
+		Short: "List issues in a custom view",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("view id is required")
+			}
+			return nil
+		},
+		RunE: runViewIssues,
+	}
+	cmd.Flags().Int("limit", 50, "maximum number of issues to return")
+	cmd.Flags().String("order-by", "updatedAt", "sort order (createdAt|updatedAt)")
+	cmd.Flags().Bool("include-archived", false, "include archived issues")
+	return cmd
+}
+
+func runViewIssues(cmd *cobra.Command, args []string) error {
+	client, err := newClientFromConfig()
+	if err != nil {
+		return err
+	}
+
+	f := cmd.Flags()
+	limit, _ := f.GetInt("limit")
+	orderBy, _ := f.GetString("order-by")
+	includeArchived, _ := f.GetBool("include-archived")
+
+	vars := map[string]any{
+		"id":    args[0],
+		"first": limit,
+	}
+	if orderBy != "" {
+		vars["orderBy"] = orderBy
+	}
+	if includeArchived {
+		vars["includeArchived"] = true
+	}
+
+	var result customViewIssuesResult
+	if err := client.Do(context.Background(), query.ViewIssuesQuery, vars, &result); err != nil {
+		return fmt.Errorf("view issues: %w", err)
+	}
+
+	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")
+	formatter := output.NewFormatter(jsonMode)
+
+	issues := result.CustomView.Issues.Nodes
+	if jsonMode {
+		return formatter.Format(cmd.OutOrStdout(), issues)
+	}
+
+	rows := make([]IssueRow, len(issues))
+	for i, issue := range issues {
+		rows[i] = IssueRow{
+			ID:       issue.Identifier,
+			Title:    truncate(issue.Title, 40),
+			Status:   issue.State.Name,
+			Priority: issue.PriorityLabel,
+		}
+		if issue.Assignee != nil {
+			rows[i].Assignee = issue.Assignee.DisplayName
+		}
+	}
+	return formatter.Format(cmd.OutOrStdout(), rows)
 }

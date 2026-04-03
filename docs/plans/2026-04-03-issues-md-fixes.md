@@ -96,12 +96,12 @@
 - [x] write test `TestProjectIssuesCommand_ByName`: verify project name is resolved to UUID via ResolveProjectID
 
 ### Task 7: Add `project issues` implementation
-- [ ] add `ProjectIssuesQuery` in `internal/query/project.go`: `project(id) { issues(first, orderBy, includeArchived) { nodes { ...issueListFields } pageInfo } }`
-- [ ] add `newProjectIssuesCommand()` in `internal/cmd/project.go` with flags: `--limit`, `--order-by`, `--include-archived`
-- [ ] implement `runProjectIssues()`: resolve project ID, query API, format with `IssueRow` / `printIssueRow`
-- [ ] register subcommand in `newProjectCommand()`
-- [ ] run tests - must pass
-- [ ] run `make build` - must pass
+- [x] add `ProjectIssuesQuery` in `internal/query/project.go`: `project(id) { issues(first, orderBy, includeArchived) { nodes { ...issueListFields } pageInfo } }`
+- [x] add `newProjectIssuesCommand()` in `internal/cmd/project.go` with flags: `--limit`, `--order-by`, `--include-archived`
+- [x] implement `runProjectIssues()`: resolve project ID, query API, format with `IssueRow` / `printIssueRow`
+- [x] register subcommand in `newProjectCommand()`
+- [x] run tests - must pass
+- [x] run `make build` - must pass
 
 ### Task 8: Verify acceptance criteria
 - [ ] verify all 5 issues from issues.md are addressed

@@ -27,6 +27,7 @@ func newProjectCommand() *cobra.Command {
 	cmd.AddCommand(newProjectUpdateCommand())
 	cmd.AddCommand(newProjectDeleteCommand())
 	cmd.AddCommand(newProjectMilestoneCommand())
+	cmd.AddCommand(newProjectIssuesCommand())
 	return cmd
 }
 
@@ -246,4 +247,86 @@ func printProjectDetail(cmd *cobra.Command, p *model.Project) error {
 	}
 
 	return nil
+}
+
+type projectIssuesResult struct {
+	Project struct {
+		Issues struct {
+			Nodes []model.Issue `json:"nodes"`
+		} `json:"issues"`
+	} `json:"project"`
+}
+
+func newProjectIssuesCommand() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "issues <id-or-name>",
+		Short: "List issues in a project",
+		Args: func(cmd *cobra.Command, args []string) error {
+			if len(args) == 0 {
+				return fmt.Errorf("project id or name is required")
+			}
+			return nil
+		},
+		RunE: runProjectIssues,
+	}
+	cmd.Flags().Int("limit", 50, "maximum number of issues to return")
+	cmd.Flags().String("order-by", "updatedAt", "sort order (createdAt|updatedAt)")
+	cmd.Flags().Bool("include-archived", false, "include archived issues")
+	return cmd
+}
+
+func runProjectIssues(cmd *cobra.Command, args []string) error {
+	client, err := newClientFromConfig()
+	if err != nil {
+		return err
+	}
+
+	ctx := context.Background()
+	id, err := api.ResolveProjectID(ctx, client, args[0])
+	if err != nil {
+		return err
+	}
+
+	f := cmd.Flags()
+	limit, _ := f.GetInt("limit")
+	orderBy, _ := f.GetString("order-by")
+	includeArchived, _ := f.GetBool("include-archived")
+
+	vars := map[string]any{
+		"id":    id,
+		"first": limit,
+	}
+	if orderBy != "" {
+		vars["orderBy"] = orderBy
+	}
+	if includeArchived {
+		vars["includeArchived"] = true
+	}
+
+	var result projectIssuesResult
+	if err := client.Do(ctx, query.ProjectIssuesQuery, vars, &result); err != nil {
+		return fmt.Errorf("project issues: %w", err)
+	}
+
+	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")
+	formatter := output.NewFormatter(jsonMode)
+
+	issues := result.Project.Issues.Nodes
+	if jsonMode {
+		return formatter.Format(cmd.OutOrStdout(), issues)
+	}
+
+	rows := make([]IssueRow, len(issues))
+	for i, issue := range issues {
+		rows[i] = IssueRow{
+			ID:       issue.Identifier,
+			Title:    truncate(issue.Title, 40),
+			Status:   issue.State.Name,
+			Priority: issue.PriorityLabel,
+		}
+		if issue.Assignee != nil {
+			rows[i].Assignee = issue.Assignee.DisplayName
+		}
+	}
+	return formatter.Format(cmd.OutOrStdout(), rows)
 }

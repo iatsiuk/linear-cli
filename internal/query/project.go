@@ -64,3 +64,15 @@ mutation ProjectDelete($id: String!) {
 	}
 }
 `
+
+// ProjectIssuesQuery fetches issues belonging to a project.
+const ProjectIssuesQuery = `
+query ProjectIssues($id: String!, $first: Int, $orderBy: PaginationOrderBy, $includeArchived: Boolean) {
+	project(id: $id) {
+		issues(first: $first, orderBy: $orderBy, includeArchived: $includeArchived) {
+			nodes {` + issueListFields + `}
+			pageInfo { hasNextPage endCursor }
+		}
+	}
+}
+`

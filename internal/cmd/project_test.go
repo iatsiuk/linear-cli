@@ -10,6 +10,19 @@ import (
 	"github.com/iatsiuk/linear-cli/internal/cmd"
 )
 
+func projectIssuesResponse(issues []map[string]any) map[string]any {
+	return map[string]any{
+		"data": map[string]any{
+			"project": map[string]any{
+				"issues": map[string]any{
+					"nodes":    issues,
+					"pageInfo": map[string]any{"hasNextPage": false, "endCursor": nil},
+				},
+			},
+		},
+	}
+}
+
 func projectListResponse(projects []map[string]any) map[string]any {
 	return map[string]any{
 		"data": map[string]any{
@@ -448,5 +461,162 @@ func TestProjectShowCommand_MissingID(t *testing.T) {
 	err := root.Execute()
 	if err == nil {
 		t.Fatal("expected error when ID is missing")
+	}
+}
+
+func TestProjectIssuesCommand_TableOutput(t *testing.T) {
+	const projUUID = "00000000-0000-0000-0000-000000000001"
+	issues := []map[string]any{
+		makeIssue("ENG-20", "Project issue one", "In Progress", "High", "Alice"),
+		makeIssue("ENG-21", "Project issue two", "Backlog", "Low", ""),
+	}
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		projectIssuesResponse(issues),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"project", "issues", projUUID})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) < 1 {
+		t.Fatalf("expected 1 request, got %d", len(*bodies))
+	}
+	if (*bodies)[0]["id"] != projUUID {
+		t.Errorf("id = %v, want %s", (*bodies)[0]["id"], projUUID)
+	}
+
+	result := out.String()
+	if !strings.Contains(result, "ENG-20") {
+		t.Errorf("output should contain ENG-20, got: %s", result)
+	}
+	if !strings.Contains(result, "ENG-21") {
+		t.Errorf("output should contain ENG-21, got: %s", result)
+	}
+	if !strings.Contains(result, "Project issue one") {
+		t.Errorf("output should contain issue title, got: %s", result)
+	}
+}
+
+func TestProjectIssuesCommand_JSONOutput(t *testing.T) {
+	const projUUID = "00000000-0000-0000-0000-000000000002"
+	issues := []map[string]any{
+		makeIssue("ENG-22", "JSON project issue", "Todo", "Medium", "Bob"),
+	}
+
+	server, _ := newQueuedServer(t, []map[string]any{
+		projectIssuesResponse(issues),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"--json", "project", "issues", projUUID})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	var decoded []map[string]any
+	if err := json.Unmarshal(out.Bytes(), &decoded); err != nil {
+		t.Fatalf("output is not valid JSON: %v\noutput: %s", err, out.String())
+	}
+	if len(decoded) != 1 {
+		t.Fatalf("expected 1 item, got %d", len(decoded))
+	}
+	if decoded[0]["identifier"] != "ENG-22" {
+		t.Errorf("identifier = %v, want ENG-22", decoded[0]["identifier"])
+	}
+}
+
+func TestProjectIssuesCommand_WithLimit(t *testing.T) {
+	const projUUID = "00000000-0000-0000-0000-000000000003"
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		projectIssuesResponse([]map[string]any{}),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"project", "issues", projUUID, "--limit", "7"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) < 1 {
+		t.Fatalf("expected 1 request, got %d", len(*bodies))
+	}
+	first, ok := (*bodies)[0]["first"]
+	if !ok {
+		t.Fatalf("expected 'first' variable in request body")
+	}
+	if first.(float64) != 7 {
+		t.Errorf("first = %v, want 7", first)
+	}
+}
+
+func TestProjectIssuesCommand_ByName(t *testing.T) {
+	const projUUID = "aaaaaaaa-bbbb-cccc-dddd-111111111111"
+	issues := []map[string]any{
+		makeIssue("ENG-30", "Named project issue", "Done", "Urgent", "Carol"),
+	}
+
+	var gotIssueVars map[string]any
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Query     string         `json:"query"`
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+
+		if strings.Contains(body.Query, "ResolveProject") {
+			writeJSONResponse(w, map[string]any{
+				"data": map[string]any{
+					"projects": map[string]any{
+						"nodes": []any{map[string]any{"id": projUUID}},
+					},
+				},
+			})
+			return
+		}
+
+		gotIssueVars = body.Variables
+		writeJSONResponse(w, projectIssuesResponse(issues))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"project", "issues", "Alpha Project"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if gotIssueVars == nil {
+		t.Fatal("project issues query was not executed")
+	}
+	if gotIssueVars["id"] != projUUID {
+		t.Errorf("id sent to issues query = %v, want %s", gotIssueVars["id"], projUUID)
+	}
+
+	result := out.String()
+	if !strings.Contains(result, "ENG-30") {
+		t.Errorf("output should contain ENG-30, got: %s", result)
 	}
 }

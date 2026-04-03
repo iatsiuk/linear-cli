@@ -90,10 +90,10 @@
 - [x] run `make build` - must pass
 
 ### Task 6: Add `project issues` tests
-- [ ] write test `TestProjectIssuesCommand_TableOutput`: mock server handles ResolveProjectID + project issues query, verify table output
-- [ ] write test `TestProjectIssuesCommand_JSONOutput`: verify JSON output
-- [ ] write test `TestProjectIssuesCommand_WithLimit`: verify `first` variable
-- [ ] write test `TestProjectIssuesCommand_ByName`: verify project name is resolved to UUID via ResolveProjectID
+- [x] write test `TestProjectIssuesCommand_TableOutput`: mock server handles ResolveProjectID + project issues query, verify table output
+- [x] write test `TestProjectIssuesCommand_JSONOutput`: verify JSON output
+- [x] write test `TestProjectIssuesCommand_WithLimit`: verify `first` variable
+- [x] write test `TestProjectIssuesCommand_ByName`: verify project name is resolved to UUID via ResolveProjectID
 
 ### Task 7: Add `project issues` implementation
 - [ ] add `ProjectIssuesQuery` in `internal/query/project.go`: `project(id) { issues(first, orderBy, includeArchived) { nodes { ...issueListFields } pageInfo } }`

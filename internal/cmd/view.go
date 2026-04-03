@@ -20,7 +20,7 @@ type customViewShowResult struct {
 }
 
 type customViewIssuesResult struct {
-	CustomView struct {
+	CustomView *struct {
 		Issues struct {
 			Nodes []model.Issue `json:"nodes"`
 		} `json:"issues"`
@@ -163,7 +163,7 @@ func runViewShow(cmd *cobra.Command, args []string) error {
 
 func newViewIssuesCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "issues <id>",
+		Use:   "issues <id-or-slug>",
 		Short: "List issues in a custom view",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
@@ -187,6 +187,9 @@ func runViewIssues(cmd *cobra.Command, args []string) error {
 
 	f := cmd.Flags()
 	limit, _ := f.GetInt("limit")
+	if limit <= 0 {
+		return fmt.Errorf("--limit must be greater than 0")
+	}
 	orderBy, _ := f.GetString("order-by")
 	includeArchived, _ := f.GetBool("include-archived")
 
@@ -204,6 +207,9 @@ func runViewIssues(cmd *cobra.Command, args []string) error {
 	var result customViewIssuesResult
 	if err := client.Do(context.Background(), query.ViewIssuesQuery, vars, &result); err != nil {
 		return fmt.Errorf("view issues: %w", err)
+	}
+	if result.CustomView == nil {
+		return fmt.Errorf("custom view not found: %s", args[0])
 	}
 
 	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")

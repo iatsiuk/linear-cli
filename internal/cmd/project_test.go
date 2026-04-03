@@ -464,6 +464,22 @@ func TestProjectShowCommand_MissingID(t *testing.T) {
 	}
 }
 
+func TestProjectIssuesCommand_MissingArg(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"project", "issues"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when project ID is missing")
+	}
+}
+
 func TestProjectIssuesCommand_TableOutput(t *testing.T) {
 	const projUUID = "00000000-0000-0000-0000-000000000001"
 	issues := []map[string]any{
@@ -486,7 +502,7 @@ func TestProjectIssuesCommand_TableOutput(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if len(*bodies) < 1 {
+	if len(*bodies) != 1 {
 		t.Fatalf("expected 1 request, got %d", len(*bodies))
 	}
 	if (*bodies)[0]["id"] != projUUID {
@@ -556,7 +572,7 @@ func TestProjectIssuesCommand_WithLimit(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if len(*bodies) < 1 {
+	if len(*bodies) != 1 {
 		t.Fatalf("expected 1 request, got %d", len(*bodies))
 	}
 	first, ok := (*bodies)[0]["first"]

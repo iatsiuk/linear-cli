@@ -250,7 +250,7 @@ func printProjectDetail(cmd *cobra.Command, p *model.Project) error {
 }
 
 type projectIssuesResult struct {
-	Project struct {
+	Project *struct {
 		Issues struct {
 			Nodes []model.Issue `json:"nodes"`
 		} `json:"issues"`
@@ -281,16 +281,19 @@ func runProjectIssues(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	f := cmd.Flags()
+	limit, _ := f.GetInt("limit")
+	if limit <= 0 {
+		return fmt.Errorf("--limit must be greater than 0")
+	}
+	orderBy, _ := f.GetString("order-by")
+	includeArchived, _ := f.GetBool("include-archived")
+
 	ctx := context.Background()
 	id, err := api.ResolveProjectID(ctx, client, args[0])
 	if err != nil {
 		return err
 	}
-
-	f := cmd.Flags()
-	limit, _ := f.GetInt("limit")
-	orderBy, _ := f.GetString("order-by")
-	includeArchived, _ := f.GetBool("include-archived")
 
 	vars := map[string]any{
 		"id":    id,
@@ -306,6 +309,9 @@ func runProjectIssues(cmd *cobra.Command, args []string) error {
 	var result projectIssuesResult
 	if err := client.Do(ctx, query.ProjectIssuesQuery, vars, &result); err != nil {
 		return fmt.Errorf("project issues: %w", err)
+	}
+	if result.Project == nil {
+		return fmt.Errorf("project not found: %s", args[0])
 	}
 
 	jsonMode, _ := cmd.Root().PersistentFlags().GetBool("json")

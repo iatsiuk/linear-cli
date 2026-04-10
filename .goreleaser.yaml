@@ -29,6 +29,17 @@ homebrew_casks:
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     homepage: "https://github.com/iatsiuk/linear-cli"
     description: "CLI tool for Linear - manage issues, projects, and teams from the terminal"
+    hooks:
+      post:
+        install: |
+          system_command "/bin/sh", args: ["-c", "xattr -d com.apple.quarantine '#{staged_path}/linear-cli' 2>/dev/null; true"]
+    caveats: |
+      Quarantine attribute (com.apple.quarantine) is automatically removed
+      from the linear-cli binary during installation to prevent Gatekeeper warnings.
+      See: https://github.com/Homebrew/brew/issues/20755
+
+      To uninstall:
+        brew uninstall --cask iatsiuk/tap/linear-cli
 
 changelog:
   sort: asc

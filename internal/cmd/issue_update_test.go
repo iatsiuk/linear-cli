@@ -3,6 +3,8 @@ package cmd_test
 import (
 	"bytes"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -303,6 +305,180 @@ func TestIssueUpdateCommand_PayloadSuccessFalse(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "success=false") {
 		t.Errorf("error should mention success=false, got: %v", err)
+	}
+}
+
+// TestIssueUpdate_DescriptionFile verifies that --description-file reads description from a file.
+func TestIssueUpdate_DescriptionFile(t *testing.T) {
+	const fileContent = "Updated description from file\n\n## Section\n- bullet\n"
+	dir := t.TempDir()
+	path := filepath.Join(dir, "desc.md")
+	if err := os.WriteFile(path, []byte(fileContent), 0o600); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	issue := makeIssue("ENG-80", "Title", "Todo", "No priority", "")
+	issue["id"] = "issue-uuid-8888"
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		issueGetResponse(issue),
+		issueUpdateResponse(issue),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "update", "ENG-80", "--description-file", path})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) < 2 {
+		t.Fatalf("expected 2 requests, got %d", len(*bodies))
+	}
+	mutationVars := (*bodies)[1]
+	input, ok := mutationVars["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("input not set: %v", mutationVars)
+	}
+	if input["description"] != fileContent {
+		t.Errorf("description = %q, want %q", input["description"], fileContent)
+	}
+}
+
+// TestIssueUpdate_DescriptionFileStdin verifies that --description-file - reads from stdin.
+func TestIssueUpdate_DescriptionFileStdin(t *testing.T) {
+	const stdinContent = "description from stdin"
+	issue := makeIssue("ENG-81", "Stdin", "Todo", "No priority", "")
+	issue["id"] = "issue-uuid-8181"
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		issueGetResponse(issue),
+		issueUpdateResponse(issue),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetIn(strings.NewReader(stdinContent))
+	root.SetArgs([]string{"issue", "update", "ENG-81", "--description-file", "-"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) < 2 {
+		t.Fatalf("expected 2 requests, got %d", len(*bodies))
+	}
+	mutationVars := (*bodies)[1]
+	input, ok := mutationVars["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("input not set: %v", mutationVars)
+	}
+	if input["description"] != stdinContent {
+		t.Errorf("description = %q, want %q", input["description"], stdinContent)
+	}
+}
+
+// TestIssueUpdate_DescriptionAndDescriptionFileMutuallyExclusive verifies that
+// --description and --description-file cannot be combined.
+func TestIssueUpdate_DescriptionAndDescriptionFileMutuallyExclusive(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{
+		"issue", "update", "ENG-82",
+		"--description", "inline",
+		"--description-file", "/tmp/x",
+	})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when both --description and --description-file are set")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "description") || !strings.Contains(msg, "description-file") {
+		t.Errorf("error should mention both flag names, got: %v", err)
+	}
+	if !strings.Contains(msg, "none of the others can be") {
+		t.Errorf("error should signal mutual exclusion, got: %v", err)
+	}
+}
+
+// TestIssueUpdate_NoDescriptionFlags verifies that omitting both --description and
+// --description-file leaves the description field absent from the mutation input,
+// preserving partial-update semantics.
+func TestIssueUpdate_NoDescriptionFlags(t *testing.T) {
+	issue := makeIssue("ENG-83", "Original", "Todo", "No priority", "")
+	issue["id"] = "issue-uuid-8383"
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		issueGetResponse(issue),
+		issueUpdateResponse(issue),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "update", "ENG-83", "--title", "New title"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) < 2 {
+		t.Fatalf("expected 2 requests, got %d", len(*bodies))
+	}
+	mutationVars := (*bodies)[1]
+	input, ok := mutationVars["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("input not set: %v", mutationVars)
+	}
+	if _, present := input["description"]; present {
+		t.Errorf("description should not be in input when neither flag is set, got: %v", input["description"])
+	}
+}
+
+func TestIssueUpdate_DescriptionFileMissing(t *testing.T) {
+	issue := makeIssue("ENG-10", "Existing title", "In Progress", "High", "")
+	issue["id"] = "issue-uuid-1234"
+
+	server, _ := newQueuedServer(t, []map[string]any{
+		issueGetResponse(issue),
+	})
+	setupIssueTest(t, server)
+
+	missingPath := filepath.Join(t.TempDir(), "does-not-exist.md")
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{
+		"issue", "update", "ENG-10",
+		"--description-file", missingPath,
+	})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when description file is missing")
+	}
+	if !strings.Contains(err.Error(), "read description file") {
+		t.Errorf("error should mention 'read description file', got: %v", err)
+	}
+	if !strings.Contains(err.Error(), missingPath) {
+		t.Errorf("error should contain path %q, got: %v", missingPath, err)
 	}
 }
 

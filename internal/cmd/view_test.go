@@ -91,6 +91,9 @@ func TestViewListCommand_Empty(t *testing.T) {
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	if got := out.String(); got != "(no results)\n" {
+		t.Errorf("expected %q, got %q", "(no results)\n", got)
+	}
 }
 
 func TestViewListCommand_JSONOutput(t *testing.T) {
@@ -126,8 +129,9 @@ func TestViewListCommand_JSONOutput(t *testing.T) {
 }
 
 func TestViewShowCommand_Basic(t *testing.T) {
+	const viewID = "11111111-2222-3333-4444-555555555555"
 	desc := "Shows all open issues assigned to me"
-	view := makeCustomView("cv-1", "My Open Issues", "Issue", false, &desc)
+	view := makeCustomView(viewID, "My Open Issues", "Issue", false, &desc)
 
 	server, bodies := newQueuedServer(t, []map[string]any{
 		customViewShowResponse(view),
@@ -138,7 +142,7 @@ func TestViewShowCommand_Basic(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"view", "show", "cv-1"})
+	root.SetArgs([]string{"view", "show", viewID})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -147,8 +151,8 @@ func TestViewShowCommand_Basic(t *testing.T) {
 	if len(*bodies) < 1 {
 		t.Fatalf("expected 1 request, got %d", len(*bodies))
 	}
-	if (*bodies)[0]["id"] != "cv-1" {
-		t.Errorf("id = %v, want cv-1", (*bodies)[0]["id"])
+	if (*bodies)[0]["id"] != viewID {
+		t.Errorf("id = %v, want %s", (*bodies)[0]["id"], viewID)
 	}
 
 	result := out.String()
@@ -164,7 +168,8 @@ func TestViewShowCommand_Basic(t *testing.T) {
 }
 
 func TestViewShowCommand_Shared(t *testing.T) {
-	view := makeCustomView("cv-2", "Team Board", "Issue", true, nil)
+	const viewID = "22222222-3333-4444-5555-666666666666"
+	view := makeCustomView(viewID, "Team Board", "Issue", true, nil)
 
 	server, _ := newQueuedServer(t, []map[string]any{
 		customViewShowResponse(view),
@@ -175,7 +180,7 @@ func TestViewShowCommand_Shared(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"view", "show", "cv-2"})
+	root.SetArgs([]string{"view", "show", viewID})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -188,7 +193,8 @@ func TestViewShowCommand_Shared(t *testing.T) {
 }
 
 func TestViewShowCommand_JSONOutput(t *testing.T) {
-	view := makeCustomView("cv-3", "Backlog", "Issue", false, nil)
+	const viewID = "33333333-4444-5555-6666-777777777777"
+	view := makeCustomView(viewID, "Backlog", "Issue", false, nil)
 
 	server, _ := newQueuedServer(t, []map[string]any{
 		customViewShowResponse(view),
@@ -199,7 +205,7 @@ func TestViewShowCommand_JSONOutput(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"--json", "view", "show", "cv-3"})
+	root.SetArgs([]string{"--json", "view", "show", viewID})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -244,6 +250,7 @@ func viewIssuesResponse(issues []map[string]any) map[string]any {
 }
 
 func TestViewIssuesCommand_TableOutput(t *testing.T) {
+	const viewID = "44444444-5555-6666-7777-888888888888"
 	issues := []map[string]any{
 		makeIssue("ENG-10", "View issue one", "In Progress", "Medium", "Alice"),
 		makeIssue("ENG-11", "View issue two", "Backlog", "Low", ""),
@@ -258,7 +265,7 @@ func TestViewIssuesCommand_TableOutput(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"view", "issues", "cv-1"})
+	root.SetArgs([]string{"view", "issues", viewID})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -267,8 +274,8 @@ func TestViewIssuesCommand_TableOutput(t *testing.T) {
 	if len(*bodies) < 1 {
 		t.Fatalf("expected 1 request, got %d", len(*bodies))
 	}
-	if (*bodies)[0]["id"] != "cv-1" {
-		t.Errorf("id = %v, want cv-1", (*bodies)[0]["id"])
+	if (*bodies)[0]["id"] != viewID {
+		t.Errorf("id = %v, want %s", (*bodies)[0]["id"], viewID)
 	}
 
 	result := out.String()
@@ -284,6 +291,7 @@ func TestViewIssuesCommand_TableOutput(t *testing.T) {
 }
 
 func TestViewIssuesCommand_JSONOutput(t *testing.T) {
+	const viewID = "55555555-6666-7777-8888-999999999999"
 	issues := []map[string]any{
 		makeIssue("ENG-12", "JSON view issue", "Todo", "High", "Bob"),
 	}
@@ -297,7 +305,7 @@ func TestViewIssuesCommand_JSONOutput(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"--json", "view", "issues", "cv-2"})
+	root.SetArgs([]string{"--json", "view", "issues", viewID})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -316,6 +324,7 @@ func TestViewIssuesCommand_JSONOutput(t *testing.T) {
 }
 
 func TestViewIssuesCommand_WithLimit(t *testing.T) {
+	const viewID = "66666666-7777-8888-9999-aaaaaaaaaaaa"
 	server, bodies := newQueuedServer(t, []map[string]any{
 		viewIssuesResponse([]map[string]any{}),
 	})
@@ -325,7 +334,7 @@ func TestViewIssuesCommand_WithLimit(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	root.SetOut(&out)
 	root.SetErr(&out)
-	root.SetArgs([]string{"view", "issues", "cv-3", "--limit", "5"})
+	root.SetArgs([]string{"view", "issues", viewID, "--limit", "5"})
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -360,7 +369,7 @@ func TestViewIssuesCommand_MissingArg(t *testing.T) {
 	}
 }
 
-func TestViewShowCommand_UseFieldContainsSlug(t *testing.T) {
+func TestViewShowCommand_HelpMentionsAcceptedForms(t *testing.T) {
 	root := cmd.NewRootCommand("test")
 	var showCmd *cobra.Command
 	for _, sub := range root.Commands() {
@@ -377,11 +386,205 @@ func TestViewShowCommand_UseFieldContainsSlug(t *testing.T) {
 	if showCmd == nil {
 		t.Fatal("view show command not found")
 	}
-	if !strings.Contains(showCmd.Use, "id-or-slug") {
-		t.Errorf("Use = %q, want to contain 'id-or-slug'", showCmd.Use)
+	short := strings.ToLower(showCmd.Short)
+	for _, want := range []string{"name", "uuid", "slug"} {
+		if !strings.Contains(short, want) {
+			t.Errorf("Short = %q, want to mention %q", showCmd.Short, want)
+		}
 	}
-	if !strings.Contains(strings.ToLower(showCmd.Short), "slug") {
-		t.Errorf("Short = %q, want to mention 'slug'", showCmd.Short)
+}
+
+func customViewResolveResponse(viewID string) map[string]any {
+	return map[string]any{
+		"data": map[string]any{
+			"customViews": map[string]any{
+				"nodes": []map[string]any{{"id": viewID}},
+			},
+		},
+	}
+}
+
+func TestViewShow_ByName(t *testing.T) {
+	const viewID = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+	desc := "Issues without estimates"
+	view := makeCustomView(viewID, "Without Estimates", "Issue", false, &desc)
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		customViewResolveResponse(viewID),
+		customViewShowResponse(view),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"view", "show", "Without Estimates"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) != 2 {
+		t.Fatalf("expected 2 requests (resolve + show), got %d", len(*bodies))
+	}
+	if (*bodies)[0]["name"] != "Without Estimates" {
+		t.Errorf("resolve name = %v, want 'Without Estimates'", (*bodies)[0]["name"])
+	}
+	if (*bodies)[1]["id"] != viewID {
+		t.Errorf("show id = %v, want %s", (*bodies)[1]["id"], viewID)
+	}
+
+	if !strings.Contains(out.String(), "Without Estimates") {
+		t.Errorf("output should contain view name, got: %s", out.String())
+	}
+}
+
+func TestViewShow_ByUUID(t *testing.T) {
+	const viewID = "bbbbbbbb-cccc-dddd-eeee-ffffffffffff"
+	view := makeCustomView(viewID, "My View", "Issue", false, nil)
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		customViewShowResponse(view),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"view", "show", viewID})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) != 1 {
+		t.Fatalf("expected 1 request (no resolve call), got %d", len(*bodies))
+	}
+	if (*bodies)[0]["id"] != viewID {
+		t.Errorf("id = %v, want %s", (*bodies)[0]["id"], viewID)
+	}
+}
+
+func TestViewIssues_ByName(t *testing.T) {
+	const viewID = "cccccccc-dddd-eeee-ffff-000000000000"
+	issues := []map[string]any{
+		makeIssue("ENG-100", "An issue", "Todo", "Medium", ""),
+	}
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		customViewResolveResponse(viewID),
+		viewIssuesResponse(issues),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"view", "issues", "Without Estimates"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) != 2 {
+		t.Fatalf("expected 2 requests (resolve + issues), got %d", len(*bodies))
+	}
+	if (*bodies)[0]["name"] != "Without Estimates" {
+		t.Errorf("resolve name = %v, want 'Without Estimates'", (*bodies)[0]["name"])
+	}
+	if (*bodies)[1]["id"] != viewID {
+		t.Errorf("issues id = %v, want %s", (*bodies)[1]["id"], viewID)
+	}
+}
+
+func TestViewIssues_NotFound(t *testing.T) {
+	// name lookup returns empty, slug fallback passes "Nonexistent" to API which returns null
+	server, _ := newQueuedServer(t, []map[string]any{
+		customViewListResponse([]map[string]any{}),
+		{"data": map[string]any{"customView": nil}},
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"view", "issues", "Nonexistent"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("expected 'not found' in error, got: %v", err)
+	}
+}
+
+func TestViewShow_BySlug(t *testing.T) {
+	const slug = "my-team-bugs"
+	const viewID = "dddddddd-eeee-ffff-0000-111111111111"
+	view := makeCustomView(viewID, "My Team Bugs", "Issue", false, nil)
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		customViewListResponse([]map[string]any{}),
+		customViewShowResponse(view),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"view", "show", slug})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) != 2 {
+		t.Fatalf("expected 2 requests (resolve + show), got %d", len(*bodies))
+	}
+	if (*bodies)[0]["name"] != slug {
+		t.Errorf("resolve name = %v, want %q", (*bodies)[0]["name"], slug)
+	}
+	if (*bodies)[1]["id"] != slug {
+		t.Errorf("show id = %v, want %q (slug passthrough)", (*bodies)[1]["id"], slug)
+	}
+}
+
+func TestViewIssues_BySlug(t *testing.T) {
+	const slug = "without-estimates"
+	issues := []map[string]any{
+		makeIssue("ENG-200", "A slug issue", "Todo", "Medium", ""),
+	}
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		customViewListResponse([]map[string]any{}),
+		viewIssuesResponse(issues),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"view", "issues", slug})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) != 2 {
+		t.Fatalf("expected 2 requests (resolve + issues), got %d", len(*bodies))
+	}
+	if (*bodies)[0]["name"] != slug {
+		t.Errorf("resolve name = %v, want %q", (*bodies)[0]["name"], slug)
+	}
+	if (*bodies)[1]["id"] != slug {
+		t.Errorf("issues id = %v, want %q (slug passthrough)", (*bodies)[1]["id"], slug)
 	}
 }
 

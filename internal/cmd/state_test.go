@@ -162,6 +162,29 @@ func TestStateListCommand_TeamFilter(t *testing.T) {
 	}
 }
 
+// TestStateListCommand_EmptyResult verifies that empty state list prints (no results).
+func TestStateListCommand_EmptyResult(t *testing.T) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {
+		writeJSONResponse(w, stateListResponse([]map[string]any{}))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"state", "list", "--team", "ENG"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	got := out.String()
+	if got != "(no results)\n" {
+		t.Errorf("want \"(no results)\\n\", got %q", got)
+	}
+}
+
 // TestStateListCommand_RequiresTeam verifies that --team flag is required.
 func TestStateListCommand_RequiresTeam(t *testing.T) {
 	server := newIssueTestServer(t, func(w http.ResponseWriter, _ *http.Request) {})

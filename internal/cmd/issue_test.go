@@ -399,9 +399,9 @@ func TestIssueListCommand_EmptyResult(t *testing.T) {
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	// empty table produces no output (TableFormatter returns nil for empty slice)
-	if out.Len() != 0 {
-		t.Errorf("expected empty output for no issues, got: %q", out.String())
+	// empty table prints "(no results)" so callers can distinguish "no rows" from a silent failure
+	if got := out.String(); got != "(no results)\n" {
+		t.Errorf("expected %q, got %q", "(no results)\n", got)
 	}
 }
 
@@ -915,6 +915,216 @@ func TestIssueListCommand_ProjectFilter_MutualExclusive(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "--project") || !strings.Contains(err.Error(), "--no-project") {
 		t.Errorf("error should mention --project and --no-project, got: %v", err)
+	}
+}
+
+func TestIssueList_ParentFilter_Identifier(t *testing.T) {
+	const parentUUID = "11111111-2222-3333-4444-555555555555"
+	var reqCount int
+	var gotVars map[string]any
+
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Query     string         `json:"query"`
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		reqCount++
+
+		if strings.Contains(body.Query, "ResolveIssue") {
+			if body.Variables["id"] != "ENG-727" {
+				t.Errorf("ResolveIssue variable id = %v, want ENG-727", body.Variables["id"])
+			}
+			writeJSONResponse(w, map[string]any{
+				"data": map[string]any{
+					"issue": map[string]any{"id": parentUUID},
+				},
+			})
+			return
+		}
+
+		gotVars = body.Variables
+		writeJSONResponse(w, issueListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "list", "--parent", "ENG-727"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if reqCount != 2 {
+		t.Errorf("expected 2 requests (resolve + list), got %d", reqCount)
+	}
+
+	filter, ok := gotVars["filter"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables.filter not set, got: %v", gotVars["filter"])
+	}
+	parent, ok := filter["parent"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.parent not set, got: %v", filter["parent"])
+	}
+	id, ok := parent["id"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.parent.id not set, got: %v", parent["id"])
+	}
+	if id["eq"] != parentUUID {
+		t.Errorf("filter.parent.id.eq = %v, want %s", id["eq"], parentUUID)
+	}
+}
+
+func TestIssueList_ParentFilter_UUID(t *testing.T) {
+	const parentUUID = "11111111-2222-3333-4444-555555555555"
+	var reqCount int
+	var gotVars map[string]any
+
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Query     string         `json:"query"`
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		reqCount++
+
+		if strings.Contains(body.Query, "ResolveIssue") {
+			t.Errorf("unexpected ResolveIssue call for UUID input")
+			writeJSONResponse(w, map[string]any{"data": map[string]any{"issue": nil}})
+			return
+		}
+
+		gotVars = body.Variables
+		writeJSONResponse(w, issueListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "list", "--parent", parentUUID})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if reqCount != 1 {
+		t.Errorf("expected 1 request (list only), got %d", reqCount)
+	}
+
+	filter, ok := gotVars["filter"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables.filter not set, got: %v", gotVars["filter"])
+	}
+	parent, ok := filter["parent"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.parent not set, got: %v", filter["parent"])
+	}
+	id, ok := parent["id"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.parent.id not set, got: %v", parent["id"])
+	}
+	if id["eq"] != parentUUID {
+		t.Errorf("filter.parent.id.eq = %v, want %s", id["eq"], parentUUID)
+	}
+}
+
+func TestIssueList_ParentFilter_NotFound(t *testing.T) {
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Query string `json:"query"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+		if strings.Contains(body.Query, "ResolveIssue") {
+			writeJSONResponse(w, map[string]any{
+				"data": map[string]any{"issue": nil},
+			})
+			return
+		}
+		writeJSONResponse(w, issueListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "list", "--parent", "ENG-999"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when parent issue not found")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("error should mention 'not found', got: %v", err)
+	}
+}
+
+func TestIssueList_ParentFilter_CombinedWithOther(t *testing.T) {
+	const parentUUID = "11111111-2222-3333-4444-555555555555"
+	var gotVars map[string]any
+
+	server := newIssueTestServer(t, func(w http.ResponseWriter, r *http.Request) {
+		var body struct {
+			Query     string         `json:"query"`
+			Variables map[string]any `json:"variables"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&body)
+
+		if strings.Contains(body.Query, "ResolveIssue") {
+			writeJSONResponse(w, map[string]any{
+				"data": map[string]any{
+					"issue": map[string]any{"id": parentUUID},
+				},
+			})
+			return
+		}
+
+		gotVars = body.Variables
+		writeJSONResponse(w, issueListResponse(nil))
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "list", "--parent", "ENG-727", "--state", "In Progress"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	filter, ok := gotVars["filter"].(map[string]any)
+	if !ok {
+		t.Fatalf("variables.filter not set, got: %v", gotVars["filter"])
+	}
+	parent, ok := filter["parent"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.parent not set, got: %v", filter["parent"])
+	}
+	pid, ok := parent["id"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.parent.id not set, got: %v", parent["id"])
+	}
+	if pid["eq"] != parentUUID {
+		t.Errorf("filter.parent.id.eq = %v, want %s", pid["eq"], parentUUID)
+	}
+	state, ok := filter["state"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.state not set, got: %v", filter["state"])
+	}
+	name, ok := state["name"].(map[string]any)
+	if !ok {
+		t.Fatalf("filter.state.name not set, got: %v", state["name"])
+	}
+	if name["eq"] != "In Progress" {
+		t.Errorf("filter.state.name.eq = %v, want In Progress", name["eq"])
 	}
 }
 

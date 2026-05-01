@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"testing"
 )
@@ -121,8 +122,33 @@ func TestPaginateAll_EmptyResult(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	if nodes == nil {
+		t.Fatal("want non-nil empty slice, got nil")
+	}
 	if len(nodes) != 0 {
 		t.Errorf("want 0 nodes, got %d", len(nodes))
+	}
+}
+
+func TestPaginateAll_EmptyJSONShape(t *testing.T) {
+	t.Parallel()
+	fetch := func(_ context.Context, _ *string, _ int) (Connection[string], error) {
+		return Connection[string]{
+			Nodes:    nil,
+			PageInfo: PageInfo{HasNextPage: false},
+		}, nil
+	}
+
+	nodes, err := PaginateAll(context.Background(), fetch, 10, 0)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	b, err := json.Marshal(nodes)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if string(b) != "[]" {
+		t.Errorf("want JSON []; got %s", string(b))
 	}
 }
 

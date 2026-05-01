@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -429,6 +431,121 @@ func TestCommentUpdate_NotFound(t *testing.T) {
 	}
 }
 
+// TestCommentUpdate_BodyFile verifies that --body-file reads body from a file.
+func TestCommentUpdate_BodyFile(t *testing.T) {
+	const fileContent = "Updated body from file\nwith multiple lines\n"
+	dir := t.TempDir()
+	path := filepath.Join(dir, "body.md")
+	if err := os.WriteFile(path, []byte(fileContent), 0o600); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	comment := makeComment("update-file-id", fileContent, "Alice", nil)
+	server, bodies := newQueuedServer(t, []map[string]any{
+		commentUpdateResponse(comment),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "update", "update-file-id", "--body-file", path})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) < 1 {
+		t.Fatalf("expected 1 request, got %d", len(*bodies))
+	}
+	input, ok := (*bodies)[0]["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("input not set: %v", (*bodies)[0])
+	}
+	if input["body"] != fileContent {
+		t.Errorf("input.body = %q, want %q", input["body"], fileContent)
+	}
+}
+
+// TestCommentUpdate_BodyFileStdin verifies that --body-file - reads body from stdin.
+func TestCommentUpdate_BodyFileStdin(t *testing.T) {
+	const stdinContent = "from stdin update"
+	comment := makeComment("update-stdin-id", stdinContent, "Alice", nil)
+	server, bodies := newQueuedServer(t, []map[string]any{
+		commentUpdateResponse(comment),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetIn(strings.NewReader(stdinContent))
+	root.SetArgs([]string{"comment", "update", "update-stdin-id", "--body-file", "-"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) < 1 {
+		t.Fatalf("expected 1 request, got %d", len(*bodies))
+	}
+	input, ok := (*bodies)[0]["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("input not set: %v", (*bodies)[0])
+	}
+	if input["body"] != stdinContent {
+		t.Errorf("input.body = %q, want %q", input["body"], stdinContent)
+	}
+}
+
+// TestCommentUpdate_BodyAndBodyFileMutuallyExclusive verifies that --body and
+// --body-file cannot be combined.
+func TestCommentUpdate_BodyAndBodyFileMutuallyExclusive(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "update", "comment-uuid-1", "--body", "x", "--body-file", "/tmp/x"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when both --body and --body-file are set")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "body") || !strings.Contains(msg, "body-file") {
+		t.Errorf("error should mention both flag names, got: %v", err)
+	}
+	if !strings.Contains(msg, "none of the others can be") {
+		t.Errorf("error should signal mutual exclusion, got: %v", err)
+	}
+}
+
+// TestCommentUpdate_NoBodyOrBodyFile verifies that one of --body / --body-file is required.
+func TestCommentUpdate_NoBodyOrBodyFile(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "update", "comment-uuid-1"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when neither --body nor --body-file is set")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "body") || !strings.Contains(msg, "required") {
+		t.Errorf("error should mention body and required, got: %v", err)
+	}
+}
+
 // TestCommentUpdate_VerifyInput verifies that id and input.body are sent correctly.
 func TestCommentUpdate_VerifyInput(t *testing.T) {
 	comment := makeComment("target-id", "New text", "Carol", nil)
@@ -588,6 +705,146 @@ func TestCommentDelete_MutationFails(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "success=false") {
 		t.Errorf("error should mention success=false, got: %v", err)
+	}
+}
+
+// TestCommentCreate_BodyFile verifies that --body-file reads body from a file.
+func TestCommentCreate_BodyFile(t *testing.T) {
+	const fileContent = "This is body from file\nwith multiple lines\n"
+	dir := t.TempDir()
+	path := filepath.Join(dir, "body.md")
+	if err := os.WriteFile(path, []byte(fileContent), 0o600); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	comment := makeComment("file-comment-id", fileContent, "Alice", nil)
+	server, bodies := newQueuedServer(t, []map[string]any{
+		commentCreateResponse(comment),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "create", "ENG-1", "--body-file", path})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) < 1 {
+		t.Fatalf("expected 1 request, got %d", len(*bodies))
+	}
+	input, ok := (*bodies)[0]["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("input not set: %v", (*bodies)[0])
+	}
+	if input["body"] != fileContent {
+		t.Errorf("body = %q, want %q", input["body"], fileContent)
+	}
+}
+
+// TestCommentCreate_BodyFileStdin verifies that --body-file - reads body from stdin.
+func TestCommentCreate_BodyFileStdin(t *testing.T) {
+	const stdinContent = "from stdin"
+	comment := makeComment("stdin-comment-id", stdinContent, "Alice", nil)
+	server, bodies := newQueuedServer(t, []map[string]any{
+		commentCreateResponse(comment),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetIn(strings.NewReader(stdinContent))
+	root.SetArgs([]string{"comment", "create", "ENG-1", "--body-file", "-"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) < 1 {
+		t.Fatalf("expected 1 request, got %d", len(*bodies))
+	}
+	input, ok := (*bodies)[0]["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("input not set: %v", (*bodies)[0])
+	}
+	if input["body"] != stdinContent {
+		t.Errorf("body = %q, want %q", input["body"], stdinContent)
+	}
+}
+
+// TestCommentCreate_BodyAndBodyFileMutuallyExclusive verifies that --body and
+// --body-file cannot be combined.
+func TestCommentCreate_BodyAndBodyFileMutuallyExclusive(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "create", "ENG-1", "--body", "x", "--body-file", "/tmp/x"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when both --body and --body-file are set")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "body") || !strings.Contains(msg, "body-file") {
+		t.Errorf("error should mention both flag names, got: %v", err)
+	}
+	if !strings.Contains(msg, "none of the others can be") {
+		t.Errorf("error should signal mutual exclusion, got: %v", err)
+	}
+}
+
+// TestCommentCreate_NoBodyOrBodyFile verifies that one of --body / --body-file is required.
+func TestCommentCreate_NoBodyOrBodyFile(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "create", "ENG-1"})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when neither --body nor --body-file is set")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "body") || !strings.Contains(msg, "required") {
+		t.Errorf("error should mention body and required, got: %v", err)
+	}
+}
+
+// TestCommentCreate_BodyFileMissing verifies error includes path when file is missing.
+func TestCommentCreate_BodyFileMissing(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	missingPath := filepath.Join(t.TempDir(), "does-not-exist.md")
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"comment", "create", "ENG-1", "--body-file", missingPath})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when body file is missing")
+	}
+	if !strings.Contains(err.Error(), "read body file") {
+		t.Errorf("error should mention 'read body file', got: %v", err)
+	}
+	if !strings.Contains(err.Error(), missingPath) {
+		t.Errorf("error should contain path %q, got: %v", missingPath, err)
 	}
 }
 

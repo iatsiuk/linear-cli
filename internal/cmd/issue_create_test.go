@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -257,6 +259,141 @@ func TestIssueCreateCommand_OptionalFieldsOmitted(t *testing.T) {
 	}
 	if input["title"] != "Minimal" {
 		t.Errorf("title = %v, want Minimal", input["title"])
+	}
+}
+
+// TestIssueCreate_DescriptionFile verifies that --description-file reads description from a file.
+func TestIssueCreate_DescriptionFile(t *testing.T) {
+	const teamID = "team-uuid-1234-5678-90ab-cdef01234567"
+	const fileContent = "Issue description from file\n\n## Section\n- bullet\n"
+	dir := t.TempDir()
+	path := filepath.Join(dir, "desc.md")
+	if err := os.WriteFile(path, []byte(fileContent), 0o600); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	created := makeIssue("ENG-20", "Title", "Todo", "No priority", "")
+	server, bodies := newQueuedServer(t, []map[string]any{
+		teamResolveResponse(teamID),
+		issueCreateResponse(created),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{"issue", "create", "--title", "Title", "--team", "ENG", "--description-file", path})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) < 2 {
+		t.Fatalf("expected 2 requests, got %d", len(*bodies))
+	}
+	mutationVars := (*bodies)[1]
+	input, ok := mutationVars["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("input not set: %v", mutationVars)
+	}
+	if input["description"] != fileContent {
+		t.Errorf("description = %q, want %q", input["description"], fileContent)
+	}
+}
+
+// TestIssueCreate_DescriptionFileStdin verifies that --description-file - reads from stdin.
+func TestIssueCreate_DescriptionFileStdin(t *testing.T) {
+	const teamID = "team-uuid-1234-5678-90ab-cdef01234567"
+	const stdinContent = "description from stdin"
+	created := makeIssue("ENG-21", "Stdin", "Todo", "No priority", "")
+
+	server, bodies := newQueuedServer(t, []map[string]any{
+		teamResolveResponse(teamID),
+		issueCreateResponse(created),
+	})
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetIn(strings.NewReader(stdinContent))
+	root.SetArgs([]string{"issue", "create", "--title", "Stdin", "--team", "ENG", "--description-file", "-"})
+
+	if err := root.Execute(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(*bodies) < 2 {
+		t.Fatalf("expected 2 requests, got %d", len(*bodies))
+	}
+	mutationVars := (*bodies)[1]
+	input, ok := mutationVars["input"].(map[string]any)
+	if !ok {
+		t.Fatalf("input not set: %v", mutationVars)
+	}
+	if input["description"] != stdinContent {
+		t.Errorf("description = %q, want %q", input["description"], stdinContent)
+	}
+}
+
+// TestIssueCreate_DescriptionAndDescriptionFileMutuallyExclusive verifies that
+// --description and --description-file cannot be combined.
+func TestIssueCreate_DescriptionAndDescriptionFileMutuallyExclusive(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{
+		"issue", "create",
+		"--title", "T", "--team", "ENG",
+		"--description", "inline",
+		"--description-file", "/tmp/x",
+	})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when both --description and --description-file are set")
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, "description") || !strings.Contains(msg, "description-file") {
+		t.Errorf("error should mention both flag names, got: %v", err)
+	}
+	if !strings.Contains(msg, "none of the others can be") {
+		t.Errorf("error should signal mutual exclusion, got: %v", err)
+	}
+}
+
+// TestIssueCreate_DescriptionFileMissing verifies error includes path when file is missing.
+func TestIssueCreate_DescriptionFileMissing(t *testing.T) {
+	server, _ := newQueuedServer(t, nil)
+	setupIssueTest(t, server)
+
+	missingPath := filepath.Join(t.TempDir(), "does-not-exist.md")
+
+	var out bytes.Buffer
+	root := cmd.NewRootCommand("test")
+	root.SetOut(&out)
+	root.SetErr(&out)
+	root.SetArgs([]string{
+		"issue", "create",
+		"--title", "T", "--team", "ENG",
+		"--description-file", missingPath,
+	})
+
+	err := root.Execute()
+	if err == nil {
+		t.Fatal("expected error when description file is missing")
+	}
+	if !strings.Contains(err.Error(), "read description file") {
+		t.Errorf("error should mention 'read description file', got: %v", err)
+	}
+	if !strings.Contains(err.Error(), missingPath) {
+		t.Errorf("error should contain path %q, got: %v", missingPath, err)
 	}
 }
 

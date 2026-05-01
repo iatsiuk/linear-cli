@@ -4,6 +4,8 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -13,6 +15,29 @@ import (
 	"github.com/iatsiuk/linear-cli/internal/output"
 	"github.com/iatsiuk/linear-cli/internal/query"
 )
+
+// readBody returns the comment body from --body or --body-file. When
+// --body-file is "-" it reads from cmd's stdin, otherwise from the file.
+func readBody(cmd *cobra.Command) (string, error) {
+	f := cmd.Flags()
+	if f.Changed("body-file") {
+		path, _ := f.GetString("body-file")
+		if path == "-" {
+			data, err := io.ReadAll(cmd.InOrStdin())
+			if err != nil {
+				return "", fmt.Errorf("read body file %q: %w", path, err)
+			}
+			return string(data), nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return "", fmt.Errorf("read body file %q: %w", path, err)
+		}
+		return string(data), nil
+	}
+	body, _ := f.GetString("body")
+	return body, nil
+}
 
 type commentListResult struct {
 	Issue *struct {
@@ -78,8 +103,10 @@ func newCommentUpdateCmd() *cobra.Command {
 		RunE: runCommentUpdate,
 	}
 	f := cmd.Flags()
-	f.String("body", "", "new comment body in markdown (required)")
-	_ = cmd.MarkFlagRequired("body")
+	f.String("body", "", "new comment body in markdown")
+	f.String("body-file", "", "read comment body from file ('-' for stdin)")
+	cmd.MarkFlagsMutuallyExclusive("body", "body-file")
+	cmd.MarkFlagsOneRequired("body", "body-file")
 	return cmd
 }
 
@@ -91,7 +118,10 @@ func runCommentUpdate(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 
 	id := args[0]
-	body, _ := cmd.Flags().GetString("body")
+	body, err := readBody(cmd)
+	if err != nil {
+		return err
+	}
 
 	vars := map[string]any{
 		"id":    id,
@@ -247,9 +277,11 @@ func newCommentCreateCommand() *cobra.Command {
 		RunE: runCommentCreate,
 	}
 	f := cmd.Flags()
-	f.String("body", "", "comment body in markdown (required)")
+	f.String("body", "", "comment body in markdown")
+	f.String("body-file", "", "read comment body from file ('-' for stdin)")
 	f.String("parent", "", "parent comment ID for threading")
-	_ = cmd.MarkFlagRequired("body")
+	cmd.MarkFlagsMutuallyExclusive("body", "body-file")
+	cmd.MarkFlagsOneRequired("body", "body-file")
 	return cmd
 }
 
@@ -262,9 +294,11 @@ func runCommentCreate(cmd *cobra.Command, args []string) error {
 
 	identifier := args[0]
 
-	f := cmd.Flags()
-	body, _ := f.GetString("body")
-	parentID, _ := f.GetString("parent")
+	body, err := readBody(cmd)
+	if err != nil {
+		return err
+	}
+	parentID, _ := cmd.Flags().GetString("parent")
 
 	input := map[string]any{
 		"issueId": identifier,

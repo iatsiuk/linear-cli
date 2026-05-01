@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/iatsiuk/linear-cli/internal/api"
 	"github.com/iatsiuk/linear-cli/internal/model"
 	"github.com/iatsiuk/linear-cli/internal/output"
 	"github.com/iatsiuk/linear-cli/internal/query"
@@ -95,9 +96,9 @@ func runViewList(cmd *cobra.Command, _ []string) error {
 
 func newViewShowCommand() *cobra.Command {
 	return &cobra.Command{
-		Use:   "show <id-or-slug>",
-		Short: "Show custom view details (accepts UUID or URL slug)",
-		Long:  "Show details for a custom view. Accepts a UUID or URL slug.",
+		Use:   "show <view>",
+		Short: "Show custom view details (accepts name, UUID, or URL slug)",
+		Long:  "Show details for a custom view. Accepts a name, UUID, or URL slug.",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf("view id is required")
@@ -114,9 +115,15 @@ func runViewShow(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	vars := map[string]any{"id": args[0]}
+	ctx := context.Background()
+	id, err := api.ResolveCustomViewID(ctx, client, args[0])
+	if err != nil {
+		return err
+	}
+
+	vars := map[string]any{"id": id}
 	var result customViewShowResult
-	if err := client.Do(context.Background(), query.CustomViewShowQuery, vars, &result); err != nil {
+	if err := client.Do(ctx, query.CustomViewShowQuery, vars, &result); err != nil {
 		return fmt.Errorf("show custom view: %w", err)
 	}
 	if result.CustomView == nil {
@@ -163,8 +170,8 @@ func runViewShow(cmd *cobra.Command, args []string) error {
 
 func newViewIssuesCommand() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "issues <id-or-slug>",
-		Short: "List issues in a custom view",
+		Use:   "issues <view>",
+		Short: "List issues in a custom view (accepts name, UUID, or URL slug)",
 		Args: func(cmd *cobra.Command, args []string) error {
 			if len(args) == 0 {
 				return fmt.Errorf("view id is required")
@@ -193,8 +200,14 @@ func runViewIssues(cmd *cobra.Command, args []string) error {
 	orderBy, _ := f.GetString("order-by")
 	includeArchived, _ := f.GetBool("include-archived")
 
+	ctx := context.Background()
+	id, err := api.ResolveCustomViewID(ctx, client, args[0])
+	if err != nil {
+		return err
+	}
+
 	vars := map[string]any{
-		"id":    args[0],
+		"id":    id,
 		"first": limit,
 	}
 	if orderBy != "" {
@@ -205,7 +218,7 @@ func runViewIssues(cmd *cobra.Command, args []string) error {
 	}
 
 	var result customViewIssuesResult
-	if err := client.Do(context.Background(), query.ViewIssuesQuery, vars, &result); err != nil {
+	if err := client.Do(ctx, query.ViewIssuesQuery, vars, &result); err != nil {
 		return fmt.Errorf("view issues: %w", err)
 	}
 	if result.CustomView == nil {

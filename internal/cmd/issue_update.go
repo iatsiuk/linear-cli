@@ -34,6 +34,7 @@ func newIssueUpdateCommand() *cobra.Command {
 	f := cmd.Flags()
 	f.String("title", "", "issue title")
 	f.String("description", "", "issue description in markdown")
+	f.String("description-file", "", "read issue description from file ('-' for stdin)")
 	f.String("assignee", "", "assignee name, email, UUID, or \"me\"")
 	f.String("state", "", "workflow state name or ID")
 	f.Int("priority", -1, "priority: 0=none, 1=urgent, 2=high, 3=normal, 4=low")
@@ -45,6 +46,7 @@ func newIssueUpdateCommand() *cobra.Command {
 	f.String("cycle", "", "cycle ID")
 	f.String("project", "", "project name or ID")
 	f.String("parent", "", "parent issue identifier or ID")
+	cmd.MarkFlagsMutuallyExclusive("description", "description-file")
 	return cmd
 }
 
@@ -83,8 +85,9 @@ func runIssueUpdate(cmd *cobra.Command, args []string) error {
 		input["title"] = title
 	}
 
-	if f.Changed("description") {
-		desc, _ := f.GetString("description")
+	if desc, ok, err := readDescription(cmd); err != nil {
+		return err
+	} else if ok {
 		input["description"] = desc
 	}
 

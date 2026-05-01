@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -14,6 +15,34 @@ import (
 	"github.com/iatsiuk/linear-cli/internal/output"
 	"github.com/iatsiuk/linear-cli/internal/query"
 )
+
+// readDescription returns the issue description from --description or --description-file.
+// The bool return is true when either flag was set, false otherwise (preserving partial-update
+// semantics for callers that need to distinguish "not provided" from "empty"). When
+// --description-file is "-" it reads from cmd's stdin, otherwise from the file at the path.
+func readDescription(cmd *cobra.Command) (string, bool, error) {
+	f := cmd.Flags()
+	if f.Changed("description-file") {
+		path, _ := f.GetString("description-file")
+		if path == "-" {
+			data, err := io.ReadAll(cmd.InOrStdin())
+			if err != nil {
+				return "", false, fmt.Errorf("read description file %q: %w", path, err)
+			}
+			return string(data), true, nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return "", false, fmt.Errorf("read description file %q: %w", path, err)
+		}
+		return string(data), true, nil
+	}
+	if f.Changed("description") {
+		desc, _ := f.GetString("description")
+		return desc, true, nil
+	}
+	return "", false, nil
+}
 
 func newIssueCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -65,6 +94,7 @@ func newIssueListCommand() *cobra.Command {
 	f.String("order-by", "updatedAt", "sort order (createdAt|updatedAt)")
 	f.String("label", "", "filter by label name")
 	f.String("project", "", "filter by project name or UUID")
+	f.String("parent", "", "filter by parent issue (UUID or identifier like ENG-727)")
 	filter.AddFlags(cmd)
 	return cmd
 }
@@ -85,6 +115,7 @@ func runIssueList(cmd *cobra.Command, _ []string) error {
 	priority, _ := f.GetInt("priority")
 	labelName, _ := f.GetString("label")
 	projectName, _ := f.GetString("project")
+	parentRaw, _ := f.GetString("parent")
 
 	if limit <= 0 {
 		return fmt.Errorf("--limit must be greater than 0")
@@ -130,6 +161,13 @@ func runIssueList(cmd *cobra.Command, _ []string) error {
 			return fmt.Errorf("resolve project: %w", err)
 		}
 		issueFilter["project"] = map[string]any{"id": map[string]any{"eq": projectID}}
+	}
+	if parentRaw != "" {
+		parentID, err := api.ResolveIssueID(context.Background(), client, parentRaw)
+		if err != nil {
+			return fmt.Errorf("resolve parent: %w", err)
+		}
+		issueFilter["parent"] = map[string]any{"id": map[string]any{"eq": parentID}}
 	}
 	if priority >= 0 {
 		if !useOr {

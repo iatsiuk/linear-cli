@@ -221,6 +221,59 @@ func ResolveProjectStatusID(ctx context.Context, c *Client, typeOrID string) (st
 	return "", fmt.Errorf("project status %q not found", typeOrID)
 }
 
+// ResolveIssueID resolves an issue identifier (e.g. "ENG-727") or UUID to an
+// issue UUID. If idOrKey is already a UUID, it is returned as-is without an
+// API call. The Linear API accepts both UUID and identifier forms in the
+// top-level issue(id:) field, so the input is forwarded directly.
+func ResolveIssueID(ctx context.Context, c *Client, idOrKey string) (string, error) {
+	if looksLikeUUID(idOrKey) {
+		return idOrKey, nil
+	}
+
+	var result struct {
+		Issue *idNode `json:"issue"`
+	}
+	const q = `
+		query ResolveIssue($id: String!) {
+			issue(id: $id) { id }
+		}`
+	if err := c.Do(ctx, q, map[string]any{"id": idOrKey}, &result); err != nil {
+		return "", fmt.Errorf("resolve issue %q: %w", idOrKey, err)
+	}
+	if result.Issue == nil || result.Issue.ID == "" {
+		return "", fmt.Errorf("issue %q not found", idOrKey)
+	}
+	return result.Issue.ID, nil
+}
+
+// ResolveCustomViewID resolves a custom view name or URL slug to a UUID.
+// UUID input is returned as-is. Name input is resolved via exact match.
+// If no name match is found, the original input is returned unchanged so the
+// API can handle it as a URL slug (e.g. "my-team-bugs").
+func ResolveCustomViewID(ctx context.Context, c *Client, nameOrID string) (string, error) {
+	if looksLikeUUID(nameOrID) {
+		return nameOrID, nil
+	}
+
+	var result struct {
+		CustomViews nodeConnection `json:"customViews"`
+	}
+	const q = `
+		query ResolveCustomView($name: String!) {
+			customViews(filter: { name: { eq: $name } }, first: 1) {
+				nodes { id }
+			}
+		}`
+	if err := c.Do(ctx, q, map[string]any{"name": nameOrID}, &result); err != nil {
+		return "", fmt.Errorf("resolve custom view %q: %w", nameOrID, err)
+	}
+	if len(result.CustomViews.Nodes) == 0 {
+		// no name match; pass through so the API can resolve it as a slug
+		return nameOrID, nil
+	}
+	return result.CustomViews.Nodes[0].ID, nil
+}
+
 // ResolveProjectID resolves a project name to a project UUID.
 // If name is already a UUID, it is returned as-is without an API call.
 func ResolveProjectID(ctx context.Context, c *Client, name string) (string, error) {

@@ -122,6 +122,8 @@ Use functions in `internal/api/resolver.go` to convert human-readable names to U
 - `ResolveStateID` - workflow state name or UUID; accepts optional teamID
 - `ResolveProjectID` - project name or UUID
 - `ResolveViewerID` - returns authenticated user ID (used for "me" assignee)
+- `ResolveIssueID` - issue identifier (e.g. "ENG-727") or UUID; uses top-level `issue(id:)` field which accepts both forms
+- `ResolveCustomViewID` - custom view name or UUID; searches by exact name match, first result wins
 
 Pattern: if input already matches UUID regex, return immediately without API call.
 

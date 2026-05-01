@@ -13,15 +13,28 @@ type row struct {
 	Value string `json:"value"`
 }
 
-func TestTableFormatter_EmptyData(t *testing.T) {
+func TestTableFormatter_EmptySlice(t *testing.T) {
 	t.Parallel()
 	var buf bytes.Buffer
 	f := output.NewFormatter(false)
 	if err := f.Format(&buf, []row{}); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if buf.Len() != 0 {
-		t.Errorf("expected empty output for empty slice, got %q", buf.String())
+	if got := buf.String(); got != "(no results)\n" {
+		t.Errorf("expected %q, got %q", "(no results)\n", got)
+	}
+}
+
+func TestTableFormatter_NilSlice(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	f := output.NewFormatter(false)
+	var nilSlice []row
+	if err := f.Format(&buf, nilSlice); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got := buf.String(); got != "(no results)\n" {
+		t.Errorf("expected %q, got %q", "(no results)\n", got)
 	}
 }
 
@@ -127,9 +140,51 @@ func TestJSONFormatter_EmptySlice(t *testing.T) {
 	if err := f.Format(&buf, []row{}); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	out := strings.TrimSpace(buf.String())
-	if out != "[]" {
-		t.Errorf("expected [], got %q", out)
+	if got := buf.String(); got != "[]\n" {
+		t.Errorf("expected %q, got %q", "[]\n", got)
+	}
+}
+
+func TestJSONFormatter_NilSlice(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	f := output.NewFormatter(true)
+	var nilSlice []int
+	if err := f.Format(&buf, nilSlice); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got := buf.String(); got != "[]\n" {
+		t.Errorf("expected %q, got %q", "[]\n", got)
+	}
+}
+
+func TestJSONFormatter_TypedNilSlice(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	f := output.NewFormatter(true)
+	var nilSlice []row
+	if err := f.Format(&buf, nilSlice); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got := buf.String(); got != "[]\n" {
+		t.Errorf("expected %q, got %q", "[]\n", got)
+	}
+}
+
+func TestJSONFormatter_NonSlice(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	f := output.NewFormatter(true)
+	data := row{Name: "hello", Value: "world"}
+	if err := f.Format(&buf, data); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	out := buf.String()
+	if !strings.Contains(out, `"name": "hello"`) {
+		t.Errorf("expected struct marshaled normally, got:\n%s", out)
+	}
+	if !strings.Contains(out, `"value": "world"`) {
+		t.Errorf("expected struct marshaled normally, got:\n%s", out)
 	}
 }
 

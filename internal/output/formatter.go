@@ -25,6 +25,9 @@ func NewFormatter(jsonMode bool) Formatter {
 type JSONFormatter struct{}
 
 func (f *JSONFormatter) Format(w io.Writer, data any) error {
+	if v := reflect.ValueOf(data); v.Kind() == reflect.Slice && v.IsNil() {
+		data = reflect.MakeSlice(v.Type(), 0, 0).Interface()
+	}
 	b, err := json.MarshalIndent(data, "", "  ")
 	if err != nil {
 		return fmt.Errorf("json marshal: %w", err)
@@ -44,7 +47,8 @@ func (f *TableFormatter) Format(w io.Writer, data any) error {
 		return fmt.Errorf("table formatter requires a slice, got %T", data)
 	}
 	if v.Len() == 0 {
-		return nil
+		_, err := fmt.Fprintln(w, "(no results)")
+		return err
 	}
 
 	// resolve element type (handle pointer elements)

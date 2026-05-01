@@ -96,13 +96,17 @@ func runStateList(cmd *cobra.Command, _ []string) error {
 		return output.NewFormatter(true).Format(cmd.OutOrStdout(), states)
 	}
 
+	w := cmd.OutOrStdout()
+	if len(states) == 0 {
+		_, err := fmt.Fprintln(w, "(no results)")
+		return err
+	}
+
 	// group states by type
 	grouped := make(map[string][]model.WorkflowState)
 	for _, s := range states {
 		grouped[s.Type] = append(grouped[s.Type], s)
 	}
-
-	w := cmd.OutOrStdout()
 	first := true
 	for _, typeKey := range stateTypeOrder {
 		group := grouped[typeKey]

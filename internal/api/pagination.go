@@ -25,7 +25,7 @@ type FetchFunc[T any] func(ctx context.Context, after *string, first int) (Conne
 // If limit > 0, stops after collecting limit nodes.
 func PaginateAll[T any](ctx context.Context, fetch FetchFunc[T], pageSize, limit int) ([]T, error) {
 	var (
-		all   []T
+		all   = make([]T, 0)
 		after *string
 	)
 	for {

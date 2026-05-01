@@ -1560,6 +1560,33 @@ linear completion fish > ~/.config/fish/completions/linear.fish
 linear completion powershell >> $PROFILE
 ```
 
+## Output Behavior
+
+### Errors
+
+In default (table) mode, errors are written to stderr as plain text and exit code is 1.
+
+When `--json` is set, errors are written to stderr as a JSON envelope and exit code is 1:
+
+```json
+{"error": "<message>"}
+```
+
+This keeps `--json` pipelines parseable end-to-end:
+
+```
+linear issue list --team NONEXISTENT --json 2>&1 1>/dev/null | jq -r .error
+```
+
+### Empty results
+
+List commands with no matching rows behave consistently:
+
+- Table mode: prints `(no results)` followed by a newline to stdout, exit code 0.
+- JSON mode: prints `[]` followed by a newline to stdout, exit code 0.
+
+This lets callers distinguish "no rows" from "command did nothing".
+
 ## Pipe-friendly Workflows
 
 All commands support `--json` output for use in pipelines. The `issue batch update` command reads identifiers from stdin when no arguments are given.

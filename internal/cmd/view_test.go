@@ -91,6 +91,9 @@ func TestViewListCommand_Empty(t *testing.T) {
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
+	if got := out.String(); got != "(no results)\n" {
+		t.Errorf("expected %q, got %q", "(no results)\n", got)
+	}
 }
 
 func TestViewListCommand_JSONOutput(t *testing.T) {

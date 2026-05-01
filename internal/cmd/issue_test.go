@@ -399,9 +399,9 @@ func TestIssueListCommand_EmptyResult(t *testing.T) {
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	// empty table produces no output (TableFormatter returns nil for empty slice)
-	if out.Len() != 0 {
-		t.Errorf("expected empty output for no issues, got: %q", out.String())
+	// empty table prints "(no results)" so callers can distinguish "no rows" from a silent failure
+	if got := out.String(); got != "(no results)\n" {
+		t.Errorf("expected %q, got %q", "(no results)\n", got)
 	}
 }
 

@@ -135,6 +135,9 @@ func TestSearchCommand_EmptyResults(t *testing.T) {
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error on empty results: %v", err)
 	}
+	if got := out.String(); got != "(no results)\n" {
+		t.Errorf("expected %q, got %q", "(no results)\n", got)
+	}
 }
 
 func TestSearchCommand_WithTeamFlag(t *testing.T) {
@@ -313,6 +316,9 @@ func TestSearchCommand_TypeProject_Empty(t *testing.T) {
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error on empty results: %v", err)
 	}
+	if got := out.String(); got != "(no results)\n" {
+		t.Errorf("expected %q, got %q", "(no results)\n", got)
+	}
 }
 
 func TestSearchCommand_TypeDocument_TableOutput(t *testing.T) {
@@ -401,6 +407,9 @@ func TestSearchCommand_TypeDocument_Empty(t *testing.T) {
 
 	if err := root.Execute(); err != nil {
 		t.Fatalf("unexpected error on empty results: %v", err)
+	}
+	if got := out.String(); got != "(no results)\n" {
+		t.Errorf("expected %q, got %q", "(no results)\n", got)
 	}
 }
 

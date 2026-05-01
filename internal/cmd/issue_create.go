@@ -29,6 +29,7 @@ func newIssueCreateCommand() *cobra.Command {
 	f.String("title", "", "issue title (required)")
 	f.String("team", "", "team key or ID (required)")
 	f.String("description", "", "issue description in markdown")
+	f.String("description-file", "", "read issue description from file ('-' for stdin)")
 	f.String("assignee", "", "assignee name, email, UUID, or \"me\"")
 	f.String("state", "", "workflow state name or ID")
 	f.Int("priority", -1, "priority: 0=none, 1=urgent, 2=high, 3=normal, 4=low")
@@ -40,6 +41,7 @@ func newIssueCreateCommand() *cobra.Command {
 	f.String("parent", "", "parent issue identifier or ID")
 	_ = cmd.MarkFlagRequired("title")
 	_ = cmd.MarkFlagRequired("team")
+	cmd.MarkFlagsMutuallyExclusive("description", "description-file")
 	return cmd
 }
 
@@ -53,7 +55,6 @@ func runIssueCreate(cmd *cobra.Command, _ []string) error {
 	f := cmd.Flags()
 	title, _ := f.GetString("title")
 	teamKey, _ := f.GetString("team")
-	description, _ := f.GetString("description")
 	assignee, _ := f.GetString("assignee")
 	stateName, _ := f.GetString("state")
 	priority, _ := f.GetInt("priority")
@@ -68,6 +69,11 @@ func runIssueCreate(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("priority must be 0-4, got %d", priority)
 	}
 
+	description, hasDesc, err := readDescription(cmd)
+	if err != nil {
+		return err
+	}
+
 	teamID, err := api.ResolveTeamID(ctx, client, teamKey)
 	if err != nil {
 		return err
@@ -78,7 +84,7 @@ func runIssueCreate(cmd *cobra.Command, _ []string) error {
 		"title":  title,
 	}
 
-	if description != "" {
+	if hasDesc {
 		input["description"] = description
 	}
 

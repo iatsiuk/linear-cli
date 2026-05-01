@@ -104,6 +104,7 @@ Flags:
   --priority int            filter by priority: 0=none, 1=urgent, 2=high, 3=normal, 4=low
   --label string            filter by label name
   --project string          filter by project name or UUID
+  --parent string           filter by parent issue (UUID or identifier like ENG-727)
   --limit int               maximum number of issues to return (default 50)
   --include-archived        include archived issues
   --order-by string         sort order: createdAt|updatedAt (default "updatedAt")
@@ -147,6 +148,7 @@ linear issue list --created-after 7d --priority-gte 2 --no-assignee
 linear issue list --team ENG --my --state "In Progress"
 linear issue list --due-before today --priority-lte 2
 linear issue list --updated-after 2w --or --no-project --no-cycle
+linear issue list --parent ENG-727
 ```
 
 ### Show issue
@@ -175,24 +177,27 @@ linear issue create --title <title> --team <team> [flags]
 
 Flags:
 ```
-  --title string         issue title (required)
-  --team string          team key or ID (required)
-  --description string   issue description in markdown
-  --assignee string      assignee name, email, UUID, or "me"
-  --state string         workflow state name or ID
-  --priority int         priority: 0=none, 1=urgent, 2=high, 3=normal, 4=low
-  --label stringArray    label name or ID (repeatable)
-  --due-date string      due date (YYYY-MM-DD)
-  --estimate int         complexity estimate (integer)
-  --cycle string         cycle ID
-  --project string       project name or ID
-  --parent string        parent issue identifier or ID
-  --json                 output created issue as JSON
+  --title string             issue title (required)
+  --team string              team key or ID (required)
+  --description string       issue description in markdown
+  --description-file string  read issue description from file ('-' for stdin; mutually exclusive with --description)
+  --assignee string          assignee name, email, UUID, or "me"
+  --state string             workflow state name or ID
+  --priority int             priority: 0=none, 1=urgent, 2=high, 3=normal, 4=low
+  --label stringArray        label name or ID (repeatable)
+  --due-date string          due date (YYYY-MM-DD)
+  --estimate int             complexity estimate (integer)
+  --cycle string             cycle ID
+  --project string           project name or ID
+  --parent string            parent issue identifier or ID
+  --json                     output created issue as JSON
 ```
 
-Example:
+Examples:
 ```
 linear issue create --title "Fix login bug" --team ENG --priority 1 --assignee me
+linear issue create --title "Spec" --team ENG --description-file spec.md
+cat spec.md | linear issue create --title "Spec" --team ENG --description-file -
 ```
 
 ### Update issue
@@ -205,25 +210,28 @@ Only flags explicitly provided are sent to the API - omitted flags leave fields 
 
 Flags:
 ```
-  --title string            issue title
-  --description string      issue description in markdown
-  --assignee string         assignee name, email, UUID, or "me"
-  --state string            workflow state name or ID
-  --priority int            priority: 0=none, 1=urgent, 2=high, 3=normal, 4=low
-  --label stringArray       set labels, replacing all existing (repeatable)
-  --add-label stringArray   add label by name or ID (repeatable)
+  --title string             issue title
+  --description string       issue description in markdown
+  --description-file string  read issue description from file ('-' for stdin; mutually exclusive with --description)
+  --assignee string          assignee name, email, UUID, or "me"
+  --state string             workflow state name or ID
+  --priority int             priority: 0=none, 1=urgent, 2=high, 3=normal, 4=low
+  --label stringArray        set labels, replacing all existing (repeatable)
+  --add-label stringArray    add label by name or ID (repeatable)
   --remove-label stringArray remove label by name or ID (repeatable)
-  --due-date string         due date (YYYY-MM-DD)
-  --estimate int            complexity estimate (integer)
-  --cycle string            cycle ID
-  --project string          project name or ID
-  --parent string           parent issue identifier or ID
-  --json                    output updated issue as JSON
+  --due-date string          due date (YYYY-MM-DD)
+  --estimate int             complexity estimate (integer)
+  --cycle string             cycle ID
+  --project string           project name or ID
+  --parent string            parent issue identifier or ID
+  --json                     output updated issue as JSON
 ```
 
-Example:
+Examples:
 ```
 linear issue update ENG-42 --state Done --assignee me
+linear issue update ENG-42 --description-file new-spec.md
+cat new-spec.md | linear issue update ENG-42 --description-file -
 ```
 
 ### Batch update issues
@@ -983,37 +991,47 @@ linear comment list ENG-42
 ### Create comment
 
 ```
-linear comment create <issue-identifier> --body <text> [flags]
+linear comment create <issue-identifier> [flags]
 ```
+
+One of `--body` or `--body-file` is required.
 
 Flags:
 ```
-  --body string     comment body in markdown (required)
-  --parent string   parent comment ID for threading (reply to a comment)
-  --json            output created comment as JSON
+  --body string        comment body in markdown
+  --body-file string   read comment body from file ('-' for stdin; mutually exclusive with --body)
+  --parent string      parent comment ID for threading (reply to a comment)
+  --json               output created comment as JSON
 ```
 
-Example:
+Examples:
 ```
 linear comment create ENG-42 --body "Looks good, merging soon."
 linear comment create ENG-42 --body "Agreed." --parent abc123
+linear comment create ENG-42 --body-file review.md
+cat review.md | linear comment create ENG-42 --body-file -
 ```
 
 ### Update comment
 
 ```
-linear comment update <comment-id> --body <text> [flags]
+linear comment update <comment-id> [flags]
 ```
+
+One of `--body` or `--body-file` is required.
 
 Flags:
 ```
-  --body string   new comment body in markdown (required)
-  --json          output updated comment as JSON
+  --body string        new comment body in markdown
+  --body-file string   read comment body from file ('-' for stdin; mutually exclusive with --body)
+  --json               output updated comment as JSON
 ```
 
-Example:
+Examples:
 ```
 linear comment update abc123 --body "Revised: looks good, merging next sprint."
+linear comment update abc123 --body-file revised.md
+cat revised.md | linear comment update abc123 --body-file -
 ```
 
 ### Delete comment
@@ -1232,10 +1250,10 @@ linear view list
 ### Show custom view
 
 ```
-linear view show <id-or-slug> [flags]
+linear view show <name-or-id-or-slug> [flags]
 ```
 
-Accepts a UUID or URL slug (e.g. the last path segment from a Linear view URL).
+Accepts a view name (e.g. `"Without Estimates"`), a UUID, or a URL slug (the last path segment from a Linear view URL). Name resolution returns the first match.
 
 Flags:
 ```
@@ -1244,17 +1262,20 @@ Flags:
 
 Output fields: Name, Type, Shared, Description.
 
-Example:
+Examples:
 ```
 linear view show abc123
 linear view show my-team-bugs
+linear view show "Without Estimates"
 ```
 
 ### List issues in a custom view
 
 ```
-linear view issues <id> [flags]
+linear view issues <name-or-id> [flags]
 ```
+
+Accepts a view name or UUID. Name resolution returns the first match.
 
 Flags:
 ```
@@ -1266,10 +1287,11 @@ Flags:
 
 Output columns: ID, Title, Status, Priority, Assignee
 
-Example:
+Examples:
 ```
 linear view issues abc123
 linear view issues abc123 --limit 100 --json
+linear view issues "Without Estimates"
 ```
 
 ## Search Command
